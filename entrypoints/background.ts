@@ -14,6 +14,7 @@ import { settingsStorage } from '@/utils/storage';
 import { shouldSkipJa } from '@/utils/skip-words-ja';
 import { fetchEdgeTTSAudio } from '@/utils/tts-edge';
 import type { AnnotationResult } from '@/utils/ai';
+import { initDictionary, searchWords } from './background/dict-manager';
 
 const PARAGRAPH_SEGMENT_CACHE_KEY = 'rubi_paragraph_segment_cache_v1';
 const SEGMENT_TIMEOUT_MS = 25000;
@@ -23,6 +24,9 @@ export default defineBackground(() => {
   console.log('[Rubi] Background service worker started', {
     id: browser.runtime.id,
   });
+
+  // Initialize dictionary downloading/loading in background
+  initDictionary();
 
   // ─── Update Extension Icon and Badge ─────────────────────────
   async function updateIconState(enabled: boolean) {
@@ -128,6 +132,29 @@ export default defineBackground(() => {
           handleEdgeTTS(message.text, message.voice, message.rate, message.volume)
             .then(sendResponse)
             .catch((err) => sendResponse({ success: false, error: err.message }));
+          return true;
+
+        case 'SEARCH_WORD':
+          searchWords(message.text)
+            .then((result) => sendResponse({ success: true, result }))
+            .catch((err) => sendResponse({ success: false, error: err.message }));
+          return true;
+
+        case 'GET_DICT_STATE':
+          import('./background/dict-manager').then(({ db }) => {
+            if (!db) {
+              sendResponse({ success: true, state: 'not_initialized' });
+            } else {
+              sendResponse({
+                success: true,
+                state: {
+                  words: db.words.state,
+                  names: db.names.state,
+                  kanji: db.kanji.state
+                }
+              });
+            }
+          });
           return true;
 
         case 'OPEN_OPTIONS':

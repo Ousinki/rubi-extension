@@ -1,0 +1,270 @@
+import { AbortError } from '@birchill/jpdict-idb';
+import { expandChoon, kyuujitaiToShinjitai } from '@birchill/normal-jp';
+
+function isNoSplitPoint(input: string, pos: number): boolean { return false; }
+function isOnlyDigits(input: string): boolean { return /^\d+$/.test(input); }
+function toRomaji(input: string): string { return input; }
+
+
+import type { CandidateWord } from './deinflect';
+import { WordType, deinflect } from './deinflect';
+import type {
+  CandidateWordResult,
+  DictionaryWordResult,
+  WordResult,
+  WordSearchResult,
+} from './search-result';
+import { sortWordResults } from './word-match-sorting';
+
+export type GetWordsFunction = (params: {
+  input: string;
+  maxResults: number;
+}) => Promise<Array<DictionaryWordResult>>;
+
+export async function wordSearch({
+  abortSignal,
+  getWords,
+  input,
+  inputLengths,
+  noSplitMask,
+  maxResults,
+}: {
+  abortSignal?: AbortSignal;
+  getWords: GetWordsFunction;
+  input: string;
+  inputLengths: Array<number>;
+  noSplitMask?: number;
+  maxResults: number;
+}): Promise<WordSearchResult | null> {
+  let longestMatch = 0;
+  let have = new Set<number>();
+  const result: WordSearchResult = {
+    type: 'words',
+    data: [],
+    more: false,
+    matchLen: 0,
+  };
+  let includeVariants = true;
+
+  while (input.length) {
+    // Check if we have been aborted
+    if (abortSignal?.aborted) {
+      throw new AbortError();
+    }
+
+    // If we only have digits left, don't bother looking them up since we don't
+    // want to bother the user by showing the popup every time they hover over a
+    // digit.
+    if (isOnlyDigits(input)) {
+      break;
+    }
+
+    const variations = [input];
+
+    // Generate variations on this substring
+    if (includeVariants) {
+      // Expand ー to its various possibilities
+      variations.push(...expandChoon(input));
+
+      // See if there are any 旧字体 we can convert to 新字体
+      const toNew = kyuujitaiToShinjitai(input);
+      if (toNew !== input) {
+        variations.push(toNew);
+      }
+    }
+
+    const currentInputLength = inputLengths[input.length];
+
+    for (const variant of variations) {
+      const wordResults = await lookupCandidates({
+        abortSignal,
+        existingEntries: have,
+        getWords,
+        input: variant,
+        inputLength: currentInputLength,
+        maxResults,
+      });
+
+      if (!wordResults.length) {
+        continue;
+      }
+
+      // Now that we have filtered our set of matches to those we plan to keep,
+      // update our duplicates set.
+      have = new Set([...have, ...wordResults.map((word) => word.id)]);
+
+      // And now that we know we will add at least one entry for this candidate
+      // we can update our longest match length.
+      longestMatch = Math.max(longestMatch, currentInputLength);
+
+      // Add the results to the list
+      //
+      // TODO: This is not right. If we end up with exactly maxResults, we
+      // shouldn't set `more` to true unless we know that there were actually
+      // more results. Fixing this will require changing the signature of
+      // GetWordsFunction, however.
+      if (result.data.length + wordResults.length >= maxResults) {
+        result.more = true;
+      }
+
+      result.data.push(
+        ...wordResults.slice(0, maxResults - result.data.length)
+      );
+
+      // Continue refining this variant excluding all others
+      input = variant;
+      includeVariants = false;
+      break;
+    }
+
+    if (result.data.length >= maxResults) {
+      break;
+    }
+
+    // Shorten input, but don't split at any blocked boundary such as inside a
+    // ようおん (e.g. きゃ) or caller-provided ruby <rt> text.
+    let nextInputLength = input.length - 1;
+    while (
+      nextInputLength > 0 &&
+      isNoSplitPoint(noSplitMask, nextInputLength)
+    ) {
+      nextInputLength -= 1;
+    }
+    input = input.substring(0, Math.max(nextInputLength, 0));
+  }
+
+  if (!result.data.length) {
+    return null;
+  }
+
+  result.matchLen = longestMatch;
+  return result;
+}
+
+async function lookupCandidates({
+  abortSignal,
+  existingEntries,
+  getWords,
+  input,
+  inputLength,
+  maxResults,
+}: {
+  abortSignal?: AbortSignal;
+  existingEntries: Set<number>;
+  getWords: GetWordsFunction;
+  input: string;
+  inputLength: number;
+  maxResults: number;
+}): Promise<Array<WordResult>> {
+  const candidateResults: Array<CandidateWordResult> = [];
+
+  const candidates: Array<CandidateWord> = deinflect(input);
+  for (const [candidateIndex, candidate] of candidates.entries()) {
+    if (abortSignal?.aborted) {
+      throw new AbortError();
+    }
+
+    let wordResults = await lookupCandidate({
+      candidate,
+      getWords,
+      isDeinflection: candidateIndex !== 0,
+      maxResults,
+    });
+
+    // Drop redundant results
+    wordResults = wordResults.filter((word) => !existingEntries.has(word.id));
+
+    candidateResults.push(...wordResults);
+  }
+
+  // The results are currently sorted for each candidate lookup but we really
+  // want to sort _across_ all the candidate lookups.
+  sortWordResults(candidateResults);
+
+  // Convert to a flattened WordResult
+  return candidateResults.map<WordResult>((result) => ({
+    ...result,
+    matchLen: inputLength,
+  }));
+}
+
+async function lookupCandidate({
+  candidate,
+  getWords,
+  isDeinflection,
+  maxResults,
+}: {
+  candidate: CandidateWord;
+  getWords: GetWordsFunction;
+  isDeinflection: boolean;
+  maxResults: number;
+}): Promise<Array<CandidateWordResult>> {
+  let matches = await getWords({ input: candidate.word, maxResults });
+
+  // The deinflection code doesn't know anything about the actual words. It just
+  // produces possible deinflections along with a type that says what kind of a
+  // word (e.g. godan verb, i-adjective etc.) it must be in order for that
+  // deinflection to be valid.
+  //
+  // So, if we have a possible deinflection, we need to check that it matches
+  // the kind of word we looked up.
+  matches = matches.filter(
+    (match) => !isDeinflection || entryMatchesType(match, candidate.type)
+  );
+
+  return matches.map((match) => ({
+    ...match,
+    reasonChains: candidate.reasonChains,
+  }));
+}
+
+// Tests if a given entry matches the type of a generated deflection
+function entryMatchesType(entry: DictionaryWordResult, type: number): boolean {
+  const hasMatchingSense = (test: (pos: string) => boolean) =>
+    entry.s.some((sense) => sense.pos?.some(test));
+
+  if (
+    type & WordType.IchidanVerb &&
+    hasMatchingSense((pos) => pos.startsWith('v1'))
+  ) {
+    return true;
+  }
+
+  if (
+    type & WordType.GodanVerb &&
+    hasMatchingSense((pos) => pos.startsWith('v5') || pos.startsWith('v4'))
+  ) {
+    return true;
+  }
+
+  if (
+    type & WordType.IAdj &&
+    hasMatchingSense((pos) => pos.startsWith('adj-i'))
+  ) {
+    return true;
+  }
+
+  if (type & WordType.KuruVerb && hasMatchingSense((pos) => pos === 'vk')) {
+    return true;
+  }
+
+  if (
+    type & WordType.SuruVerb &&
+    hasMatchingSense((pos) => pos === 'vs-i' || pos === 'vs-s')
+  ) {
+    return true;
+  }
+
+  if (
+    type & WordType.SpecialSuruVerb &&
+    hasMatchingSense((pos) => pos === 'vs-s' || pos === 'vz')
+  ) {
+    return true;
+  }
+
+  if (type & WordType.NounVS && hasMatchingSense((pos) => pos === 'vs')) {
+    return true;
+  }
+
+  return false;
+}

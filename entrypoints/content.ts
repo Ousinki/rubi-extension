@@ -12,11 +12,7 @@ import { safeSendMessage, showErrorToast } from '@/utils/content-messaging';
 import { speakText } from '@/utils/tts';
 import { loadDictionary, lookupWord, tokenizeJa } from '@/utils/tokenizer';
 import { shouldSkipJa } from '@/utils/skip-words-ja';
-import {
-  initKuromoji,
-  getWordAtCaret as kuromojiGetWordAtCaret,
-  isKuromojiReady,
-} from '@/utils/kuromoji-analyzer';
+// Removed Kuromoji imports
 
 import type { RubiSettings } from '@/utils/storage';
 
@@ -66,14 +62,18 @@ export default defineContentScript({
     // Start event listeners
     setupEventListeners();
 
-    // Warm up Kuromoji tokenizer in the background (non-blocking).
-    // By the time the user hovers over the first word, it will likely be ready.
-    initKuromoji().catch((err) =>
-      console.warn('[Rubi] Kuromoji failed to load, falling back to JMdict backtrack scan:', err)
-    );
+    // Check dict state and log it
+    safeSendMessage({ type: 'GET_DICT_STATE' }).then(res => {
+      console.log(`[Rubi] Initial dictionary state: WORDS=${res?.state?.words}, NAMES=${res?.state?.names}, KANJI=${res?.state?.kanji}`);
+    });
 
-    // Full-page Furigana ruby injection is opt-in via settings only.
-    // It is NOT automatically triggered here to keep the default UX hover-only.
+    setInterval(() => {
+      safeSendMessage({ type: 'GET_DICT_STATE' }).then(res => {
+        if (res && res.state && (res.state.words === 'updating' || res.state.words === 'init')) {
+          console.log('[Rubi] Dictionary is currently downloading in background... Please wait.', res.state);
+        }
+      });
+    }, 5000);
 
   }
 });
@@ -304,7 +304,6 @@ function setupEventListeners() {
       }
       uiActions.hidePronounceBadge();
       uiActions.hideTranslationBadge();
-      uiActions.hideExplainPanel();
     }
   });
 }
@@ -334,76 +333,35 @@ async function handleMouseMove(e: MouseEvent) {
   let matchedStart = -1;
   let matchedEnd = -1;
 
-  // ── Primary: Kuromoji morphological analysis ──────────────────────────────
-  if (isKuromojiReady()) {
-    const kResult = kuromojiGetWordAtCaret(text, caretOffset);
-    if (kResult) {
-      // Look up meanings from JMdict using the surface form.
-      // Also try the base form (dictionary form) if surface form isn't found.
-      const entry = lookupWord(kResult.word)
-        ?? (kResult.word.length > 1 ? lookupWord(kResult.word.slice(0, -1)) : null);
+  // ── Dictionary & Morphological Scan (10ten engine) ──────────────────────────────
+  // We scan backwards up to 8 characters to find the start of the word.
+  // The wordSearch engine handles deinflections automatically (e.g. 食べさせられた -> 食べる)
+  await loadDictionary();
+  const maxBacktrack = 8;
+  const startScan = Math.max(0, caretOffset - maxBacktrack);
 
-      matchedWord = kResult.word;
-      matchedReading = kResult.reading;
-      matchedStart = kResult.start;
-      matchedEnd = kResult.end;
-      // Use JMdict entry for meanings if found, otherwise rely on reading only
-      matchedEntry = entry ? entry.entry : { r: kResult.reading, m: [] };
-      // Always use Kuromoji reading (more accurate than JMdict key)
-      matchedEntry = { ...matchedEntry, r: kResult.reading };
-    }
+  for (let start = caretOffset; start >= startScan; start--) {
+    const searchText = text.substring(start, start + 12);
+    const match = await lookupWord(searchText);
 
-    // ── Kuromoji returned null (particle/aux/symbol) — try JMdict for compound expressions ──
-    // Compound particles like について、によって、にとって are split by Kuromoji into
-    // individual morphemes and skipped, but they exist as single entries in JMdict.
-    if (!matchedWord) {
-      await loadDictionary();
-      const maxBacktrack = 8; // longer window for compound particles (e.g. についての = 5 chars)
-      const startScan = Math.max(0, caretOffset - maxBacktrack);
-
-      for (let start = caretOffset; start >= startScan; start--) {
-        const searchText = text.substring(start, start + 12);
-        const match = lookupWord(searchText);
-
-        if (match && caretOffset >= start && caretOffset < start + match.word.length) {
-          if (!matchedWord) {
-            matchedWord = match.word; matchedEntry = match.entry;
-            matchedStart = start; matchedEnd = start + match.word.length;
-          } else if (start > matchedStart) {
-            matchedWord = match.word; matchedEntry = match.entry;
-            matchedStart = start; matchedEnd = start + match.word.length;
-          } else if (start === matchedStart && match.word.length > matchedWord.length) {
-            matchedWord = match.word; matchedEntry = match.entry;
-            matchedStart = start; matchedEnd = start + match.word.length;
-          }
-        }
-      }
-      if (matchedEntry) matchedReading = matchedEntry.r || '';
-    }
-  } else {
-    // ── Fallback: JMdict backtrack scan (used before Kuromoji is ready) ──────
-    await loadDictionary();
-    const maxBacktrack = 6;
-    const startScan = Math.max(0, caretOffset - maxBacktrack);
-
-    for (let start = caretOffset; start >= startScan; start--) {
-      const searchText = text.substring(start, start + 12);
-      const match = lookupWord(searchText);
-
-      if (match && caretOffset >= start && caretOffset < start + match.word.length) {
-        if (!matchedWord) {
-          matchedWord = match.word; matchedEntry = match.entry;
-          matchedStart = start; matchedEnd = start + match.word.length;
-        } else if (start > matchedStart) {
-          matchedWord = match.word; matchedEntry = match.entry;
-          matchedStart = start; matchedEnd = start + match.word.length;
-        } else if (start === matchedStart && match.word.length > matchedWord.length) {
-          matchedWord = match.word; matchedEntry = match.entry;
-          matchedStart = start; matchedEnd = start + match.word.length;
-        }
+    if (match && caretOffset >= start && caretOffset < start + match.length) {
+      if (!matchedWord) {
+        matchedWord = match.word; matchedEntry = match.entry;
+        matchedStart = start; matchedEnd = start + match.length;
+      } else if (start > matchedStart) {
+        // Prefer matches that start later (closer to caret) if they still cover the caret
+        matchedWord = match.word; matchedEntry = match.entry;
+        matchedStart = start; matchedEnd = start + match.length;
+      } else if (start === matchedStart && match.length > (matchedEnd - matchedStart)) {
+        // Prefer longer matches starting at the same position
+        matchedWord = match.word; matchedEntry = match.entry;
+        matchedStart = start; matchedEnd = start + match.length;
       }
     }
-    if (matchedEntry) matchedReading = matchedEntry.r || '';
+  }
+  
+  if (matchedEntry) {
+    matchedReading = matchedEntry.r || '';
   }
 
 
@@ -556,9 +514,9 @@ async function triggerWordExplain(word: string, clientX: number, clientY: number
   const getRect = () => hlRange.getBoundingClientRect();
   const currentRect = getRect();
 
-  const match = lookupWord(word);
+  const match = await lookupWord(word);
   const reading = match?.entry?.r || null;
-  const wordWithReading = reading ? `${word} [${reading}]` : word;
+  const wordWithReading = reading ? `${word} ${reading}` : word;
 
   const settings = currentSettings || (await settingsStorage.getValue());
   const pos = (settings.translationPosition as 'top' | 'bottom') || 'bottom';
@@ -657,10 +615,10 @@ async function injectRubyAnnotations() {
   }
 
   const BATCH_SIZE = 40;
-  function processBatch(startIndex: number) {
+  async function processBatch(startIndex: number) {
     const endIndex = Math.min(startIndex + BATCH_SIZE, nodesToProcess.length);
     for (let i = startIndex; i < endIndex; i++) {
-      processNode(nodesToProcess[i], settings.jlptFilterLevel);
+      await processNode(nodesToProcess[i], settings.jlptFilterLevel);
     }
     if (endIndex < nodesToProcess.length) {
       setTimeout(() => processBatch(endIndex), 20);
@@ -672,7 +630,7 @@ async function injectRubyAnnotations() {
   }
 }
 
-function processNode(node: Text, filterLevel: string) {
+async function processNode(node: Text, filterLevel: string) {
   const text = node.textContent || '';
   const segments = tokenizeJa(text);
   const fragment = document.createDocumentFragment();
@@ -680,7 +638,7 @@ function processNode(node: Text, filterLevel: string) {
 
   for (const segment of segments) {
     if (segment.isWordLike && /[\u4e00-\u9fff]/.test(segment.text)) {
-      const match = lookupWord(segment.text);
+      const match = await lookupWord(segment.text);
       if (match && match.entry.r) {
         const wordJlpt = match.entry.j || 'N5';
         if (shouldAnnotateJlpt(wordJlpt, filterLevel)) {

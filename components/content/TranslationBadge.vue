@@ -15,7 +15,7 @@
     <div class="trans-row">
       <div v-if="parsedText" class="trans-content-col">
         <span class="trans-original">{{ parsedText.original }}</span>
-        <span class="trans-translation">({{ parsedText.translation }})</span>
+        <span class="trans-translation">{{ parsedText.translation }}</span>
       </div>
       <strong v-else>{{ uiState.translationBadge.text }}</strong>
 

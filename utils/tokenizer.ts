@@ -1,4 +1,6 @@
 import { isJapaneseChar } from './dom-ja';
+import { safeSendMessage } from './content-messaging';
+import type { WordSearchResult } from '../entrypoints/background/jpdict/search-result';
 
 export interface Segment {
   text: string;
@@ -12,9 +14,6 @@ export interface DictEntry {
   m: string[];        // meanings (translations)
   j?: string;         // JLPT level (N5-N1) (optional)
 }
-
-let dictionary: Record<string, DictEntry> = {};
-let loadingPromise: Promise<Record<string, DictEntry>> | null = null;
 
 // Clean up search word by removing punctuation, spaces, and matching Japanese chars
 export function cleanJapaneseSearchText(text: string): string {
@@ -56,55 +55,49 @@ export function tokenizeJa(text: string): Segment[] {
   return result;
 }
 
-// Lazy-loads the main Japanese dictionary from extension assets
+// We no longer load a local dictionary; everything is routed to the background script's jpdict-idb!
 export async function loadDictionary(): Promise<Record<string, DictEntry>> {
-  if (Object.keys(dictionary).length > 0) {
-    return dictionary;
-  }
-  if (loadingPromise) {
-    return loadingPromise;
-  }
-
-  loadingPromise = (async () => {
-    try {
-      // Use standard browser API via WXT global import runtime
-      const url = browser.runtime.getURL('/data/dict-ja.json');
-      const response = await fetch(url);
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      dictionary = await response.json();
-      console.log(`[Rubi Dictionary] Loaded successfully. ${Object.keys(dictionary).length} entries.`);
-    } catch (e) {
-      console.error('[Rubi Dictionary] Failed to load dictionary:', e);
-      dictionary = {};
-    }
-    return dictionary;
-  })();
-
-  return loadingPromise;
+  return {}; 
 }
 
 export function getDictionary(): Record<string, DictEntry> {
-  return dictionary;
+  return {};
 }
 
-// Searches the dictionary using longest-match-first strategy
-export function lookupWord(text: string): { word: string; entry: DictEntry; length: number } | null {
+export async function lookupWord(text: string): Promise<{ word: string; entry: DictEntry; length: number; reasonChains?: any } | null> {
   if (!text) return null;
 
   const cleaned = cleanJapaneseSearchText(text);
   if (!cleaned) return null;
 
-  // We match starting from the first hovered character
-  // Japanese search text maximum matching window size: 12 chars
-  for (let len = Math.min(cleaned.length, 12); len > 0; len--) {
-    const word = cleaned.substring(0, len);
-    if (dictionary[word]) {
+  // Send request to background script which runs @birchill/jpdict-idb
+  console.log(`[Rubi] lookupWord requesting SEARCH_WORD for: "${cleaned}"`);
+  const resp = await safeSendMessage({
+    type: 'SEARCH_WORD',
+    text: cleaned
+  });
+  console.log(`[Rubi] lookupWord received resp for "${cleaned}":`, resp);
+
+  if (resp && resp.success && resp.result) {
+    const searchResult = resp.result as WordSearchResult;
+    if (searchResult.data && searchResult.data.length > 0) {
+      const firstHit = searchResult.data[0];
+      console.log('[Rubi] firstHit from background:', firstHit);
+      
+      const reading = firstHit.r && firstHit.r.length > 0 ? (firstHit.r[0].ent || '') : '';
+      const meanings = (firstHit.s || []).map(sense => {
+        if (!sense.g) return '';
+        return sense.g.map((g: any) => g.str || g).join(', ');
+      }).filter(Boolean);
+
       return {
-        word,
-        entry: dictionary[word],
-        length: len
+        word: text.substring(0, searchResult.matchLen),
+        length: searchResult.matchLen,
+        entry: {
+          r: reading,
+          m: meanings,
+          j: '' // JLPT level is not provided directly in 10ten word match without extra lookup, skip for now
+        }
       };
     }
   }

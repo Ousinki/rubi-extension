@@ -1,0 +1,18 @@
+{
+  "extName": {
+    "message": "Rubi — AI 日语振假名注音与语境翻译",
+    "description": "Name of the extension."
+  },
+  "extDescription": {
+    "message": "沉浸式日语阅读助手：自动添加振假名（Furigana）注音，支持 AI 语境分析与词组翻译。",
+    "description": "Description of the extension."
+  },
+  "commandTranslateParagraph": {
+    "message": "翻译鼠标悬浮段落",
+    "description": "Command to translate hovered paragraph."
+  },
+  "commandToggleExtension": {
+    "message": "开启/关闭 Rubi 扩展",
+    "description": "Command to toggle extension"
+  }
+}

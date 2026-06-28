@@ -1,0 +1,229 @@
+<template>
+  <div
+    ref="badgeEl"
+    id="rubi-pronounce-badge"
+    :class="[
+      { 'rubi-badge-visible': uiState.pronounceBadge.visible },
+      isBottom ? 'pos-bottom' : 'pos-top'
+    ]"
+    :style="badgeStyle"
+  >
+    <!-- Top Row: Japanese Kanji / Word -->
+    <div v-if="uiState.pronounceBadge.word" class="rubi-syl-word">
+      {{ uiState.pronounceBadge.word }}
+    </div>
+    
+    <!-- Bottom Row: Pronunciation (Hiragana Reading) -->
+    <div class="rubi-badge-content">
+      <span v-if="uiState.pronounceBadge.isHTML" v-html="uiState.pronounceBadge.content"></span>
+      <span v-else>{{ uiState.pronounceBadge.content }}</span>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { computed, ref, onMounted, watch, nextTick } from 'vue';
+import { uiState } from '@/utils/content-state';
+import { checkFullscreen } from '@/utils/bilibili-state';
+
+const badgeEl = ref<HTMLElement | null>(null);
+const hostEl = ref<HTMLElement | null>(null);
+const badgeWidth = ref(0);
+
+onMounted(() => {
+  if (badgeEl.value) {
+    const rootNode = badgeEl.value.getRootNode();
+    if (rootNode instanceof ShadowRoot) {
+      hostEl.value = rootNode.host as HTMLElement;
+    }
+  }
+});
+
+watch(
+  () => [uiState.pronounceBadge.visible, uiState.pronounceBadge.content, uiState.pronounceBadge.word],
+  async () => {
+    if (uiState.pronounceBadge.visible) {
+      await nextTick();
+      if (badgeEl.value) {
+        badgeWidth.value = badgeEl.value.offsetWidth;
+      }
+    } else {
+      badgeWidth.value = 0;
+    }
+  },
+  { immediate: true }
+);
+
+const isBottom = computed(() => {
+  if (!uiState.pronounceBadge.rect) return false;
+  const rect = uiState.pronounceBadge.rect;
+  return rect.top < 100;
+});
+
+const badgeStyle = computed(() => {
+  if (!uiState.pronounceBadge.rect) return {};
+  const rect = uiState.pronounceBadge.rect;
+  
+  const host = hostEl.value;
+  const isGlobalUi = !host || host.tagName === 'RUBI-UI-ROOT';
+  
+  let x: number;
+  let y: number;
+
+  if (isGlobalUi) {
+    const isFullscreen = checkFullscreen();
+    const scrollX = isFullscreen ? 0 : window.scrollX;
+    const scrollY = isFullscreen ? 0 : window.scrollY;
+
+    x = rect.left + scrollX + rect.width / 2;
+    if (isBottom.value) {
+      y = rect.bottom + scrollY + 6;
+    } else {
+      y = rect.top + scrollY - 6;
+    }
+  } else {
+    let rootRect = host.getBoundingClientRect();
+    const hasFullscreen = checkFullscreen();
+    if (hasFullscreen) {
+      rootRect = {
+        left: 0,
+        top: 0,
+        right: window.innerWidth,
+        bottom: window.innerHeight,
+        width: window.innerWidth,
+        height: window.innerHeight
+      } as DOMRect;
+    }
+    const rootTop = rootRect.top ?? (rootRect as any).y ?? 0;
+    
+    x = rect.left - rootRect.left + rect.width / 2;
+    if (isBottom.value) {
+      y = rect.bottom - rootTop + 6;
+    } else {
+      y = rect.top - rootTop - 6;
+    }
+  }
+
+  // Calculate shiftX to prevent overflow on left/right edges
+  const viewportCenterX = rect.left + rect.width / 2;
+  const screenWidth = window.innerWidth;
+  const halfWidth = badgeWidth.value / 2;
+  const padding = 16;
+  let shiftX = 0;
+
+  if (halfWidth > 0) {
+    if (viewportCenterX - halfWidth < padding) {
+      shiftX = padding - (viewportCenterX - halfWidth);
+    } else if (viewportCenterX + halfWidth > screenWidth - padding) {
+      shiftX = (screenWidth - padding) - (viewportCenterX + halfWidth);
+    }
+  }
+
+  return {
+    left: `${x}px`,
+    top: `${y}px`,
+    '--shift-x': `${shiftX}px`,
+  };
+});
+</script>
+
+<style scoped>
+#rubi-pronounce-badge {
+  position: absolute;
+  z-index: 2147483647;
+  background: rgba(255, 255, 255, 0.98);
+  border: 1px solid #e2e2ea;
+  color: #121316;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 5px 12px;
+  border-radius: 4px;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.02);
+  pointer-events: none;
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.15s ease, transform 0.15s ease, visibility 0.15s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.rubi-syl-word {
+  color: #5c35b4; /* Academic Violet Accent for original word */
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.rubi-badge-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #5a5d6a; /* Slate color for transcription */
+  font-size: 12px;
+}
+
+#rubi-pronounce-badge.pos-top {
+  transform: translate(calc(-50% + var(--shift-x, 0px)), -100%) scale(0.9);
+}
+#rubi-pronounce-badge.pos-top.rubi-badge-visible {
+  opacity: 1;
+  visibility: visible;
+  transform: translate(calc(-50% + var(--shift-x, 0px)), -100%) scale(1);
+}
+
+#rubi-pronounce-badge.pos-bottom {
+  transform: translate(calc(-50% + var(--shift-x, 0px)), 0) scale(0.9);
+}
+#rubi-pronounce-badge.pos-bottom.rubi-badge-visible {
+  opacity: 1;
+  visibility: visible;
+  transform: translate(calc(-50% + var(--shift-x, 0px)), 0) scale(1);
+}
+
+#rubi-pronounce-badge::after {
+  content: '';
+  position: absolute;
+  left: calc(50% - var(--shift-x, 0px));
+  margin-left: -4px;
+  border-width: 4px 4px 0 4px;
+  border-style: solid;
+}
+
+#rubi-pronounce-badge.pos-top::after {
+  bottom: -4px;
+  border-color: #e2e2ea transparent transparent transparent;
+}
+
+#rubi-pronounce-badge.pos-bottom::after {
+  top: -4px;
+  border-width: 0 4px 4px 4px;
+  border-color: transparent transparent #e2e2ea transparent;
+}
+
+/* System Dark Mode support */
+@media (prefers-color-scheme: dark) {
+  #rubi-pronounce-badge {
+    background: rgba(20, 22, 29, 0.96);
+    border-color: #242731;
+    color: #eaecef;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+  }
+  .rubi-syl-word {
+    color: #a78bfa;
+  }
+  .rubi-badge-content {
+    color: #9aa2b1;
+  }
+  #rubi-pronounce-badge.pos-top::after {
+    border-color: #242731 transparent transparent transparent;
+  }
+  #rubi-pronounce-badge.pos-bottom::after {
+    border-color: transparent transparent #242731 transparent;
+  }
+}
+</style>

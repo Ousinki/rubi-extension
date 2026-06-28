@@ -1,0 +1,18 @@
+{
+  "extName": {
+    "message": "Rubi — AI日本語ふりがな注音とコンテキスト翻訳",
+    "description": "Name of the extension."
+  },
+  "extDescription": {
+    "message": "没入型日本語読書アシスタント：ふりがな（ルビ）を自動挿入し、AIによる文脈に沿った翻訳と辞书解説をサポート。",
+    "description": "Description of the extension."
+  },
+  "commandTranslateParagraph": {
+    "message": "ホバーされた段落を翻訳する",
+    "description": "Command to translate hovered paragraph."
+  },
+  "commandToggleExtension": {
+    "message": "Rubi拡張機能をオン/オフにする",
+    "description": "Command to toggle extension"
+  }
+}

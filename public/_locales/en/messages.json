@@ -1,0 +1,18 @@
+{
+  "extName": {
+    "message": "Rubi — AI Japanese Furigana & Contextual Translation",
+    "description": "Name of the extension."
+  },
+  "extDescription": {
+    "message": "Immersive Japanese reading assistant: Auto-injects Furigana and features AI-powered contextual translation and dictionary explanation.",
+    "description": "Description of the extension."
+  },
+  "commandTranslateParagraph": {
+    "message": "Translate hovered paragraph",
+    "description": "Command to translate hovered paragraph."
+  },
+  "commandToggleExtension": {
+    "message": "Toggle Rubi Extension",
+    "description": "Command to toggle extension"
+  }
+}

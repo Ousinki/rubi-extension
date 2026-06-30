@@ -118,6 +118,43 @@
             </div>
           </section>
           
+          <!-- Core Translation Options -->
+          <section class="card" id="lookup-panel">
+            <div class="card-header">
+              <h2>{{ t('lookup.title') }}</h2>
+              <span class="section-tag">{{ t('lookup.tag') }}</span>
+            </div>
+            
+            <div class="card-body">
+              <div class="row">
+                <div class="input-group half">
+                  <label>{{ t('lookup.mt_label') }}</label>
+                  <CustomSelect
+                    v-model="settings.translationEngine"
+                    :options="translationEngineOptions"
+                    @change="saveSettings"
+                  />
+                </div>
+                <div class="input-group half">
+                  <label>{{ t('lookup.position_label') }}</label>
+                  <CustomSelect
+                    v-model="settings.translationPosition"
+                    :options="translationPositionOptions"
+                    @change="saveSettings"
+                  />
+                </div>
+              </div>
+
+              <p class="dict-attribution">
+                {{ t('lookup.dict_source') }}
+                <a href="https://www.edrdg.org/jmdict/j_jmdict.html" target="_blank" rel="noopener">JMdict</a>
+                {{ t('lookup.dict_org') }}
+                <a href="https://www.edrdg.org/edrdg/licence.html" target="_blank" rel="noopener">CC BY-SA 4.0</a> {{ t('lookup.dict_license') }}
+                {{ t('lookup.dict_count') }}
+              </p>
+            </div>
+          </section>
+          
           <!-- AI Translation Configuration -->
           <section class="card" id="api-settings">
             <div class="card-header">
@@ -359,42 +396,7 @@
           </section>
 
 
-          <!-- Core Translation Options -->
-          <section class="card" id="lookup-panel">
-            <div class="card-header">
-              <h2>{{ t('lookup.title') }}</h2>
-              <span class="section-tag">{{ t('lookup.tag') }}</span>
-            </div>
-            
-            <div class="card-body">
-              <div class="row">
-                <div class="input-group half">
-                  <label>{{ t('lookup.mt_label') }}</label>
-                  <CustomSelect
-                    v-model="settings.translationEngine"
-                    :options="translationEngineOptions"
-                    @change="saveSettings"
-                  />
-                </div>
-                <div class="input-group half">
-                  <label>{{ t('lookup.position_label') }}</label>
-                  <CustomSelect
-                    v-model="settings.translationPosition"
-                    :options="translationPositionOptions"
-                    @change="saveSettings"
-                  />
-                </div>
-              </div>
 
-              <p class="dict-attribution">
-                {{ t('lookup.dict_source') }}
-                <a href="https://www.edrdg.org/jmdict/j_jmdict.html" target="_blank" rel="noopener">JMdict</a>
-                {{ t('lookup.dict_org') }}
-                <a href="https://www.edrdg.org/edrdg/licence.html" target="_blank" rel="noopener">CC BY-SA 4.0</a> {{ t('lookup.dict_license') }}
-                {{ t('lookup.dict_count') }}
-              </p>
-            </div>
-          </section>
         </main>
 
         <!-- Right Column: Navigation TOC -->
@@ -406,6 +408,9 @@
                 <a href="#appearance" class="doc-label" :class="{ active: activeSection === 'appearance' }">{{ t('appearance.title') }}</a>
               </li>
               <li>
+                <a href="#lookup-panel" class="doc-label" :class="{ active: activeSection === 'lookup-panel' }">{{ t('lookup.title') }}</a>
+              </li>
+              <li>
                 <a href="#api-settings" class="doc-label" :class="{ active: activeSection === 'api-settings' }">{{ t('llm.title') }}</a>
               </li>
               <li>
@@ -413,9 +418,6 @@
               </li>
               <li>
                 <a href="#speech-engine" class="doc-label" :class="{ active: activeSection === 'speech-engine' }">{{ t('tts.title') }}</a>
-              </li>
-              <li>
-                <a href="#lookup-panel" class="doc-label" :class="{ active: activeSection === 'lookup-panel' }">{{ t('lookup.title') }}</a>
               </li>
             </ul>
           </div>

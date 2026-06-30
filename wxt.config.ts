@@ -14,6 +14,7 @@ export default defineConfig({
     host_permissions: [
       '*://*.googleapis.com/*',
       '*://api.deepl.com/*',
+      '*://www2.deepl.com/*',
       '*://api.openai.com/*',
       '*://api.deepseek.com/*',
       '*://open.bigmodel.cn/*',
@@ -27,6 +28,7 @@ export default defineConfig({
       '*://*.birchill.co.jp/*',
       '*://api.tts.quest/*',
       '*://speech.platform.bing.com/*',
+      '*://www.bing.com/*',
       'http://114.55.243.162:8090/*',
       'http://127.0.0.1/*',
       'http://localhost/*'

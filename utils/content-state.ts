@@ -107,8 +107,8 @@ export const uiState = reactive({
     pinned: false,
     text: '',
     engine: '',
-    translationType: null as 'api' | 'ai' | null,
-    isAnnotated: false,
+    translationType: 'dict' as 'dict' | 'machine' | 'ai',
+    errorInfo: '' as string | undefined,
     rect: null as Rect | null,
     position: 'bottom' as 'top' | 'bottom',
     showEngine: true,
@@ -214,26 +214,41 @@ export const uiActions = {
     }
   },
 
-  showTranslationBadge(text: string, engine: string, targetRect: DOMRect, isAnnotated: boolean, position: 'top' | 'bottom' = 'bottom', showEngine = true, exactRect = false, updater: (() => DOMRect | null) | null = null, originalText = '', isSync = false) {
+  showTranslationBadge(
+    text: string, 
+    engine: string, 
+    rect: DOMRect, 
+    pinned: boolean = false, 
+    position: 'bottom' | 'top' = 'bottom',
+    showEngine: boolean = true,
+    translationType: 'dict' | 'machine' | 'ai' = 'machine',
+    originalText?: string,
+    errorInfo?: string,
+    isSync = false
+  ) {
     if (uiState.suppressClickUntil > Date.now() && !isSync) return;
 
     uiState.translationBadge.text = text;
     uiState.translationBadge.engine = engine;
-    uiState.translationBadge.translationType = engine === 'AI' ? 'ai' : 'api';
-    uiState.translationBadge.rect = toRect(targetRect, exactRect);
-    uiState.translationBadge.exactRect = exactRect;
-    uiState.translationBadge.updater = updater;
-    uiState.translationBadge.isAnnotated = isAnnotated;
+    uiState.translationBadge.rect = toRect(rect);
+    uiState.translationBadge.pinned = pinned;
     uiState.translationBadge.position = position;
     uiState.translationBadge.showEngine = showEngine;
-    uiState.translationBadge.originalText = originalText;
+    uiState.translationBadge.translationType = translationType;
+    uiState.translationBadge.originalText = originalText || '';
+    uiState.translationBadge.errorInfo = errorInfo;
     uiState.translationBadge.askMode = false;
     uiState.translationBadge.askLoading = false;
     uiState.translationBadge.askAnswer = '';
-    uiState.translationBadge.visible = true;
-
+    uiState.translationBadge.askContext = '';
+    
+    // Slight delay to ensure content updates before showing
+    setTimeout(() => {
+      uiState.translationBadge.visible = true;
+    }, 10);
+    
     if (!isSync) {
-      syncAction('showTranslationBadge', text, engine, toPlainRect(targetRect), isAnnotated, position, showEngine, exactRect, null, originalText);
+      syncAction('showTranslationBadge', text, engine, toPlainRect(rect), pinned, position, showEngine, translationType, originalText, errorInfo);
     }
   },
   hideTranslationBadge(isSync = false) {

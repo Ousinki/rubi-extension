@@ -498,8 +498,7 @@ async function handleMouseMove(e: MouseEvent) {
           false,
           pos,
           showEngine,
-          false,
-          () => getRect(),
+          'dict',
           matchedWord
         );
       } else {
@@ -523,9 +522,9 @@ async function handleMouseMove(e: MouseEvent) {
             true,
             pos,
             showEngine,
-            false,
-            () => getRect(),
-            wordSnapshot
+            'machine',
+            wordSnapshot,
+            resp?.errorInfo
           );
         }).catch(() => {
           // API failed — fall back to dictionary result silently
@@ -539,8 +538,7 @@ async function handleMouseMove(e: MouseEvent) {
             true,
             pos,
             showEngine,
-            false,
-            () => getRect(),
+            'dict',
             wordSnapshot
           );
         });
@@ -595,8 +593,7 @@ async function triggerWordExplain(word: string, clientX: number, clientY: number
     true,
     pos,
     showEngine,
-    false,
-    getRect,
+    'ai',
     word
   );
   uiState.translationBadge.askMode = true;

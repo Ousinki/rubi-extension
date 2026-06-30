@@ -491,6 +491,7 @@ const webSpeechVoiceOptions = computed(() => {
 const translationEngineOptions = computed(() => [
   { value: 'google', label: t('lookup.mt_google') },
   { value: 'bing', label: t('lookup.mt_bing') },
+  { value: 'deepl', label: 'DeepL 翻译' },
   { value: 'none', label: t('lookup.mt_local') },
 ]);
 

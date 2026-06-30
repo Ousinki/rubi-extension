@@ -1,4 +1,11 @@
-import type { TranslationEngine, FetchTranslationResponse } from './messaging';
+export type TranslationEngine = 'google' | 'deepl' | 'bing' | 'none' | 'AI';
+
+export interface FetchTranslationResponse {
+  engine: TranslationEngine;
+  targetText: string;
+  detectedLang?: string;
+  errorInfo?: string;
+}
 
 // --- Google Translator ---
 async function translateGoogle(text: string, sourceLang: string, targetLang: string): Promise<FetchTranslationResponse> {
@@ -194,11 +201,11 @@ export async function handleFetchTranslation(text: string, sourceLang: string, t
     try {
       switch (eng) {
         case 'google':
-          return await translateGoogle(text, sourceLang, targetLang);
+          return { ...await translateGoogle(text, sourceLang, targetLang), errorInfo: lastError?.message };
         case 'deepl':
-          return await translateDeepL(text, sourceLang, targetLang);
+          return { ...await translateDeepL(text, sourceLang, targetLang), errorInfo: lastError?.message };
         case 'bing':
-          return await translateBing(text, sourceLang, targetLang);
+          return { ...await translateBing(text, sourceLang, targetLang), errorInfo: lastError?.message };
         default:
           throw new Error(`Unknown engine: ${eng}`);
       }
@@ -208,5 +215,9 @@ export async function handleFetchTranslation(text: string, sourceLang: string, t
     }
   }
   console.error(`[RTTR] All translation engines failed. Last error:`, lastError);
-  throw lastError || new Error('All translation engines failed');
+  return {
+    engine: 'google',
+    targetText: '',
+    errorInfo: lastError?.message || String(lastError)
+  };
 }

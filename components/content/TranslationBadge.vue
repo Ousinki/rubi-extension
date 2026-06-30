@@ -21,10 +21,12 @@
 
       <span
         class="engine-tag"
+        :class="{ 'has-error': !!uiState.translationBadge.errorInfo }"
         v-if="uiState.translationBadge.showEngine && !uiState.translationBadge.askMode"
         @click="handleEngineClick"
-        title="点击使用 AI 翻译"
+        :title="uiState.translationBadge.errorInfo ? `翻译失败已降级至 Google。错误: ${uiState.translationBadge.errorInfo} (请检查权限或刷新插件)` : '点击使用 AI 翻译'"
       >
+        <span v-if="uiState.translationBadge.errorInfo" class="error-icon">⚠️</span>
         {{ safeEngine }}
       </span>
 
@@ -411,11 +413,26 @@ const handleAskSubmit = async () => {
   pointer-events: auto !important;
   cursor: pointer;
   transition: color 0.2s ease, font-weight 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.rubi-translation-tooltip .engine-tag.has-error {
+  color: #d97706; /* Amber */
 }
 
 .rubi-translation-tooltip .engine-tag:hover {
   color: #1a1a1a;
   font-weight: bold;
+}
+
+.rubi-translation-tooltip .engine-tag.has-error:hover {
+  color: #b45309;
+}
+
+.error-icon {
+  font-size: 10px;
 }
 
 .rubi-translation-tooltip .trans-content-col {

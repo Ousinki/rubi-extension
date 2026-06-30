@@ -32,6 +32,8 @@ export function speakText(
 
   if (engine === 'edge') {
     speakEdgeTTS(text, currentSettings, onComplete);
+  } else if (engine === 'voicevox') {
+    speakVoicevox(text, currentSettings, onComplete);
   } else if (engine === 'google') {
     speakGoogleTTS(text, currentSettings, onComplete);
   } else {
@@ -94,6 +96,68 @@ async function speakEdgeTTS(
     console.error('[Rubi EdgeTTS] Error:', err);
     // Fallback to Web Speech API on error
     speakWebSpeech(text, currentSettings, onComplete);
+  }
+}
+
+// ─── Engine 1.5: Voicevox (Anime, High Quality) ───────────────
+async function speakVoicevox(
+  text: string,
+  currentSettings?: any,
+  onComplete?: (success: boolean, errorMsg?: string) => void
+) {
+  try {
+    debugLog('[Voicevox] Requesting audio for:', text.substring(0, 20));
+
+    const endpoint = currentSettings?.voicevoxEndpoint || 'https://api.tts.quest/v3/voicevox';
+    const speaker = currentSettings?.voicevoxSpeaker ?? 2;
+
+    const response = await safeSendMessage({
+      type: 'VOICEVOX_TTS_SPEAK',
+      text,
+      endpoint,
+      speaker,
+      rate: currentSettings?.ttsRate || 1.0,
+      volume: currentSettings?.ttsVolume ?? 1.0,
+    });
+
+    if (!response?.success || !response.audioBase64) {
+      console.warn('[Rubi Voicevox] Failed:', response?.error || 'No audio returned');
+      // Fallback to Edge TTS if Voicevox fails
+      speakEdgeTTS(text, currentSettings, onComplete);
+      return;
+    }
+
+    // Decode base64 WAV and play via Web Audio API
+    const binary = atob(response.audioBase64);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) {
+      bytes[i] = binary.charCodeAt(i);
+    }
+
+    if (!edgeAudioContext) {
+      edgeAudioContext = new AudioContext();
+    }
+
+    const audioBuffer = await edgeAudioContext.decodeAudioData(bytes.buffer.slice(0));
+    const source = edgeAudioContext.createBufferSource();
+    source.buffer = audioBuffer;
+
+    // Apply volume (though Voicevox volume is already adjusted in query, we can still use gain node)
+    const gainNode = edgeAudioContext.createGain();
+    gainNode.gain.value = currentSettings?.ttsVolume ?? 1.0;
+    source.connect(gainNode);
+    gainNode.connect(edgeAudioContext.destination);
+
+    source.onended = () => {
+      if (onComplete) onComplete(true);
+    };
+
+    source.start(0);
+    debugLog('[Voicevox] Playback started');
+  } catch (err: any) {
+    console.error('[Rubi Voicevox] Error:', err);
+    // Fallback to Edge TTS on error
+    speakEdgeTTS(text, currentSettings, onComplete);
   }
 }
 

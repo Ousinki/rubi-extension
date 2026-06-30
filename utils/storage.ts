@@ -28,12 +28,14 @@ export interface RubiSettings {
   activeApiProfileId: string;
 
   enabled: boolean;
-  ttsEngine: 'webspeech' | 'edge' | 'google';  // TTS backend engine
+  ttsEngine: 'webspeech' | 'edge' | 'google' | 'voicevox';  // TTS backend engine
   ttsLanguage: string;     // Default: 'ja-JP'
   ttsRate: number;         // Speech rate (0.1 - 2.0)
   ttsVolume: number;       // Speech volume (0.0 - 1.0)
   ttsVoiceURI: string;     // Speech voice name (e.g. Google 日本語)
   edgeVoice: string;       // Microsoft Edge TTS voice name
+  voicevoxEndpoint: string; // Voicevox API Endpoint
+  voicevoxSpeaker: number; // Voicevox Speaker ID
   enableAutoPronounce: boolean;
   enableClickPronounce: boolean;
   enableShortcutPronounce: boolean;
@@ -84,6 +86,8 @@ export const DEFAULT_SETTINGS: RubiSettings = {
   ttsVolume: 1.0,
   ttsVoiceURI: 'Google 日本語',
   edgeVoice: 'ja-JP-NanamiNeural',
+  voicevoxEndpoint: 'https://api.tts.quest/v3/voicevox',
+  voicevoxSpeaker: 2, // 2 is typically Shikoku Metan (Normal)
   enableAutoPronounce: true,
   enableClickPronounce: false,
   enableShortcutPronounce: true,

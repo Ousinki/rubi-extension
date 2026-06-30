@@ -134,6 +134,12 @@ export default defineBackground(() => {
             .catch((err) => sendResponse({ success: false, error: err.message }));
           return true;
 
+        case 'VOICEVOX_TTS_SPEAK':
+          handleVoicevoxTTS(message.text, message.endpoint, message.speaker, message.rate, message.volume)
+            .then(sendResponse)
+            .catch((err) => sendResponse({ success: false, error: err.message }));
+          return true;
+
         case 'SEARCH_WORD':
           searchWords(message.text)
             .then((result) => sendResponse({ success: true, result }))
@@ -388,6 +394,61 @@ export default defineBackground(() => {
       return { success: true, audioBase64: base64, mimeType: 'audio/mp3' };
     } catch (err: any) {
       console.error('[Rubi] Edge TTS failed:', err);
+      return { success: false, error: err.message };
+    }
+  }
+
+  // ─── Voicevox TTS ──────────────────────────────────────────
+  async function handleVoicevoxTTS(text: string, endpoint: string, speaker: number, rate: number, volume: number): Promise<any> {
+    try {
+      const baseUrl = endpoint.replace(/\/$/, '');
+      
+      // Step 1: audio_query
+      const queryUrl = `${baseUrl}/audio_query?text=${encodeURIComponent(text)}&speaker=${speaker}`;
+      const queryRes = await fetch(queryUrl, { method: 'POST' });
+      
+      if (!queryRes.ok) {
+        throw new Error(`Voicevox audio_query failed: ${queryRes.statusText}`);
+      }
+      
+      const queryJson = await queryRes.json();
+      
+      // Apply speed and volume parameters
+      if (rate && rate !== 1.0) {
+        queryJson.speedScale = rate;
+      }
+      if (volume && volume !== 1.0) {
+        queryJson.volumeScale = volume;
+      }
+      
+      // Step 2: synthesis
+      const synthUrl = `${baseUrl}/synthesis?speaker=${speaker}`;
+      const synthRes = await fetch(synthUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(queryJson)
+      });
+      
+      if (!synthRes.ok) {
+        throw new Error(`Voicevox synthesis failed: ${synthRes.statusText}`);
+      }
+      
+      const audioBuffer = await synthRes.arrayBuffer();
+      
+      // Convert ArrayBuffer to base64
+      const uint8 = new Uint8Array(audioBuffer);
+      let binary = '';
+      // Process in chunks to avoid stack overflow for large files
+      const chunkSize = 8192;
+      for (let i = 0; i < uint8.length; i += chunkSize) {
+        const chunk = uint8.subarray(i, i + chunkSize);
+        binary += String.fromCharCode.apply(null, Array.from(chunk));
+      }
+      const base64 = btoa(binary);
+
+      return { success: true, audioBase64: base64, mimeType: 'audio/wav' };
+    } catch (err: any) {
+      console.error('[Rubi] Voicevox TTS failed:', err);
       return { success: false, error: err.message };
     }
   }

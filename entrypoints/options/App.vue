@@ -254,6 +254,14 @@
                       <span class="engine-desc">{{ t('tts.google_desc') }}</span>
                     </div>
                   </label>
+                  <label class="engine-option" :class="{ active: settings.ttsEngine === 'voicevox' }">
+                    <input type="radio" v-model="settings.ttsEngine" value="voicevox" @change="saveSettings" />
+                    <div class="engine-info">
+                      <span class="engine-name">Voicevox</span>
+                      <span class="engine-badge best">{{ t('tts.voicevox_badge') }}</span>
+                      <span class="engine-desc">{{ t('tts.voicevox_desc') }}</span>
+                    </div>
+                  </label>
                   <label class="engine-option" :class="{ active: settings.ttsEngine === 'webspeech' }">
                     <input type="radio" v-model="settings.ttsEngine" value="webspeech" @change="saveSettings" />
                     <div class="engine-info">
@@ -271,6 +279,25 @@
                 <CustomSelect
                   v-model="settings.edgeVoice"
                   :options="edgeVoiceOptions"
+                  @change="saveSettings"
+                />
+              </div>
+
+              <!-- Voicevox Configuration -->
+              <div v-if="settings.ttsEngine === 'voicevox'" class="input-group">
+                <label>{{ t('tts.voicevox_endpoint_label') }}</label>
+                <input 
+                  type="text" 
+                  v-model="settings.voicevoxEndpoint" 
+                  :placeholder="t('tts.voicevox_endpoint_placeholder')" 
+                  @change="saveSettings"
+                />
+              </div>
+              <div v-if="settings.ttsEngine === 'voicevox'" class="input-group">
+                <label>{{ t('tts.voicevox_speaker_label') }}</label>
+                <CustomSelect
+                  v-model="settings.voicevoxSpeaker"
+                  :options="voicevoxSpeakerOptions"
                   @change="saveSettings"
                 />
               </div>
@@ -424,6 +451,20 @@ const edgeVoiceOptions = computed(() => [
   { value: 'ja-JP-DaichiNeural', label: t('tts.edge_voice_daichi') },
   { value: 'ja-JP-ShioriNeural', label: t('tts.edge_voice_shiori') },
   { value: 'ja-JP-MasaruMultilingualNeural', label: t('tts.edge_voice_masaru') },
+]);
+
+const voicevoxSpeakerOptions = computed(() => [
+  { value: 2, label: '四国めたん (Normal - 甘め)' },
+  { value: 0, label: '四国めたん (あまあま)' },
+  { value: 3, label: 'ずんだもん (Normal - 活発)' },
+  { value: 1, label: 'ずんだもん (あまあま)' },
+  { value: 8, label: '春日部つむぎ (Normal - 元気)' },
+  { value: 10, label: '雨晴はう (Normal - 清楚)' },
+  { value: 9, label: '波音リツ (Normal)' },
+  { value: 11, label: '玄野武宏 (Normal - 男性)' },
+  { value: 12, label: '白上虎太郎 (Normal - 少年)' },
+  { value: 14, label: '冥鳴ひまり (Normal - 柔らかい)' },
+  { value: 20, label: 'もち子さん (Normal - 大人しい)' },
 ]);
 
 const webSpeechVoiceOptions = computed(() => [

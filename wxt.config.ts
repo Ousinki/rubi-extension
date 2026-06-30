@@ -24,7 +24,10 @@ export default defineConfig({
       '*://api.moonshot.cn/*',
       '*://api.siliconflow.cn/*',
       '*://api.lingyiwanwu.com/*',
-      '*://*.birchill.co.jp/*'
+      '*://*.birchill.co.jp/*',
+      '*://api.tts.quest/*',
+      'http://127.0.0.1/*',
+      'http://localhost/*'
     ],
     action: {
       default_icon: {

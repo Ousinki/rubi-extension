@@ -414,11 +414,34 @@ export default defineBackground(() => {
         }
         
         const json = await synthRes.json();
-        if (!json.success || !json.wavDownloadUrl) {
+        if (!json.success || !json.wavDownloadUrl || !json.audioStatusUrl) {
           throw new Error('Voicevox public API returned invalid response');
         }
         
-        // Fetch the WAV directly (api.tts.quest usually blocks or redirects until ready)
+        // Wait for audio generation by polling status
+        let isReady = false;
+        let attempts = 0;
+        while (!isReady && attempts < 30) {
+          const statusRes = await fetch(json.audioStatusUrl);
+          if (statusRes.ok) {
+            const statusJson = await statusRes.json();
+            if (statusJson.isAudioError) {
+              throw new Error('Voicevox public API failed to generate audio');
+            }
+            if (statusJson.isAudioReady) {
+              isReady = true;
+              break;
+            }
+          }
+          await new Promise(r => setTimeout(r, 1000)); // wait 1s before next poll
+          attempts++;
+        }
+
+        if (!isReady) {
+          throw new Error('Voicevox public API timed out waiting for audio generation');
+        }
+        
+        // Fetch the WAV now that it's ready
         const audioRes = await fetch(json.wavDownloadUrl);
         if (!audioRes.ok) {
           throw new Error(`Failed to download audio from public API: ${audioRes.statusText}`);

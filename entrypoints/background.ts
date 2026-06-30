@@ -28,6 +28,41 @@ export default defineBackground(() => {
   // Initialize dictionary downloading/loading in background
   initDictionary();
 
+  // ─── Setup declarativeNetRequest for Edge TTS Bypass ─────────
+  async function setupNetRules() {
+    try {
+      const RULE_ID = 1;
+      await browser.declarativeNetRequest.updateDynamicRules({
+        removeRuleIds: [RULE_ID],
+        addRules: [
+          {
+            id: RULE_ID,
+            priority: 1,
+            action: {
+              type: 'modifyHeaders',
+              requestHeaders: [
+                {
+                  header: 'Origin',
+                  operation: 'remove',
+                },
+              ],
+            },
+            condition: {
+              urlFilter: 'wss://speech.platform.bing.com/*',
+              resourceTypes: ['websocket'],
+            },
+          },
+        ],
+      });
+      console.log('[Rubi] declarativeNetRequest rules updated successfully');
+    } catch (err) {
+      console.error('[Rubi] Failed to set declarativeNetRequest rules:', err);
+    }
+  }
+
+  // Run on startup
+  setupNetRules();
+
   // ─── Update Extension Icon and Badge ─────────────────────────
   async function updateIconState(enabled: boolean) {
     if (enabled) {
@@ -414,14 +449,14 @@ export default defineBackground(() => {
         }
         
         const json = await synthRes.json();
-        if (!json.success || !json.wavDownloadUrl || !json.audioStatusUrl) {
+        if (!json.success || !json.mp3DownloadUrl || !json.audioStatusUrl) {
           throw new Error('Voicevox public API returned invalid response');
         }
         
-        // Wait for audio generation by polling status
+        // Wait for audio generation by polling status (fast poll: 200ms)
         let isReady = false;
         let attempts = 0;
-        while (!isReady && attempts < 30) {
+        while (!isReady && attempts < 100) {
           const statusRes = await fetch(json.audioStatusUrl);
           if (statusRes.ok) {
             const statusJson = await statusRes.json();
@@ -433,7 +468,7 @@ export default defineBackground(() => {
               break;
             }
           }
-          await new Promise(r => setTimeout(r, 1000)); // wait 1s before next poll
+          await new Promise(r => setTimeout(r, 200)); // poll every 200ms for speed
           attempts++;
         }
 
@@ -441,8 +476,8 @@ export default defineBackground(() => {
           throw new Error('Voicevox public API timed out waiting for audio generation');
         }
         
-        // Fetch the WAV now that it's ready
-        const audioRes = await fetch(json.wavDownloadUrl);
+        // Fetch the MP3 now that it's ready (MP3 is smaller/faster than WAV)
+        const audioRes = await fetch(json.mp3DownloadUrl);
         if (!audioRes.ok) {
           throw new Error(`Failed to download audio from public API: ${audioRes.statusText}`);
         }
@@ -494,7 +529,8 @@ export default defineBackground(() => {
       }
       const base64 = btoa(binary);
 
-      return { success: true, audioBase64: base64, mimeType: 'audio/wav' };
+      // We use MP3 for public API, WAV for local, but both are decoded automatically by Web Audio API
+      return { success: true, audioBase64: base64, mimeType: baseUrl.includes('tts.quest') ? 'audio/mp3' : 'audio/wav' };
     } catch (err: any) {
       console.error('[Rubi] Voicevox TTS failed:', err);
       return { success: false, error: err.message };

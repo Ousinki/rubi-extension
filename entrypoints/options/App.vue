@@ -241,32 +241,40 @@
                   <label class="engine-option" :class="{ active: settings.ttsEngine === 'edge' }">
                     <input type="radio" v-model="settings.ttsEngine" value="edge" @change="saveSettings" />
                     <div class="engine-info">
-                      <span class="engine-name">Microsoft Edge TTS</span>
-                      <span class="engine-badge best">{{ t('tts.edge_badge') }}</span>
+                      <div class="engine-name">
+                        Microsoft Edge TTS
+                        <span class="engine-badge best">{{ t('tts.edge_badge') }}</span>
+                      </div>
                       <span class="engine-desc">{{ t('tts.edge_desc') }}</span>
                     </div>
                   </label>
                   <label class="engine-option" :class="{ active: settings.ttsEngine === 'google' }">
                     <input type="radio" v-model="settings.ttsEngine" value="google" @change="saveSettings" />
                     <div class="engine-info">
-                      <span class="engine-name">Google Translate TTS</span>
-                      <span class="engine-badge free">{{ t('tts.google_badge') }}</span>
+                      <div class="engine-name">
+                        Google Translate TTS
+                        <span class="engine-badge free">{{ t('tts.google_badge') }}</span>
+                      </div>
                       <span class="engine-desc">{{ t('tts.google_desc') }}</span>
                     </div>
                   </label>
                   <label class="engine-option" :class="{ active: settings.ttsEngine === 'voicevox' }">
                     <input type="radio" v-model="settings.ttsEngine" value="voicevox" @change="saveSettings" />
                     <div class="engine-info">
-                      <span class="engine-name">Voicevox</span>
-                      <span class="engine-badge best">{{ t('tts.voicevox_badge') }}</span>
+                      <div class="engine-name">
+                        Voicevox
+                        <span class="engine-badge best">{{ t('tts.voicevox_badge') }}</span>
+                      </div>
                       <span class="engine-desc">{{ t('tts.voicevox_desc') }}</span>
                     </div>
                   </label>
                   <label class="engine-option" :class="{ active: settings.ttsEngine === 'webspeech' }">
                     <input type="radio" v-model="settings.ttsEngine" value="webspeech" @change="saveSettings" />
                     <div class="engine-info">
-                      <span class="engine-name">{{ t('tts.webspeech_name') }}</span>
-                      <span class="engine-badge local">{{ t('tts.webspeech_badge') }}</span>
+                      <div class="engine-name">
+                        {{ t('tts.webspeech_name') }}
+                        <span class="engine-badge local">{{ t('tts.webspeech_badge') }}</span>
+                      </div>
                       <span class="engine-desc">{{ t('tts.webspeech_desc') }}</span>
                     </div>
                   </label>
@@ -343,6 +351,9 @@
                 <button class="btn btn-action secondary" @click="testTTS" :disabled="isSpeaking">
                   {{ isSpeaking ? t('tts.testing_btn') : t('tts.test_btn') }}
                 </button>
+                <div v-if="ttsWarning" class="test-feedback error" style="margin-top: 12px; margin-bottom: 0;">
+                  {{ ttsWarning }}
+                </div>
               </div>
             </div>
           </section>
@@ -392,19 +403,19 @@
             <h2>{{ t('nav.title') }}</h2>
             <ul class="doc-list">
               <li>
-                <a href="#appearance" class="doc-label" :class="{ active: activeSection === 'appearance' }" style="text-decoration: none; display: block; padding: 6px 0; transition: color 0.2s;">{{ t('appearance.title') }}</a>
+                <a href="#appearance" class="doc-label" :class="{ active: activeSection === 'appearance' }">{{ t('appearance.title') }}</a>
               </li>
               <li>
-                <a href="#api-settings" class="doc-label" :class="{ active: activeSection === 'api-settings' }" style="text-decoration: none; display: block; padding: 6px 0; transition: color 0.2s;">{{ t('llm.title') }}</a>
+                <a href="#api-settings" class="doc-label" :class="{ active: activeSection === 'api-settings' }">{{ t('llm.title') }}</a>
               </li>
               <li>
-                <a href="#furigana-preferences" class="doc-label" :class="{ active: activeSection === 'furigana-preferences' }" style="text-decoration: none; display: block; padding: 6px 0; transition: color 0.2s;">{{ t('furigana.title') }}</a>
+                <a href="#furigana-preferences" class="doc-label" :class="{ active: activeSection === 'furigana-preferences' }">{{ t('furigana.title') }}</a>
               </li>
               <li>
-                <a href="#speech-engine" class="doc-label" :class="{ active: activeSection === 'speech-engine' }" style="text-decoration: none; display: block; padding: 6px 0; transition: color 0.2s;">{{ t('tts.title') }}</a>
+                <a href="#speech-engine" class="doc-label" :class="{ active: activeSection === 'speech-engine' }">{{ t('tts.title') }}</a>
               </li>
               <li>
-                <a href="#lookup-panel" class="doc-label" :class="{ active: activeSection === 'lookup-panel' }" style="text-decoration: none; display: block; padding: 6px 0; transition: color 0.2s;">{{ t('lookup.title') }}</a>
+                <a href="#lookup-panel" class="doc-label" :class="{ active: activeSection === 'lookup-panel' }">{{ t('lookup.title') }}</a>
               </li>
             </ul>
           </div>
@@ -434,6 +445,7 @@ const isTestingApi = ref(false);
 const showApiKey = ref(false);
 const testResult = ref<{ success: boolean; latency?: number; error?: string } | null>(null);
 const isSpeaking = ref(false);
+const ttsWarning = ref<string | null>(null);
 const showSavedStatus = ref(false);
 
 const langOptions = computed(() => [
@@ -447,10 +459,6 @@ const langOptions = computed(() => [
 const edgeVoiceOptions = computed(() => [
   { value: 'ja-JP-NanamiNeural', label: t('tts.edge_voice_nanami') },
   { value: 'ja-JP-KeitaNeural', label: t('tts.edge_voice_keita') },
-  { value: 'ja-JP-AoiNeural', label: t('tts.edge_voice_aoi') },
-  { value: 'ja-JP-DaichiNeural', label: t('tts.edge_voice_daichi') },
-  { value: 'ja-JP-ShioriNeural', label: t('tts.edge_voice_shiori') },
-  { value: 'ja-JP-MasaruMultilingualNeural', label: t('tts.edge_voice_masaru') },
 ]);
 
 const voicevoxSpeakerOptions = computed(() => [
@@ -467,13 +475,18 @@ const voicevoxSpeakerOptions = computed(() => [
   { value: 20, label: 'もち子さん (Normal - 大人しい)' },
 ]);
 
-const webSpeechVoiceOptions = computed(() => [
-  { value: 'Google 日本語', label: t('tts.google_voice_default') },
-  ...jaVoices.value.map(v => ({
-    value: v.voiceURI,
-    label: v.name + ' ' + (v.localService ? t('tts.voice_local') : t('tts.voice_network')),
-  })),
-]);
+const webSpeechVoiceOptions = computed(() => {
+  const badVoices = ['Eddy', 'Flo', 'Grandma', 'Grandpa', 'Reed', 'Rocko', 'Sandy', 'Shelley', 'Zarvox', 'Trinoids', 'Whisper'];
+  return [
+    { value: 'Google 日本語', label: t('tts.google_voice_default') },
+    ...jaVoices.value
+      .filter(v => v.name !== 'Google 日本語' && !badVoices.some(bad => v.name.includes(bad)))
+      .map(v => ({
+        value: v.voiceURI,
+        label: v.name + ' ' + (v.localService ? t('tts.voice_local') : t('tts.voice_network')),
+      })),
+  ];
+});
 
 const translationEngineOptions = computed(() => [
   { value: 'google', label: t('lookup.mt_google') },
@@ -586,8 +599,16 @@ async function testApi() {
 
 function testTTS() {
   isSpeaking.value = true;
-  speakText('日本語を勉強します。', settings, () => {
+  ttsWarning.value = null;
+  speakText('日本語を勉強します。', settings, (success, errorMsg, isFallback) => {
     isSpeaking.value = false;
+    if (isFallback) {
+      ttsWarning.value = settings.uiLanguage === 'zh-CN' || settings.uiLanguage === 'zh-TW' 
+        ? '⚠️ 在线语音连接失败 (可能被微软拦截)，已自动为您降级至本地内置发音。' 
+        : '⚠️ Online TTS connection failed. Automatically fell back to local web speech.';
+    } else if (!success) {
+      ttsWarning.value = errorMsg || 'TTS Error';
+    }
   });
 }
 </script>
@@ -1268,23 +1289,29 @@ body {
   margin: 0;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 4px;
 }
 
 .doc-label {
+  display: block;
   font-size: 13px;
   font-weight: 500;
   color: var(--text-secondary);
-  margin-bottom: 4px;
+  padding: 10px 14px;
+  border-radius: 6px;
+  text-decoration: none;
+  transition: all 0.2s ease;
 }
 
 .doc-label:hover {
   color: var(--text-primary);
+  background-color: var(--hover-bg, rgba(0, 0, 0, 0.05));
 }
 
 .doc-label.active {
   color: var(--accent-base);
-  font-weight: 700;
+  background-color: var(--accent-light);
+  font-weight: 600;
 }
 
 .doc-desc {

@@ -9,7 +9,7 @@ export default defineConfig({
     name: '__MSG_extName__',
     description: '__MSG_extDescription__',
     default_locale: 'zh_CN',
-    permissions: ['storage', 'activeTab'],
+    permissions: ['storage', 'activeTab', 'declarativeNetRequest'],
     web_accessible_resources: [],
     host_permissions: [
       '*://*.googleapis.com/*',
@@ -26,6 +26,8 @@ export default defineConfig({
       '*://api.lingyiwanwu.com/*',
       '*://*.birchill.co.jp/*',
       '*://api.tts.quest/*',
+      '*://speech.platform.bing.com/*',
+      'http://114.55.243.162:8090/*',
       'http://127.0.0.1/*',
       'http://localhost/*'
     ],

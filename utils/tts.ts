@@ -26,7 +26,7 @@ if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
 export function speakText(
   text: string,
   currentSettings?: any,
-  onComplete?: (success: boolean, errorMsg?: string) => void
+  onComplete?: (success: boolean, errorMsg?: string, isFallback?: boolean) => void
 ) {
   const engine = currentSettings?.ttsEngine || 'webspeech';
 
@@ -45,7 +45,7 @@ export function speakText(
 async function speakEdgeTTS(
   text: string,
   currentSettings?: any,
-  onComplete?: (success: boolean, errorMsg?: string) => void
+  onComplete?: (success: boolean, errorMsg?: string, isFallback?: boolean) => void
 ) {
   try {
     debugLog('[EdgeTTS] Requesting audio for:', text.substring(0, 20));
@@ -61,7 +61,7 @@ async function speakEdgeTTS(
     if (!response?.success || !response.audioBase64) {
       console.warn('[Rubi EdgeTTS] Failed:', response?.error || 'No audio returned');
       // Fallback to Web Speech API
-      speakWebSpeech(text, currentSettings, onComplete);
+      speakWebSpeech(text, currentSettings, (success, err) => onComplete?.(success, err, true));
       return;
     }
 
@@ -95,7 +95,7 @@ async function speakEdgeTTS(
   } catch (err: any) {
     console.error('[Rubi EdgeTTS] Error:', err);
     // Fallback to Web Speech API on error
-    speakWebSpeech(text, currentSettings, onComplete);
+    speakWebSpeech(text, currentSettings, (success, errMsg) => onComplete?.(success, errMsg, true));
   }
 }
 
@@ -103,7 +103,7 @@ async function speakEdgeTTS(
 async function speakVoicevox(
   text: string,
   currentSettings?: any,
-  onComplete?: (success: boolean, errorMsg?: string) => void
+  onComplete?: (success: boolean, errorMsg?: string, isFallback?: boolean) => void
 ) {
   try {
     debugLog('[Voicevox] Requesting audio for:', text.substring(0, 20));
@@ -123,7 +123,7 @@ async function speakVoicevox(
     if (!response?.success || !response.audioBase64) {
       console.warn('[Rubi Voicevox] Failed:', response?.error || 'No audio returned');
       // Fallback to Edge TTS if Voicevox fails
-      speakEdgeTTS(text, currentSettings, onComplete);
+      speakEdgeTTS(text, currentSettings, (success, err, isFb) => onComplete?.(success, err, true));
       return;
     }
 
@@ -157,7 +157,7 @@ async function speakVoicevox(
   } catch (err: any) {
     console.error('[Rubi Voicevox] Error:', err);
     // Fallback to Edge TTS on error
-    speakEdgeTTS(text, currentSettings, onComplete);
+    speakEdgeTTS(text, currentSettings, (success, err, isFb) => onComplete?.(success, err, true));
   }
 }
 
@@ -165,7 +165,7 @@ async function speakVoicevox(
 function speakGoogleTTS(
   text: string,
   currentSettings?: any,
-  onComplete?: (success: boolean, errorMsg?: string) => void
+  onComplete?: (success: boolean, errorMsg?: string, isFallback?: boolean) => void
 ) {
   // Google Translate TTS unofficial endpoint — works for short texts (<200 chars)
   // Longer texts need to be split
@@ -185,10 +185,10 @@ function speakGoogleTTS(
     audio.onended = playNext;
     audio.onerror = () => {
       console.warn('[Rubi GoogleTTS] Audio error, falling back to WebSpeech');
-      speakWebSpeech(text, currentSettings, onComplete);
+      speakWebSpeech(text, currentSettings, (success, err) => onComplete?.(success, err, true));
     };
     audio.play().catch(() => {
-      speakWebSpeech(text, currentSettings, onComplete);
+      speakWebSpeech(text, currentSettings, (success, err) => onComplete?.(success, err, true));
     });
   };
 
@@ -221,7 +221,7 @@ function splitTextForGoogle(text: string, maxLen: number): string[] {
 function speakWebSpeech(
   text: string,
   currentSettings?: any,
-  onComplete?: (success: boolean, errorMsg?: string) => void
+  onComplete?: (success: boolean, errorMsg?: string, isFallback?: boolean) => void
 ) {
   debugLog('speakText 被调用', { text: text.substring(0, 20) + '...', currentSettings });
   

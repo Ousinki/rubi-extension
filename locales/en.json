@@ -1,0 +1,100 @@
+{
+  "header": {
+    "subtitle": "Tailored for your Japanese reading and learning",
+    "theme_dark": "Dark Mode",
+    "theme_light": "Light Mode",
+    "theme_toggle": "Toggle theme"
+  },
+  "nav": {
+    "title": "Navigation"
+  },
+  "appearance": {
+    "title": "Appearance & Highlights",
+    "tag": "Appearance",
+    "highlight_label": "Choose Highlight Color",
+    "gems": {
+      "purple": "Amethyst",
+      "ruby": "Ruby",
+      "yellow": "Citrine",
+      "blue": "Sapphire"
+    }
+  },
+  "llm": {
+    "title": "LLM Configuration",
+    "tag": "API Settings",
+    "api_key": "API Key",
+    "api_key_placeholder": "Enter your API Key",
+    "endpoint": "API Endpoint",
+    "model": "Model",
+    "test_btn": "Test Connection",
+    "testing_btn": "Testing...",
+    "show_key": "Show Key",
+    "hide_key": "Hide Key",
+    "test_success_pre": "Connection successful (latency: ",
+    "test_success_suf": "ms)",
+    "test_fail_pre": "Connection failed: ",
+    "test_fail_suf": ""
+  },
+  "furigana": {
+    "title": "Furigana Preferences",
+    "tag": "Furigana Preferences",
+    "enable_label": "Enable Furigana",
+    "enable_desc": "Show hiragana above kanji characters",
+    "jlpt_label": "JLPT Filter",
+    "jlpt_all": "All Kanji",
+    "jlpt_hint": "Filter out easy vocabulary; only show furigana for words at or above the selected JLPT level.",
+    "jlpt_above_pre": "",
+    "jlpt_above_suf": " & above"
+  },
+  "tts": {
+    "title": "Speech Synthesis (TTS)",
+    "tag": "Speech Engine",
+    "engine_label": "Speech Engine",
+    "edge_desc": "Azure Neural TTS — closest to native speaker quality",
+    "edge_badge": "Neural · Free",
+    "google_desc": "Google Translate TTS — standard and fluent",
+    "google_badge": "Standard · Free",
+    "webspeech_name": "Browser Built-in (Web Speech)",
+    "webspeech_desc": "Uses system & browser built-in engine, works offline",
+    "webspeech_badge": "Local · Offline",
+    "voice_label": "Voice",
+    "voice_local": "(local synthesis)",
+    "voice_network": "(network synthesis)",
+    "test_btn": "Test Speech",
+    "testing_btn": "Playing...",
+    "rate_label_pre": "Speed: ",
+    "rate_label_suf": "x",
+    "volume_label_pre": "Volume: ",
+    "volume_label_suf": "%",
+    "edge_voice_nanami": "Nanami — Female, natural & clear ⭐ Recommended",
+    "edge_voice_keita": "Keita — Male, professional & steady",
+    "edge_voice_aoi": "Aoi — Female, bright & lively",
+    "edge_voice_daichi": "Daichi — Male, youthful",
+    "edge_voice_shiori": "Shiori — Female, gentle & warm",
+    "edge_voice_masaru": "Masaru — Male, multilingual",
+    "google_voice_default": "Google Japanese (Recommended)"
+  },
+  "lookup": {
+    "title": "Dictionary Lookup & Panel",
+    "tag": "Lookup & Panel",
+    "mt_label": "Machine Translation",
+    "mt_google": "Google Translate",
+    "mt_bing": "Bing Translate",
+    "mt_local": "Local Dictionary",
+    "position_label": "Panel Position",
+    "pos_bottom": "Bottom (Recommended)",
+    "pos_top": "Top",
+    "pos_badge": "Merge with Pronounce Badge",
+    "dict_source": "Local dictionary data source:",
+    "dict_license": "License,",
+    "dict_count": "Contains 419,643 entries in total.",
+    "dict_org": "(Electronic Dictionary Research & Development Group), licensed under"
+  },
+  "lang": {
+    "zh_cn": "简体中文",
+    "zh_tw": "繁體中文",
+    "en": "English",
+    "ja": "日本語",
+    "ko": "한국어"
+  }
+}

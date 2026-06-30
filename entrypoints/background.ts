@@ -34,16 +34,16 @@ export default defineBackground(() => {
       await browser.action.setBadgeText({ text: '' });
       await browser.action.setIcon({
         path: {
-          16: '/icon/16.png',
-          32: '/icon/32.png',
-          48: '/icon/48.png',
-          96: '/icon/96.png',
-          128: '/icon/128.png',
+          16: '/icon/action-16.png',
+          32: '/icon/action-32.png',
+          48: '/icon/action-48.png',
+          96: '/icon/action-96.png',
+          128: '/icon/action-128.png',
         },
       });
       await browser.action.setTitle({ title: 'Rubi — 点击关闭' });
     } else {
-      await browser.action.setBadgeText({ text: 'OFF' });
+      await browser.action.setBadgeText({ text: '' });
       await browser.action.setBadgeBackgroundColor({ color: '#6b7280' });
       await browser.action.setBadgeTextColor({ color: '#ffffff' });
 
@@ -52,7 +52,7 @@ export default defineBackground(() => {
         const sizes = [16, 32, 48] as const;
         const imageDataMap: Record<number, ImageData> = {};
         for (const size of sizes) {
-          const response = await fetch(browser.runtime.getURL(`/icon/${size}.png`));
+          const response = await fetch(browser.runtime.getURL(`/icon/action-${size}.png`));
           const blob = await response.blob();
           const bitmap = await createImageBitmap(blob);
           const canvas = new OffscreenCanvas(size, size);
@@ -138,6 +138,14 @@ export default defineBackground(() => {
           searchWords(message.text)
             .then((result) => sendResponse({ success: true, result }))
             .catch((err) => sendResponse({ success: false, error: err.message }));
+          return true;
+
+        case 'SEARCH_NAMES':
+          import('./background/dict-manager').then(({ searchNames }) => {
+            searchNames(message.text)
+              .then((result) => sendResponse({ success: true, result }))
+              .catch((err) => sendResponse({ success: false, error: err.message }));
+          });
           return true;
 
         case 'GET_DICT_STATE':

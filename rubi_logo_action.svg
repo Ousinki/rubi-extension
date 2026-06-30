@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="106 102 300 300" width="512" height="512">
+  <defs>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="16" stdDeviation="24" flood-color="#000000" flood-opacity="0.2" />
+    </filter>
+    <filter id="textShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#000000" flood-opacity="0.6" />
+    </filter>
+  </defs>
+
+  <g transform="translate(106, 130)" filter="url(#shadow)">
+    <polygon points="0,80 80,0 150,80" fill="#FF4D6D" />
+    <polygon points="80,0 150,0 150,80" fill="#FF758F" />
+    <polygon points="150,0 220,0 150,80" fill="#FFB3C1" />
+    <polygon points="220,0 300,80 150,80" fill="#FF4D6D" />
+    <polygon points="0,80 150,260 150,80" fill="#C9184A" />
+    <polygon points="300,80 150,260 150,80" fill="#A4133C" />
+  </g>
+
+  <text x="256" y="360" font-family="Avenir, Montserrat, system-ui, -apple-system, sans-serif" font-weight="900" font-size="108" fill="#FFFFFF" text-anchor="middle" letter-spacing="-2" filter="url(#textShadow)">Ru<tspan fill="#FF758F">bi</tspan></text>
+</svg>

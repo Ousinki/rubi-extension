@@ -49,8 +49,8 @@ export interface RubiSettings {
   enableLongPressTranslate: boolean;
   enableContextualCollocation: boolean;
   paragraphShortcut: string;
-  uiLanguage: 'zh-CN' | 'zh-TW' | 'ja' | 'en';
-  targetLanguage: 'zh-CN' | 'zh-TW' | 'ja' | 'en';
+  uiLanguage: 'zh-CN' | 'zh-TW' | 'ja' | 'en' | 'ko';
+  targetLanguage: 'zh-CN' | 'zh-TW' | 'ja' | 'en' | 'ko';
   
   enableContextMenu: boolean;
   enableSearchGoogle: boolean;
@@ -65,6 +65,8 @@ export interface RubiSettings {
   enableFuriganaRuby: boolean;       // Enable full-page Furigana ruby annotations
   furiganaDisplayMode: 'ruby' | 'overlay' | 'inline'; // Furigana display mode
   jlptFilterLevel: 'all' | 'N5' | 'N4' | 'N3' | 'N2' | 'N1'; // Filter annotations by JLPT difficulty
+  
+  highlightStyle: 'purple' | 'yellow' | 'pink' | 'blue'; // UI highlight color theme
 }
 
 export const DEFAULT_SETTINGS: RubiSettings = {
@@ -112,7 +114,9 @@ export const DEFAULT_SETTINGS: RubiSettings = {
   // Japanese specific settings default
   enableFuriganaRuby: false,
   furiganaDisplayMode: 'ruby',
-  jlptFilterLevel: 'all',
+  jlptFilterLevel: 'N3',
+  
+  highlightStyle: 'purple',
 };
 
 export const settingsStorage = storage.defineItem<RubiSettings>(

@@ -159,15 +159,18 @@ async function lookupCandidates({
   const candidateResults: Array<CandidateWordResult> = [];
 
   const candidates: Array<CandidateWord> = deinflect(input);
+
   for (const [candidateIndex, candidate] of candidates.entries()) {
     if (abortSignal?.aborted) {
       throw new AbortError();
     }
 
+    const isDeinflection = candidateIndex !== 0;
+
     let wordResults = await lookupCandidate({
       candidate,
       getWords,
-      isDeinflection: candidateIndex !== 0,
+      isDeinflection,
       maxResults,
     });
 

@@ -1,0 +1,100 @@
+{
+  "header": {
+    "subtitle": "為您的日語閱讀和學習量身定制",
+    "theme_dark": "深色模式",
+    "theme_light": "淺色模式",
+    "theme_toggle": "切換主題"
+  },
+  "nav": {
+    "title": "導航目錄"
+  },
+  "appearance": {
+    "title": "界面外觀與高亮樣式",
+    "tag": "Appearance",
+    "highlight_label": "選擇查詞高亮顏色",
+    "gems": {
+      "purple": "紫水晶",
+      "ruby": "紅寶石",
+      "yellow": "黃水晶",
+      "blue": "藍寶石"
+    }
+  },
+  "llm": {
+    "title": "大型語言模型配置",
+    "tag": "API Settings",
+    "api_key": "API Key",
+    "api_key_placeholder": "請輸入 API Key",
+    "endpoint": "API Endpoint",
+    "model": "模型 (Model)",
+    "test_btn": "測試連接",
+    "testing_btn": "測試中...",
+    "show_key": "顯示 Key",
+    "hide_key": "隱藏 Key",
+    "test_success_pre": "連接測試通過 (響應時延: ",
+    "test_success_suf": "ms)",
+    "test_fail_pre": "連接建立失敗: ",
+    "test_fail_suf": ""
+  },
+  "furigana": {
+    "title": "假名渲染偏好",
+    "tag": "Furigana Preferences",
+    "enable_label": "啟用假名標注",
+    "enable_desc": "在漢字上方顯示平假名",
+    "jlpt_label": "JLPT 過濾",
+    "jlpt_all": "全部標注",
+    "jlpt_hint": "過濾低難度詞彙，僅為所選級別以上的單詞顯示假名。",
+    "jlpt_above_pre": "",
+    "jlpt_above_suf": "級以上"
+  },
+  "tts": {
+    "title": "語音合成 (TTS)",
+    "tag": "Speech Engine",
+    "engine_label": "語音引擎",
+    "edge_desc": "Azure 級別神經網絡發音，最接近真人母語者",
+    "edge_badge": "神經網絡 · 免費",
+    "google_desc": "Google 翻譯合成，發音標準流暢",
+    "google_badge": "標準 · 免費",
+    "webspeech_name": "瀏覽器內置 (Web Speech)",
+    "webspeech_desc": "調用系統和瀏覽器內置發音引擎，可離線使用",
+    "webspeech_badge": "本地 · 離線可用",
+    "voice_label": "發音人 (Voice)",
+    "voice_local": "(本地合成)",
+    "voice_network": "(網絡合成)",
+    "test_btn": "測試發音",
+    "testing_btn": "發音測試中...",
+    "rate_label_pre": "語速: ",
+    "rate_label_suf": "x",
+    "volume_label_pre": "音量: ",
+    "volume_label_suf": "%",
+    "edge_voice_nanami": "七海 (Nanami) — 女聲，自然清晰 ⭐ 推薦",
+    "edge_voice_keita": "圭太 (Keita) — 男聲，專業沉穩",
+    "edge_voice_aoi": "葵 (Aoi) — 女聲，明亮活潑",
+    "edge_voice_daichi": "大地 (Daichi) — 男聲，年輕感",
+    "edge_voice_shiori": "しおり (Shiori) — 女聲，溫柔親切",
+    "edge_voice_masaru": "マサル (Masaru) — 男聲，多語言",
+    "google_voice_default": "Google 日本語 (推薦音源)"
+  },
+  "lookup": {
+    "title": "查詞與釋義彈窗",
+    "tag": "Lookup & Panel",
+    "mt_label": "機器翻譯",
+    "mt_google": "Google 翻譯",
+    "mt_bing": "Bing 翻譯",
+    "mt_local": "本地詞典",
+    "position_label": "彈窗位置",
+    "pos_bottom": "正下方 (推薦)",
+    "pos_top": "正上方",
+    "pos_badge": "合併於發音欄",
+    "dict_source": "本地詞典數據來源：",
+    "dict_license": "協議授權，",
+    "dict_count": "共收錄 419,643 條詞條。",
+    "dict_org": "(Electronic Dictionary Research & Development Group)，以"
+  },
+  "lang": {
+    "zh_cn": "簡體中文",
+    "zh_tw": "繁體中文",
+    "en": "English",
+    "ja": "日本語",
+    "ko": "한국어"
+  }
+}

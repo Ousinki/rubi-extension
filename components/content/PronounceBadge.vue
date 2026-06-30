@@ -152,7 +152,7 @@ const badgeStyle = computed(() => {
 }
 
 .rubi-syl-word {
-  color: #5c35b4; /* Academic Violet Accent for original word */
+  color: var(--rubi-highlight-main, #5c35b4);
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
   font-size: 14px;
   font-weight: 700;
@@ -214,7 +214,7 @@ const badgeStyle = computed(() => {
     box-shadow: 0 4px 20px rgba(0,0,0,0.3);
   }
   .rubi-syl-word {
-    color: #a78bfa;
+    color: var(--rubi-highlight-dark, #a78bfa);
   }
   .rubi-badge-content {
     color: #9aa2b1;

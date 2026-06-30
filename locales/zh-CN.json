@@ -1,0 +1,100 @@
+{
+  "header": {
+    "subtitle": "为您的日语阅读和学习量身定制",
+    "theme_dark": "深色模式",
+    "theme_light": "浅色模式",
+    "theme_toggle": "切换主题"
+  },
+  "nav": {
+    "title": "导航目录"
+  },
+  "appearance": {
+    "title": "界面外观与高亮样式",
+    "tag": "Appearance",
+    "highlight_label": "选择查词高亮颜色",
+    "gems": {
+      "purple": "紫水晶",
+      "ruby": "红宝石",
+      "yellow": "黄水晶",
+      "blue": "蓝宝石"
+    }
+  },
+  "llm": {
+    "title": "大型语言模型配置",
+    "tag": "API Settings",
+    "api_key": "API Key",
+    "api_key_placeholder": "请输入 API Key",
+    "endpoint": "API Endpoint",
+    "model": "模型 (Model)",
+    "test_btn": "测试连接",
+    "testing_btn": "测试中...",
+    "show_key": "显示 Key",
+    "hide_key": "隐藏 Key",
+    "test_success_pre": "连接测试通过 (响应时延: ",
+    "test_success_suf": "ms)",
+    "test_fail_pre": "连接建立失败: ",
+    "test_fail_suf": ""
+  },
+  "furigana": {
+    "title": "假名渲染偏好",
+    "tag": "Furigana Preferences",
+    "enable_label": "启用假名标注",
+    "enable_desc": "在汉字上方显示平假名",
+    "jlpt_label": "JLPT 过滤",
+    "jlpt_all": "全部标注",
+    "jlpt_hint": "过滤低难度词汇，仅为所选级别以上的单词显示假名。",
+    "jlpt_above_pre": "",
+    "jlpt_above_suf": "级以上"
+  },
+  "tts": {
+    "title": "语音合成 (TTS)",
+    "tag": "Speech Engine",
+    "engine_label": "语音引擎",
+    "edge_desc": "Azure 级别神经网络发音，最接近真人母语者",
+    "edge_badge": "神经网络 · 免费",
+    "google_desc": "Google 翻译合成，发音标准流畅",
+    "google_badge": "标准 · 免费",
+    "webspeech_name": "浏览器内置 (Web Speech)",
+    "webspeech_desc": "调用系统和浏览器内置发音引擎，可离线使用",
+    "webspeech_badge": "本地 · 离线可用",
+    "voice_label": "发音人 (Voice)",
+    "voice_local": "(本地合成)",
+    "voice_network": "(网络合成)",
+    "test_btn": "测试发音",
+    "testing_btn": "发音测试中...",
+    "rate_label_pre": "语速: ",
+    "rate_label_suf": "x",
+    "volume_label_pre": "音量: ",
+    "volume_label_suf": "%",
+    "edge_voice_nanami": "七海 (Nanami) — 女声，自然清晰 ⭐ 推荐",
+    "edge_voice_keita": "圭太 (Keita) — 男声，专业沉稳",
+    "edge_voice_aoi": "葵 (Aoi) — 女声，明亮活泼",
+    "edge_voice_daichi": "大地 (Daichi) — 男声，年轻感",
+    "edge_voice_shiori": "しおり (Shiori) — 女声，温柔亲切",
+    "edge_voice_masaru": "マサル (Masaru) — 男声，多语言",
+    "google_voice_default": "Google 日本語 (推荐音源)"
+  },
+  "lookup": {
+    "title": "查词与释义弹窗",
+    "tag": "Lookup & Panel",
+    "mt_label": "机器翻译",
+    "mt_google": "Google 翻译",
+    "mt_bing": "Bing 翻译",
+    "mt_local": "本地词典",
+    "position_label": "弹窗位置",
+    "pos_bottom": "正下方 (推荐)",
+    "pos_top": "正上方",
+    "pos_badge": "合并于发音栏",
+    "dict_source": "本地词典数据来源：",
+    "dict_license": "协议授权，",
+    "dict_count": "共收录 419,643 条词条。",
+    "dict_org": "(Electronic Dictionary Research & Development Group)，以"
+  },
+  "lang": {
+    "zh_cn": "简体中文",
+    "zh_tw": "繁體中文",
+    "en": "English",
+    "ja": "日本語",
+    "ko": "한국어"
+  }
+}

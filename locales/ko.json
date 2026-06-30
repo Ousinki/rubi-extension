@@ -1,0 +1,100 @@
+{
+  "header": {
+    "subtitle": "일본어 읽기 및 학습을 위한 맞춤형 설정",
+    "theme_dark": "다크 모드",
+    "theme_light": "라이트 모드",
+    "theme_toggle": "테마 전환"
+  },
+  "nav": {
+    "title": "탐색 목차"
+  },
+  "appearance": {
+    "title": "UI 외관 및 하이라이트",
+    "tag": "Appearance",
+    "highlight_label": "하이라이트 색상 선택",
+    "gems": {
+      "purple": "자수정",
+      "ruby": "루비",
+      "yellow": "황수정",
+      "blue": "사파이어"
+    }
+  },
+  "llm": {
+    "title": "대규모 언어 모델 설정",
+    "tag": "API Settings",
+    "api_key": "API 키",
+    "api_key_placeholder": "API 키를 입력하세요",
+    "endpoint": "API 엔드포인트",
+    "model": "모델 이름",
+    "test_btn": "연결 테스트",
+    "testing_btn": "테스트 중...",
+    "show_key": "키 표시",
+    "hide_key": "키 숨기기",
+    "test_success_pre": "연결 성공 (지연: ",
+    "test_success_suf": "ms)",
+    "test_fail_pre": "연결 실패: ",
+    "test_fail_suf": ""
+  },
+  "furigana": {
+    "title": "후리가나 표시 설정",
+    "tag": "Furigana Preferences",
+    "enable_label": "후리가나 활성화",
+    "enable_desc": "한자 위에 히라가나 표시",
+    "jlpt_label": "JLPT 필터",
+    "jlpt_all": "모든 한자",
+    "jlpt_hint": "낮은 난이도의 어휘를 제외하고, 선택한 JLPT 레벨 이상의 단어에만 후리가나를 표시합니다.",
+    "jlpt_above_pre": "",
+    "jlpt_above_suf": " 이상"
+  },
+  "tts": {
+    "title": "음성 합성 (TTS)",
+    "tag": "Speech Engine",
+    "engine_label": "음성 엔진",
+    "edge_desc": "Azure 신경망 TTS — 원어민에 가장 가까운 품질",
+    "edge_badge": "신경망 · 무료",
+    "google_desc": "Google 번역 TTS — 표준적이고 유창한 음성",
+    "google_badge": "표준 · 무료",
+    "webspeech_name": "브라우저 내장 (Web Speech)",
+    "webspeech_desc": "시스템 및 브라우저 내장 엔진 사용, 오프라인 가능",
+    "webspeech_badge": "로컬 · 오프라인",
+    "voice_label": "음성 선택",
+    "voice_local": "(로컬 합성)",
+    "voice_network": "(네트워크 합성)",
+    "test_btn": "음성 테스트",
+    "testing_btn": "재생 중...",
+    "rate_label_pre": "속도: ",
+    "rate_label_suf": "x",
+    "volume_label_pre": "음량: ",
+    "volume_label_suf": "%",
+    "edge_voice_nanami": "나나미 (Nanami) — 여성, 자연스러운 발음 ⭐ 추천",
+    "edge_voice_keita": "케이타 (Keita) — 남성, 전문적이고 차분한",
+    "edge_voice_aoi": "아오이 (Aoi) — 여성, 밝고 활발한",
+    "edge_voice_daichi": "다이치 (Daichi) — 남성, 젊은 느낌",
+    "edge_voice_shiori": "시오리 (Shiori) — 여성, 부드럽고 따뜻한",
+    "edge_voice_masaru": "마사루 (Masaru) — 남성, 다국어",
+    "google_voice_default": "Google 일본어 (추천)"
+  },
+  "lookup": {
+    "title": "단어 검색 및 의미 팝업",
+    "tag": "Lookup & Panel",
+    "mt_label": "기계 번역",
+    "mt_google": "Google 번역",
+    "mt_bing": "Bing 번역",
+    "mt_local": "로컬 사전",
+    "position_label": "팝업 위치",
+    "pos_bottom": "하단 (권장)",
+    "pos_top": "상단",
+    "pos_badge": "발음 바에 통합",
+    "dict_source": "로컬 사전 데이터 출처:",
+    "dict_license": "라이선스로 제공되며,",
+    "dict_count": "총 419,643개의 항목이 수록되어 있습니다.",
+    "dict_org": "(Electronic Dictionary Research & Development Group),"
+  },
+  "lang": {
+    "zh_cn": "简体中文",
+    "zh_tw": "繁體中文",
+    "en": "English",
+    "ja": "日本語",
+    "ko": "한국어"
+  }
+}

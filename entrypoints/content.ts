@@ -5,9 +5,9 @@ import { settingsStorage } from '@/utils/storage';
 import {
   isEditableElement,
   hasEditableFocus,
-  getDeepCaretRangeFromPoint,
-  isJapaneseChar
+  getDeepElementFromPoint
 } from '@/utils/dom-ja';
+import { getTextAtPoint } from '@/utils/10ten/get-text';
 import { safeSendMessage, showErrorToast } from '@/utils/content-messaging';
 import { speakText } from '@/utils/tts';
 import { loadDictionary, lookupWord, tokenizeJa } from '@/utils/tokenizer';
@@ -19,7 +19,7 @@ import type { RubiSettings } from '@/utils/storage';
 let isEnabled = true;
 let currentSettings: RubiSettings | null = null;
 let hoverTimer: ReturnType<typeof setTimeout> | null = null;
-let currentHighlightedRange: Range | null = null;
+let currentHighlightedRanges: Range[] | null = null;
 let currentWord: string | null = null;
 let lastMouseX = 0;
 let lastMouseY = 0;
@@ -35,19 +35,21 @@ export default defineContentScript({
   
   async main(ctx) {
     console.log('[Rubi] Content script main initialized.');
-    
-    // Inject global host styling for CSS Custom Highlight & Ruby
-    injectHostStyles();
-
     // Load initial settings
     currentSettings = await settingsStorage.getValue();
     isEnabled = currentSettings.enabled;
+
+    // Inject global host styling for CSS Custom Highlight & Ruby
+    injectHostStyles(currentSettings.highlightStyle);
 
     // Watch settings changes
     settingsStorage.watch((newSettings) => {
       if (newSettings) {
         currentSettings = newSettings;
         isEnabled = newSettings.enabled;
+        
+        injectHostStyles(currentSettings.highlightStyle);
+        
         if (!isEnabled) {
           clearHoverHighlight();
           uiActions.hidePronounceBadge();
@@ -123,15 +125,34 @@ async function setupUi(ctx: any) {
   }
 }
 
-function injectHostStyles() {
-  const style = document.createElement('style');
-  style.id = 'rubi-host-styles';
+const HIGHLIGHT_THEMES: Record<string, { main: string, dark: string, bg: string }> = {
+  purple: { main: '#8b5cf6', dark: '#a78bfa', bg: 'rgba(139, 92, 246, 0.28)' },
+  pink: { main: '#FF758F', dark: '#FFB3C1', bg: 'rgba(255, 117, 143, 0.28)' },
+  yellow: { main: '#eab308', dark: '#fde047', bg: 'rgba(234, 179, 8, 0.28)' },
+  blue: { main: '#3b82f6', dark: '#60a5fa', bg: 'rgba(59, 130, 246, 0.28)' },
+};
+
+function injectHostStyles(styleKey: string = 'purple') {
+  let style = document.getElementById('rubi-host-styles') as HTMLStyleElement;
+  if (!style) {
+    style = document.createElement('style');
+    style.id = 'rubi-host-styles';
+    (document.head || document.documentElement).appendChild(style);
+  }
+
+  const theme = HIGHLIGHT_THEMES[styleKey] || HIGHLIGHT_THEMES.purple;
+
   style.textContent = `
+    rubi-ui-root {
+      --rubi-highlight-main: ${theme.main};
+      --rubi-highlight-dark: ${theme.dark};
+    }
+
     /* CSS Custom Highlight API styling */
     ::highlight(rubi-hover-highlight) {
-      background-color: rgba(139, 92, 246, 0.28) !important;
+      background-color: ${theme.bg} !important;
       color: inherit !important;
-      text-decoration: underline double #8b5cf6 2px !important;
+      text-decoration: underline double ${theme.main} 2px !important;
       text-underline-offset: 3px !important;
     }
     
@@ -149,7 +170,7 @@ function injectHostStyles() {
     ruby.rubi-injected-ruby rt {
       font-size: 0.52em !important;
       font-weight: 500 !important;
-      color: #8b5cf6 !important;
+      color: ${theme.main} !important;
       opacity: 0.82 !important;
       user-select: none !important;
       padding: 0 0.12em !important;
@@ -157,11 +178,10 @@ function injectHostStyles() {
     
     @media (prefers-color-scheme: dark) {
       ruby.rubi-injected-ruby rt {
-        color: #a78bfa !important;
+        color: ${theme.dark} !important;
       }
     }
   `;
-  (document.head || document.documentElement).appendChild(style);
 }
 
 // ─── Interaction Listeners ──────────────────────────────────
@@ -200,8 +220,8 @@ function setupEventListeners() {
 
     // ── Synchronous fast-path: check if cursor has left the highlighted word ──
     // This runs even during throttle so the badge disappears immediately.
-    if (currentHighlightedRange && currentWord) {
-      const hlRects = currentHighlightedRange.getClientRects();
+    if (currentHighlightedRanges && currentWord) {
+      const hlRects = currentHighlightedRanges[0].getClientRects(); // Use first range for fast check
       let stillOverWord = false;
       const padding = 4;
       for (let i = 0; i < hlRects.length; i++) {
@@ -235,28 +255,37 @@ function setupEventListeners() {
 
     setLastInteractionY(e.clientY);
 
-    if (currentHighlightedRange && currentWord) {
-      const textNode = currentHighlightedRange.startContainer;
-      const range = getDeepCaretRangeFromPoint(e.clientX, e.clientY);
-      if (range && range.startContainer === textNode) {
-        const offset = range.startOffset;
-        if (offset >= currentHighlightedRange.startOffset && offset < currentHighlightedRange.endOffset) {
-          e.preventDefault();
-          e.stopPropagation();
-
-          longPressActive = false;
-
-          // Delay showing the ring to avoid flashing on quick clicks (copied from RTTR)
-          ringDelayTimer = setTimeout(() => {
-            uiActions.showLongPressRing(e.clientX, e.clientY);
-          }, 150);
-
-          longPressTimer = setTimeout(() => {
-            longPressActive = true;
-            uiActions.popLongPressRing();
-            triggerWordExplain(currentWord!, e.clientX, e.clientY);
-          }, 500);
+    if (currentHighlightedRanges && currentWord) {
+      // Check if mouse is still inside any of the highlighted ranges
+      let isInside = false;
+      for (const hlRange of currentHighlightedRanges) {
+        const rects = hlRange.getClientRects();
+        for (let i = 0; i < rects.length; i++) {
+          const r = rects[i];
+          if (e.clientX >= r.left && e.clientX <= r.right &&
+              e.clientY >= r.top && e.clientY <= r.bottom) {
+            isInside = true;
+            break;
+          }
         }
+        if (isInside) break;
+      }
+      if (isInside) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        longPressActive = false;
+
+        // Delay showing the ring to avoid flashing on quick clicks (copied from RTTR)
+        ringDelayTimer = setTimeout(() => {
+          uiActions.showLongPressRing(e.clientX, e.clientY);
+        }, 150);
+
+        longPressTimer = setTimeout(() => {
+          longPressActive = true;
+          uiActions.popLongPressRing();
+          triggerWordExplain(currentWord!, e.clientX, e.clientY);
+        }, 500);
       }
     }
   });
@@ -272,16 +301,25 @@ function setupEventListeners() {
     }
     uiActions.hideLongPressRing();
 
-    if (currentHighlightedRange && currentWord && !longPressActive) {
-      const range = getDeepCaretRangeFromPoint(e.clientX, e.clientY);
-      if (range && range.startContainer === currentHighlightedRange.startContainer) {
-        const offset = range.startOffset;
-        if (offset >= currentHighlightedRange.startOffset && offset < currentHighlightedRange.endOffset) {
-          const now = Date.now();
-          if (now - lastClickTime > 250) {
-            lastClickTime = now;
-            triggerTTS(currentWord!);
+    if (currentHighlightedRanges && currentWord && !longPressActive) {
+      let isInside = false;
+      for (const hlRange of currentHighlightedRanges) {
+        const rects = hlRange.getClientRects();
+        for (let i = 0; i < rects.length; i++) {
+          const r = rects[i];
+          if (e.clientX >= r.left && e.clientX <= r.right &&
+              e.clientY >= r.top && e.clientY <= r.bottom) {
+            isInside = true;
+            break;
           }
+        }
+        if (isInside) break;
+      }
+      if (isInside) {
+        const now = Date.now();
+        if (now - lastClickTime > 250) {
+          lastClickTime = now;
+          triggerTTS(currentWord!);
         }
       }
     }
@@ -293,14 +331,21 @@ function setupEventListeners() {
     const isUiClick = path.some((el: any) => el.id === 'rubi-ui-root');
     if (!isUiClick) {
       // Don't hide if clicking on the currently highlighted word itself
-      if (currentHighlightedRange) {
-        const range = getDeepCaretRangeFromPoint(e.clientX, e.clientY);
-        if (range && range.startContainer === currentHighlightedRange.startContainer) {
-          const offset = range.startOffset;
-          if (offset >= currentHighlightedRange.startOffset && offset < currentHighlightedRange.endOffset) {
-            return; // Click is ON the highlighted word — keep tooltip visible
+      if (currentHighlightedRanges) {
+        let isInside = false;
+        for (const hlRange of currentHighlightedRanges) {
+          const rects = hlRange.getClientRects();
+          for (let i = 0; i < rects.length; i++) {
+            const r = rects[i];
+            if (e.clientX >= r.left && e.clientX <= r.right &&
+                e.clientY >= r.top && e.clientY <= r.bottom) {
+              isInside = true;
+              break;
+            }
           }
+          if (isInside) break;
         }
+        if (isInside) return; // Click is ON the highlighted word — keep tooltip visible
       }
       uiActions.hidePronounceBadge();
       uiActions.hideTranslationBadge();
@@ -312,110 +357,130 @@ function setupEventListeners() {
 async function handleMouseMove(e: MouseEvent) {
   await loadDictionary();
 
-  const range = getDeepCaretRangeFromPoint(e.clientX, e.clientY);
-  if (!range) {
+  const scanResult = getTextAtPoint({
+    point: { x: e.clientX, y: e.clientY },
+    maxLength: 16
+  });
+
+  if (!scanResult || !scanResult.text || !scanResult.textRange) {
     immediateHide();
     return;
   }
-
-  const textNode = range.startContainer;
-  if (textNode.nodeType !== Node.TEXT_NODE) {
-    immediateHide();
-    return;
-  }
-
-  const text = textNode.textContent || '';
-  const caretOffset = range.startOffset;
 
   let matchedWord: string | null = null;
   let matchedReading: string = '';
   let matchedEntry: any = null;
-  let matchedStart = -1;
-  let matchedEnd = -1;
+  let matchedLength = -1;
 
-  // ── Dictionary & Morphological Scan (10ten engine) ──────────────────────────────
-  // We scan backwards up to 8 characters to find the start of the word.
-  // The wordSearch engine handles deinflections automatically (e.g. 食べさせられた -> 食べる)
-  await loadDictionary();
-  const maxBacktrack = 8;
-  const startScan = Math.max(0, caretOffset - maxBacktrack);
-
-  for (let start = caretOffset; start >= startScan; start--) {
-    const searchText = text.substring(start, start + 12);
-    const match = await lookupWord(searchText);
-
-    if (match && caretOffset >= start && caretOffset < start + match.length) {
-      if (!matchedWord) {
-        matchedWord = match.word; matchedEntry = match.entry;
-        matchedStart = start; matchedEnd = start + match.length;
-      } else if (start > matchedStart) {
-        // Prefer matches that start later (closer to caret) if they still cover the caret
-        matchedWord = match.word; matchedEntry = match.entry;
-        matchedStart = start; matchedEnd = start + match.length;
-      } else if (start === matchedStart && match.length > (matchedEnd - matchedStart)) {
-        // Prefer longer matches starting at the same position
-        matchedWord = match.word; matchedEntry = match.entry;
-        matchedStart = start; matchedEnd = start + match.length;
-      }
-    }
+  const match = await lookupWord(scanResult.text);
+  
+  if (match) {
+    matchedWord = match.word;
+    matchedEntry = match.entry;
+    matchedLength = match.length;
   }
   
   if (matchedEntry) {
     matchedReading = matchedEntry.r || '';
   }
 
-
   if (matchedWord) {
-  }
-
-  if (matchedWord && !shouldSkipJa(matchedWord)) {
-    const hlRange = document.createRange();
-    hlRange.setStart(textNode, matchedStart);
-    hlRange.setEnd(textNode, matchedEnd);
-
-    const rects = hlRange.getClientRects();
-    let isOverWord = false;
-    const padding = 6;
-
-    for (let i = 0; i < rects.length; i++) {
-      const r = rects[i];
-      if (e.clientX >= r.left - padding && e.clientX <= r.right + padding &&
-          e.clientY >= r.top - padding && e.clientY <= r.bottom + padding) {
-        isOverWord = true;
-        break;
+    // Check if it's the exact same word and range
+    if (currentWord === matchedWord && currentHighlightedRanges && currentHighlightedRanges.length > 0) {
+      if (currentHighlightedRanges[0].startContainer === scanResult.textRange[0].node &&
+          currentHighlightedRanges[0].startOffset === scanResult.textRange[0].start) {
+        cancelScheduledHide();
+        return;
       }
     }
 
-    if (isOverWord) {
-      cancelScheduledHide();
-
-      if (currentWord === matchedWord && currentHighlightedRange) {
-        return;
+    // Build multiple disjoint ranges to avoid highlighting superscripts/ruby in between
+    const ranges: Range[] = [];
+    let currentLen = 0;
+    
+    for (const textRange of scanResult.textRange) {
+      const segLen = textRange.end - textRange.start;
+      const range = document.createRange();
+      
+      if (currentLen + segLen >= matchedLength) {
+        const remaining = matchedLength - currentLen;
+        range.setStart(textRange.node, textRange.start);
+        range.setEnd(textRange.node, textRange.start + remaining);
+        if (remaining > 0) ranges.push(range);
+        break;
       }
+      
+      range.setStart(textRange.node, textRange.start);
+      range.setEnd(textRange.node, textRange.end);
+      if (segLen > 0) ranges.push(range);
+      currentLen += segLen;
+    }
 
+    if (ranges.length === 0) return;
+
+    let isOverWord = false;
+    const padding = 6;
+    let targetRect: DOMRect | null = null;
+    let targetRange: Range | null = null;
+    let targetRectIndex = 0;
+
+    for (const range of ranges) {
+      const rects = range.getClientRects();
+      for (let i = 0; i < rects.length; i++) {
+        const r = rects[i];
+        if (e.clientX >= r.left - padding && e.clientX <= r.right + padding &&
+            e.clientY >= r.top - padding && e.clientY <= r.bottom + padding) {
+          isOverWord = true;
+          targetRect = r;
+          targetRange = range;
+          targetRectIndex = i;
+          break;
+        }
+      }
+      if (isOverWord) break;
+    }
+
+    // Fallback if not strictly over (should not happen if ranges > 0 but just in case)
+    if (!targetRect && ranges.length > 0) {
+      const rects = ranges[0].getClientRects();
+      if (rects.length > 0) {
+        targetRect = rects[0];
+        targetRange = ranges[0];
+        targetRectIndex = 0;
+      }
+    }
+
+    if (isOverWord && targetRect && targetRange) {
+      cancelScheduledHide();
       currentWord = matchedWord;
-      currentHighlightedRange = hlRange;
+      currentHighlightedRanges = ranges;
 
       if (typeof (CSS as any) !== 'undefined' && (CSS as any).highlights) {
-        const hl = new (window as any).Highlight(hlRange);
+        const hl = new (window as any).Highlight(...ranges);
         (CSS as any).highlights.set('rubi-hover-highlight', hl);
       } else {
         console.warn('[Rubi] CSS.highlights is not supported in this browser!');
       }
 
-      const rect = hlRange.getBoundingClientRect();
+      const rect = targetRect;
       const translationStr = matchedEntry?.m?.length ? matchedEntry.m.join('; ') : '';
       const displayReading = matchedReading || matchedEntry?.r || '';
+
+      // Create a closure that re-fetches the specific client rect on scroll
+      const getRect = () => {
+        const currentRects = targetRange!.getClientRects();
+        return currentRects.length > targetRectIndex ? currentRects[targetRectIndex] : currentRects[0];
+      };
 
       // 1. Show Top Pronounce Badge (Japanese Word & Hiragana Reading)
       uiActions.showPronounceBadge(
         displayReading ? displayReading : matchedWord,
-        rect as DOMRect,
+        rect,
         false,
         matchedWord,
         '', // pass empty translation here as it goes to translation badge!
         false,
-        () => hlRange.getBoundingClientRect()
+        getRect
       );
 
       const engine = currentSettings?.translationEngine || 'none';
@@ -434,7 +499,7 @@ async function handleMouseMove(e: MouseEvent) {
           pos,
           showEngine,
           false,
-          () => hlRange.getBoundingClientRect(),
+          () => getRect(),
           matchedWord
         );
       } else {
@@ -450,7 +515,7 @@ async function handleMouseMove(e: MouseEvent) {
           if (currentWord !== wordSnapshot) return; // User moved away
           if (uiState.translationBadge.pinned && uiState.translationBadge.askMode) return; // AI analysis is open
           const result = resp?.targetText || translationStr; // fallback to dict on error
-          const activeRect = hlRange.getBoundingClientRect();
+          const activeRect = getRect();
           uiActions.showTranslationBadge(
             result,
             resp?.targetText ? (resp.engine || engine) : 'DICT',
@@ -459,14 +524,14 @@ async function handleMouseMove(e: MouseEvent) {
             pos,
             showEngine,
             false,
-            () => hlRange.getBoundingClientRect(),
+            () => getRect(),
             wordSnapshot
           );
         }).catch(() => {
           // API failed — fall back to dictionary result silently
           if (currentWord !== wordSnapshot) return;
           if (uiState.translationBadge.pinned && uiState.translationBadge.askMode) return; // AI analysis is open
-          const activeRect = hlRange.getBoundingClientRect();
+          const activeRect = getRect();
           uiActions.showTranslationBadge(
             `${matchedWord} (${translationStr})`,
             'DICT',
@@ -475,7 +540,7 @@ async function handleMouseMove(e: MouseEvent) {
             pos,
             showEngine,
             false,
-            () => hlRange.getBoundingClientRect(),
+            () => getRect(),
             wordSnapshot
           );
         });
@@ -492,7 +557,7 @@ function clearHoverHighlight() {
   if (typeof (CSS as any) !== 'undefined' && (CSS as any).highlights) {
     (CSS as any).highlights.delete('rubi-hover-highlight');
   }
-  currentHighlightedRange = null;
+  currentHighlightedRanges = null;
   currentWord = null;
 }
 
@@ -508,9 +573,9 @@ async function triggerWordExplain(word: string, clientX: number, clientY: number
   uiState.suppressClickUntil = 0;
   uiActions.hidePronounceBadge();
 
-  if (!currentHighlightedRange) return;
+  if (!currentHighlightedRanges || currentHighlightedRanges.length === 0) return;
 
-  const hlRange = currentHighlightedRange;
+  const hlRange = currentHighlightedRanges[0];
   const getRect = () => hlRange.getBoundingClientRect();
   const currentRect = getRect();
 
@@ -564,8 +629,8 @@ async function triggerWordExplain(word: string, clientX: number, clientY: number
 }
 
 function getSentenceContext(): string {
-  if (currentHighlightedRange) {
-    const parent = currentHighlightedRange.startContainer.parentElement;
+  if (currentHighlightedRanges && currentHighlightedRanges.length > 0) {
+    const parent = currentHighlightedRanges[0].startContainer.parentElement;
     if (parent) {
       return parent.textContent || '';
     }

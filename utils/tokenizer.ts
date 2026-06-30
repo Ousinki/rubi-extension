@@ -70,36 +70,57 @@ export async function lookupWord(text: string): Promise<{ word: string; entry: D
   const cleaned = cleanJapaneseSearchText(text);
   if (!cleaned) return null;
 
-  // Send request to background script which runs @birchill/jpdict-idb
-  console.log(`[Rubi] lookupWord requesting SEARCH_WORD for: "${cleaned}"`);
-  const resp = await safeSendMessage({
-    type: 'SEARCH_WORD',
-    text: cleaned
-  });
-  console.log(`[Rubi] lookupWord received resp for "${cleaned}":`, resp);
+  console.log(`[Rubi] lookupWord requesting SEARCH_WORD and SEARCH_NAMES for: "${cleaned}"`);
+  
+  const [wordResp, nameResp] = await Promise.all([
+    safeSendMessage({ type: 'SEARCH_WORD', text: cleaned }),
+    safeSendMessage({ type: 'SEARCH_NAMES', text: cleaned })
+  ]);
 
-  if (resp && resp.success && resp.result) {
-    const searchResult = resp.result as WordSearchResult;
-    if (searchResult.data && searchResult.data.length > 0) {
-      const firstHit = searchResult.data[0];
-      console.log('[Rubi] firstHit from background:', firstHit);
-      
-      const reading = firstHit.r && firstHit.r.length > 0 ? (firstHit.r[0].ent || '') : '';
-      const meanings = (firstHit.s || []).map(sense => {
+  let bestHit: any = null;
+  let bestMatchLen = 0;
+  let isName = false;
+
+  if (wordResp && wordResp.success && wordResp.result && wordResp.result.data.length > 0) {
+    bestHit = wordResp.result.data[0];
+    bestMatchLen = wordResp.result.matchLen;
+  }
+
+  if (nameResp && nameResp.success && nameResp.result && nameResp.result.data.length > 0) {
+    if (nameResp.result.matchLen > bestMatchLen) {
+      bestHit = nameResp.result.data[0];
+      bestMatchLen = nameResp.result.matchLen;
+      isName = true;
+    }
+  }
+
+  if (bestHit) {
+    let reading = '';
+    let meanings: string[] = [];
+
+    if (isName) {
+      reading = bestHit.r && bestHit.r.length > 0 ? bestHit.r[0] : '';
+      meanings = (bestHit.tr || []).map((tr: any) => {
+        const type = tr.type && tr.type.length > 0 ? `[${tr.type.join(', ')}] ` : '';
+        return `${type}${tr.det.join(', ')}`;
+      });
+    } else {
+      reading = bestHit.r && bestHit.r.length > 0 ? (bestHit.r[0].ent || '') : '';
+      meanings = (bestHit.s || []).map((sense: any) => {
         if (!sense.g) return '';
         return sense.g.map((g: any) => g.str || g).join(', ');
       }).filter(Boolean);
-
-      return {
-        word: text.substring(0, searchResult.matchLen),
-        length: searchResult.matchLen,
-        entry: {
-          r: reading,
-          m: meanings,
-          j: '' // JLPT level is not provided directly in 10ten word match without extra lookup, skip for now
-        }
-      };
     }
+
+    return {
+      word: text.substring(0, bestMatchLen),
+      length: bestMatchLen,
+      entry: {
+        r: reading,
+        m: meanings,
+        j: ''
+      }
+    };
   }
 
   return null;

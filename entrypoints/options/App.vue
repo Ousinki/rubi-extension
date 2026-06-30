@@ -1,17 +1,18 @@
 <template>
-  <div :class="['rubi-page-wrapper', 'theme-' + theme]">
+  <div :class="['rubi-page-wrapper', 'theme-' + theme, 'gem-' + settings.highlightStyle]">
     <div class="rubi-options-app">
       <!-- Header -->
       <header class="rubi-header">
         <div class="logo-area">
+          <img src="/icon/action-128.png" alt="Rubi Logo" class="app-logo" />
           <div class="logo-text">
             <h1>Rubi Settings</h1>
-            <p class="subtitle">日语学术文献辅助标注扩展</p>
+            <p class="subtitle">{{ t('header.subtitle') }}</p>
           </div>
         </div>
         <div class="header-controls">
           <!-- Theme Switcher -->
-          <button class="theme-toggle-btn" @click="toggleTheme" title="切换主题">
+          <button class="theme-toggle-btn" @click="toggleTheme" :title="t('header.theme_toggle')">
             <svg v-if="theme === 'dark'" viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
               <circle cx="12" cy="12" r="5"></circle>
               <line x1="12" y1="1" x2="12" y2="3"></line>
@@ -26,13 +27,22 @@
             <svg v-else viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
               <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
             </svg>
-            <span class="theme-label">{{ theme === 'dark' ? '学术日照' : '深夜模式' }}</span>
+            <span class="theme-label">{{ theme === 'dark' ? t('header.theme_light') : t('header.theme_dark') }}</span>
           </button>
 
-          <!-- Auto-save Status Indicator -->
-          <div class="save-status" :class="{ saved: showSavedStatus }">
-            <span class="dot"></span>
-            {{ showSavedStatus ? '已保存更改' : '配置将即时保存' }}
+          <!-- UI Language Selector -->
+          <div class="lang-selector">
+            <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="2" y1="12" x2="22" y2="12"></line>
+              <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+            </svg>
+            <CustomSelect
+              v-model="settings.uiLanguage"
+              :options="langOptions"
+              compact
+              @change="saveSettings"
+            />
           </div>
         </div>
       </header>
@@ -40,25 +50,92 @@
       <div class="layout-grid">
         <!-- Left Column: Core settings -->
         <main class="settings-column">
-          
-          <!-- AI Translation Configuration -->
-          <section class="card">
+          <!-- UI Themes -->
+          <section class="card" id="appearance">
             <div class="card-header">
-              <h2>大型语言模型配置</h2>
-              <span class="section-tag">API Settings</span>
+              <h2>{{ t('appearance.title') }}</h2>
+              <span class="section-tag">{{ t('appearance.tag') }}</span>
             </div>
             
             <div class="card-body">
               <div class="input-group">
-                <label>API Key</label>
+                <label>{{ t('appearance.highlight_label') }}</label>
+                <div class="engine-selector" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                  <label class="engine-option" :class="{ active: settings.highlightStyle === 'purple' }">
+                    <input type="radio" v-model="settings.highlightStyle" value="purple" @change="saveSettings" />
+                    <div class="engine-info" style="display: flex; align-items: center; gap: 8px;">
+                      <svg viewBox="0 0 24 24" width="18" height="18" stroke="#8b5cf6" stroke-width="2" fill="rgba(139, 92, 246, 0.2)" stroke-linecap="round" stroke-linejoin="round" style="filter: drop-shadow(0 0 4px rgba(139, 92, 246, 0.4));">
+                        <path d="M6 3h12l4 6-10 12L2 9z"></path>
+                        <path d="M2 9h20"></path>
+                        <path d="M12 21V9"></path>
+                        <path d="M6 3l6 6"></path>
+                        <path d="M18 3l-6 6"></path>
+                      </svg>
+                      <span class="engine-name">{{ t('appearance.gems.purple') }} (Amethyst)</span>
+                    </div>
+                  </label>
+                  <label class="engine-option" :class="{ active: settings.highlightStyle === 'pink' }">
+                    <input type="radio" v-model="settings.highlightStyle" value="pink" @change="saveSettings" />
+                    <div class="engine-info" style="display: flex; align-items: center; gap: 8px;">
+                      <svg viewBox="0 0 24 24" width="18" height="18" stroke="#FF758F" stroke-width="2" fill="rgba(255, 117, 143, 0.2)" stroke-linecap="round" stroke-linejoin="round" style="filter: drop-shadow(0 0 4px rgba(255, 117, 143, 0.4));">
+                        <path d="M6 3h12l4 6-10 12L2 9z"></path>
+                        <path d="M2 9h20"></path>
+                        <path d="M12 21V9"></path>
+                        <path d="M6 3l6 6"></path>
+                        <path d="M18 3l-6 6"></path>
+                      </svg>
+                      <span class="engine-name">{{ t('appearance.gems.ruby') }} (Ruby)</span>
+                    </div>
+                  </label>
+                  <label class="engine-option" :class="{ active: settings.highlightStyle === 'yellow' }">
+                    <input type="radio" v-model="settings.highlightStyle" value="yellow" @change="saveSettings" />
+                    <div class="engine-info" style="display: flex; align-items: center; gap: 8px;">
+                      <svg viewBox="0 0 24 24" width="18" height="18" stroke="#eab308" stroke-width="2" fill="rgba(234, 179, 8, 0.2)" stroke-linecap="round" stroke-linejoin="round" style="filter: drop-shadow(0 0 4px rgba(234, 179, 8, 0.4));">
+                        <path d="M6 3h12l4 6-10 12L2 9z"></path>
+                        <path d="M2 9h20"></path>
+                        <path d="M12 21V9"></path>
+                        <path d="M6 3l6 6"></path>
+                        <path d="M18 3l-6 6"></path>
+                      </svg>
+                      <span class="engine-name">{{ t('appearance.gems.yellow') }} (Citrine)</span>
+                    </div>
+                  </label>
+                  <label class="engine-option" :class="{ active: settings.highlightStyle === 'blue' }">
+                    <input type="radio" v-model="settings.highlightStyle" value="blue" @change="saveSettings" />
+                    <div class="engine-info" style="display: flex; align-items: center; gap: 8px;">
+                      <svg viewBox="0 0 24 24" width="18" height="18" stroke="#3b82f6" stroke-width="2" fill="rgba(59, 130, 246, 0.2)" stroke-linecap="round" stroke-linejoin="round" style="filter: drop-shadow(0 0 4px rgba(59, 130, 246, 0.4));">
+                        <path d="M6 3h12l4 6-10 12L2 9z"></path>
+                        <path d="M2 9h20"></path>
+                        <path d="M12 21V9"></path>
+                        <path d="M6 3l6 6"></path>
+                        <path d="M18 3l-6 6"></path>
+                      </svg>
+                      <span class="engine-name">{{ t('appearance.gems.blue') }} (Sapphire)</span>
+                    </div>
+                  </label>
+                </div>
+              </div>
+            </div>
+          </section>
+          
+          <!-- AI Translation Configuration -->
+          <section class="card" id="api-settings">
+            <div class="card-header">
+              <h2>{{ t('llm.title') }}</h2>
+              <span class="section-tag">{{ t('llm.tag') }}</span>
+            </div>
+            
+            <div class="card-body">
+              <div class="input-group">
+                <label>{{ t('llm.api_key') }}</label>
                 <div class="password-wrapper">
                   <input 
                     :type="showApiKey ? 'text' : 'password'" 
                     v-model="settings.apiKey" 
-                    placeholder="请输入 API Key" 
+                    :placeholder="t('llm.api_key_placeholder')" 
                     @change="saveSettings"
                   />
-                  <button type="button" class="toggle-password-btn" @click="showApiKey = !showApiKey" :title="showApiKey ? '隐藏 Key' : '显示 Key'">
+                  <button type="button" class="toggle-password-btn" @click="showApiKey = !showApiKey" :title="showApiKey ? t('llm.hide_key') : t('llm.show_key')">
                     <svg v-if="!showApiKey" viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
                       <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
                       <circle cx="12" cy="12" r="3"></circle>
@@ -72,7 +149,7 @@
               </div>
               
               <div class="input-group">
-                <label>API Endpoint</label>
+                <label>{{ t('llm.endpoint') }}</label>
                 <input 
                   type="text" 
                   v-model="settings.apiEndpoint" 
@@ -83,7 +160,7 @@
 
               <div class="row">
                 <div class="input-group half">
-                  <label>模型 (Model)</label>
+                  <label>{{ t('llm.model') }}</label>
                   <input 
                     type="text" 
                     v-model="settings.model" 
@@ -97,29 +174,29 @@
                     @click="testApi" 
                     :disabled="isTestingApi || !settings.apiKey"
                   >
-                    {{ isTestingApi ? '测试中...' : '测试连接' }}
+                    {{ isTestingApi ? t('llm.testing_btn') : t('llm.test_btn') }}
                   </button>
                 </div>
               </div>
 
               <div v-if="testResult" class="test-feedback" :class="testResult.success ? 'success' : 'error'">
-                {{ testResult.success ? `连接测试通过 (响应时延: ${testResult.latency}ms)` : `连接建立失败: ${testResult.error}` }}
+                {{ testResult.success ? t('llm.test_success_pre') + testResult.latency + t('llm.test_success_suf') : t('llm.test_fail_pre') + testResult.error + t('llm.test_fail_suf') }}
               </div>
             </div>
           </section>
 
           <!-- Japanese Rendering Preferences -->
-          <section class="card">
+          <section class="card" id="furigana-preferences">
             <div class="card-header">
-              <h2>假名渲染偏好</h2>
-              <span class="section-tag">Furigana Preferences</span>
+              <h2>{{ t('furigana.title') }}</h2>
+              <span class="section-tag">{{ t('furigana.tag') }}</span>
             </div>
             
             <div class="card-body">
               <div class="toggle-row">
                 <div class="toggle-desc">
-                  <h3>启用假名标注</h3>
-                  <p>在汉字上方显示平假名</p>
+                  <h3>{{ t('furigana.enable_label') }}</h3>
+                  <p>{{ t('furigana.enable_desc') }}</p>
                 </div>
                 <button 
                   class="toggle-btn" 
@@ -131,7 +208,7 @@
               </div>
 
               <div class="input-group">
-                <label>JLPT 过滤</label>
+                <label>{{ t('furigana.jlpt_label') }}</label>
                 <div class="radio-group-bar">
                   <label v-for="level in ['all', 'N5', 'N4', 'N3', 'N2', 'N1']" :key="level" class="radio-label-item" :class="{ selected: settings.jlptFilterLevel === level }">
                     <input 
@@ -141,48 +218,48 @@
                       v-model="settings.jlptFilterLevel" 
                       @change="saveSettings"
                     />
-                    <span class="radio-text">{{ level === 'all' ? '全部标注' : level + '级以上' }}</span>
+                    <span class="radio-text">{{ level === 'all' ? t('furigana.jlpt_all') : t('furigana.jlpt_above_pre') + level + t('furigana.jlpt_above_suf') }}</span>
                   </label>
                 </div>
-                <p class="description-hint">过滤低难度词汇，仅为所选级别以上的单词显示假名。</p>
+                <p class="description-hint">{{ t('furigana.jlpt_hint') }}</p>
               </div>
             </div>
           </section>
 
           <!-- Speech Synthesis Preferences -->
-          <section class="card">
+          <section class="card" id="speech-engine">
             <div class="card-header">
-              <h2>语音合成 (TTS)</h2>
-              <span class="section-tag">Speech Engine</span>
+              <h2>{{ t('tts.title') }}</h2>
+              <span class="section-tag">{{ t('tts.tag') }}</span>
             </div>
             
             <div class="card-body">
               <!-- Engine Selection -->
               <div class="input-group">
-                <label>语音引擎</label>
+                <label>{{ t('tts.engine_label') }}</label>
                 <div class="engine-selector">
                   <label class="engine-option" :class="{ active: settings.ttsEngine === 'edge' }">
                     <input type="radio" v-model="settings.ttsEngine" value="edge" @change="saveSettings" />
                     <div class="engine-info">
                       <span class="engine-name">Microsoft Edge TTS</span>
-                      <span class="engine-badge best">神经网络 · 免费</span>
-                      <span class="engine-desc">Azure 级别神经网络发音，最接近真人母语者</span>
+                      <span class="engine-badge best">{{ t('tts.edge_badge') }}</span>
+                      <span class="engine-desc">{{ t('tts.edge_desc') }}</span>
                     </div>
                   </label>
                   <label class="engine-option" :class="{ active: settings.ttsEngine === 'google' }">
                     <input type="radio" v-model="settings.ttsEngine" value="google" @change="saveSettings" />
                     <div class="engine-info">
                       <span class="engine-name">Google Translate TTS</span>
-                      <span class="engine-badge free">标准 · 免费</span>
-                      <span class="engine-desc">Google 翻译合成，发音标准流畅</span>
+                      <span class="engine-badge free">{{ t('tts.google_badge') }}</span>
+                      <span class="engine-desc">{{ t('tts.google_desc') }}</span>
                     </div>
                   </label>
                   <label class="engine-option" :class="{ active: settings.ttsEngine === 'webspeech' }">
                     <input type="radio" v-model="settings.ttsEngine" value="webspeech" @change="saveSettings" />
                     <div class="engine-info">
-                      <span class="engine-name">浏览器内置 (Web Speech)</span>
-                      <span class="engine-badge local">本地 · 离线可用</span>
-                      <span class="engine-desc">调用系统和浏览器内置发音引擎，可离线使用</span>
+                      <span class="engine-name">{{ t('tts.webspeech_name') }}</span>
+                      <span class="engine-badge local">{{ t('tts.webspeech_badge') }}</span>
+                      <span class="engine-desc">{{ t('tts.webspeech_desc') }}</span>
                     </div>
                   </label>
                 </div>
@@ -190,31 +267,27 @@
 
               <!-- Edge TTS Voice Selection -->
               <div v-if="settings.ttsEngine === 'edge'" class="input-group">
-                <label>发音人 (Voice)</label>
-                <select v-model="settings.edgeVoice" @change="saveSettings" class="select-field">
-                  <option value="ja-JP-NanamiNeural">七海 (Nanami) — 女声，自然清晰 ⭐ 推荐</option>
-                  <option value="ja-JP-KeitaNeural">圭太 (Keita) — 男声，专业沉稳</option>
-                  <option value="ja-JP-AoiNeural">葵 (Aoi) — 女声，明亮活泼</option>
-                  <option value="ja-JP-DaichiNeural">大地 (Daichi) — 男声，年轻感</option>
-                  <option value="ja-JP-ShioriNeural">しおり (Shiori) — 女声，温柔亲切</option>
-                  <option value="ja-JP-MasaruMultilingualNeural">マサル (Masaru) — 男声，多语言</option>
-                </select>
+                <label>{{ t('tts.voice_label') }}</label>
+                <CustomSelect
+                  v-model="settings.edgeVoice"
+                  :options="edgeVoiceOptions"
+                  @change="saveSettings"
+                />
               </div>
 
               <!-- Web Speech Voice Selection (only shown for webspeech engine) -->
               <div v-if="settings.ttsEngine === 'webspeech'" class="input-group">
-                <label>发音人 (Voice)</label>
-                <select v-model="settings.ttsVoiceURI" @change="saveSettings" class="select-field">
-                  <option value="Google 日本語">Google 日本語 (推荐音源)</option>
-                  <option v-for="voice in jaVoices" :key="voice.voiceURI" :value="voice.voiceURI">
-                    {{ voice.name }} {{ voice.localService ? '(本地合成)' : '(网络合成)' }}
-                  </option>
-                </select>
+                <label>{{ t('tts.voice_label') }}</label>
+                <CustomSelect
+                  v-model="settings.ttsVoiceURI"
+                  :options="webSpeechVoiceOptions"
+                  @change="saveSettings"
+                />
               </div>
 
               <div class="row">
                 <div class="input-group half">
-                  <label>语速: {{ settings.ttsRate }}x</label>
+                  <label>{{ t('tts.rate_label_pre') + settings.ttsRate + t('tts.rate_label_suf') }}</label>
                   <input 
                     type="range" 
                     min="0.5" 
@@ -226,7 +299,7 @@
                   />
                 </div>
                 <div class="input-group half">
-                  <label>音量: {{ Math.round(settings.ttsVolume * 100) }}%</label>
+                  <label>{{ t('tts.volume_label_pre') + Math.round(settings.ttsVolume * 100) + t('tts.volume_label_suf') }}</label>
                   <input 
                     type="range" 
                     min="0.0" 
@@ -241,7 +314,7 @@
 
               <div class="action-footer">
                 <button class="btn btn-action secondary" @click="testTTS" :disabled="isSpeaking">
-                  {{ isSpeaking ? '发音测试中...' : '测试发音' }}
+                  {{ isSpeaking ? t('tts.testing_btn') : t('tts.test_btn') }}
                 </button>
               </div>
             </div>
@@ -249,76 +322,64 @@
 
 
           <!-- Core Translation Options -->
-          <section class="card">
+          <section class="card" id="lookup-panel">
             <div class="card-header">
-              <h2>查词与释义弹窗</h2>
-              <span class="section-tag">Lookup & Panel</span>
+              <h2>{{ t('lookup.title') }}</h2>
+              <span class="section-tag">{{ t('lookup.tag') }}</span>
             </div>
             
             <div class="card-body">
               <div class="row">
                 <div class="input-group half">
-                  <label>机器翻译</label>
-                  <select v-model="settings.translationEngine" @change="saveSettings" class="select-field">
-                    <option value="google">Google 翻译</option>
-                    <option value="bing">Bing 翻译</option>
-                    <option value="none">本地词典</option>
-                  </select>
+                  <label>{{ t('lookup.mt_label') }}</label>
+                  <CustomSelect
+                    v-model="settings.translationEngine"
+                    :options="translationEngineOptions"
+                    @change="saveSettings"
+                  />
                 </div>
                 <div class="input-group half">
-                  <label>弹窗位置</label>
-                  <select v-model="settings.translationPosition" @change="saveSettings" class="select-field">
-                    <option value="bottom">正下方 (推荐)</option>
-                    <option value="top">正上方</option>
-                    <option value="pronounce-badge">合并于发音栏</option>
-                  </select>
+                  <label>{{ t('lookup.position_label') }}</label>
+                  <CustomSelect
+                    v-model="settings.translationPosition"
+                    :options="translationPositionOptions"
+                    @change="saveSettings"
+                  />
                 </div>
               </div>
 
               <p class="dict-attribution">
-                本地词典数据来源：
+                {{ t('lookup.dict_source') }}
                 <a href="https://www.edrdg.org/jmdict/j_jmdict.html" target="_blank" rel="noopener">JMdict</a>
-                (Electronic Dictionary Research &amp; Development Group)，
-                以 <a href="https://www.edrdg.org/edrdg/licence.html" target="_blank" rel="noopener">CC BY-SA 4.0</a> 协议授权，
-                共收录 419,643 条词条。
+                {{ t('lookup.dict_org') }}
+                <a href="https://www.edrdg.org/edrdg/licence.html" target="_blank" rel="noopener">CC BY-SA 4.0</a> {{ t('lookup.dict_license') }}
+                {{ t('lookup.dict_count') }}
               </p>
             </div>
           </section>
         </main>
 
-        <!-- Right Column: Academic guidelines / shortcuts -->
+        <!-- Right Column: Navigation TOC -->
         <aside class="info-column">
-          <div class="sidebar-block doc-panel">
-            <h2>操作说明</h2>
+          <div class="sidebar-block doc-panel" style="position: sticky; top: 24px;">
+            <h2>{{ t('nav.title') }}</h2>
             <ul class="doc-list">
               <li>
-                <div class="doc-label">鼠标悬停</div>
-                <div class="doc-desc">在日语文字上悬停，即可显示假名和翻译。</div>
+                <a href="#appearance" class="doc-label" :class="{ active: activeSection === 'appearance' }" style="text-decoration: none; display: block; padding: 6px 0; transition: color 0.2s;">{{ t('appearance.title') }}</a>
               </li>
               <li>
-                <div class="doc-label">点击发音</div>
-                <div class="doc-desc">点击高亮单词，即可播放语音。</div>
+                <a href="#api-settings" class="doc-label" :class="{ active: activeSection === 'api-settings' }" style="text-decoration: none; display: block; padding: 6px 0; transition: color 0.2s;">{{ t('llm.title') }}</a>
               </li>
               <li>
-                <div class="doc-label">AI 语境分析</div>
-                <div class="doc-desc">长按单词 500 毫秒，调用 AI 分析上下文和语法结构。</div>
+                <a href="#furigana-preferences" class="doc-label" :class="{ active: activeSection === 'furigana-preferences' }" style="text-decoration: none; display: block; padding: 6px 0; transition: color 0.2s;">{{ t('furigana.title') }}</a>
               </li>
               <li>
-                <div class="doc-label">一键注音 (Alt+T)</div>
-                <div class="doc-desc">为网页中的所有日文汉字标注平假名。可在浏览器设置中修改快捷键。</div>
+                <a href="#speech-engine" class="doc-label" :class="{ active: activeSection === 'speech-engine' }" style="text-decoration: none; display: block; padding: 6px 0; transition: color 0.2s;">{{ t('tts.title') }}</a>
+              </li>
+              <li>
+                <a href="#lookup-panel" class="doc-label" :class="{ active: activeSection === 'lookup-panel' }" style="text-decoration: none; display: block; padding: 6px 0; transition: color 0.2s;">{{ t('lookup.title') }}</a>
               </li>
             </ul>
-          </div>
-
-          <div class="sidebar-block status-panel">
-            <h2>本地引擎层</h2>
-            <div class="status-indicator">
-              <span class="status-dot"></span>
-              <span>Intl.Segmenter 切词引擎激活</span>
-            </div>
-            <p class="status-details">
-              当前系统内建的字词字典已经成功读取，提供最轻量的跨行词法归并解析。
-            </p>
           </div>
         </aside>
       </div>
@@ -327,18 +388,63 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, reactive } from 'vue';
+import { ref, onMounted, reactive, watch, computed } from 'vue';
+import { useI18n } from '@/utils/i18n-plugin';
+import type { SupportedLocale } from '@/utils/i18n-plugin';
 import { settingsStorage, DEFAULT_SETTINGS } from '@/utils/storage';
 import type { RubiSettings } from '@/utils/storage';
 import { speakText } from '@/utils/tts';
+import CustomSelect from './components/CustomSelect.vue';
 
 const settings = reactive<RubiSettings>({ ...DEFAULT_SETTINGS });
+const { t, locale } = useI18n();
+
+watch(() => settings.uiLanguage, (newLang) => {
+  locale.value = newLang as SupportedLocale;
+});
 const jaVoices = ref<SpeechSynthesisVoice[]>([]);
 const isTestingApi = ref(false);
 const showApiKey = ref(false);
 const testResult = ref<{ success: boolean; latency?: number; error?: string } | null>(null);
 const isSpeaking = ref(false);
 const showSavedStatus = ref(false);
+
+const langOptions = computed(() => [
+  { value: 'zh-CN', label: t('lang.zh_cn') },
+  { value: 'zh-TW', label: t('lang.zh_tw') },
+  { value: 'en', label: t('lang.en') },
+  { value: 'ja', label: t('lang.ja') },
+  { value: 'ko', label: t('lang.ko') },
+]);
+
+const edgeVoiceOptions = computed(() => [
+  { value: 'ja-JP-NanamiNeural', label: t('tts.edge_voice_nanami') },
+  { value: 'ja-JP-KeitaNeural', label: t('tts.edge_voice_keita') },
+  { value: 'ja-JP-AoiNeural', label: t('tts.edge_voice_aoi') },
+  { value: 'ja-JP-DaichiNeural', label: t('tts.edge_voice_daichi') },
+  { value: 'ja-JP-ShioriNeural', label: t('tts.edge_voice_shiori') },
+  { value: 'ja-JP-MasaruMultilingualNeural', label: t('tts.edge_voice_masaru') },
+]);
+
+const webSpeechVoiceOptions = computed(() => [
+  { value: 'Google 日本語', label: t('tts.google_voice_default') },
+  ...jaVoices.value.map(v => ({
+    value: v.voiceURI,
+    label: v.name + ' ' + (v.localService ? t('tts.voice_local') : t('tts.voice_network')),
+  })),
+]);
+
+const translationEngineOptions = computed(() => [
+  { value: 'google', label: t('lookup.mt_google') },
+  { value: 'bing', label: t('lookup.mt_bing') },
+  { value: 'none', label: t('lookup.mt_local') },
+]);
+
+const translationPositionOptions = computed(() => [
+  { value: 'bottom', label: t('lookup.pos_bottom') },
+  { value: 'top', label: t('lookup.pos_top') },
+  { value: 'pronounce-badge', label: t('lookup.pos_badge') },
+]);
 
 const getInitialTheme = (): 'light' | 'dark' => {
   if (typeof window === 'undefined' || typeof localStorage === 'undefined') return 'dark';
@@ -349,16 +455,38 @@ const getInitialTheme = (): 'light' | 'dark' => {
 
 const theme = ref<'light' | 'dark'>(getInitialTheme());
 
+const activeSection = ref<string>('appearance');
+
 onMounted(async () => {
   // Load settings
   const stored = await settingsStorage.getValue();
   Object.assign(settings, stored);
+  if (settings.uiLanguage) {
+    locale.value = settings.uiLanguage;
+  }
 
   // Load voices
   loadVoices();
   if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
     window.speechSynthesis.onvoiceschanged = loadVoices;
   }
+
+  // Setup Scrollspy Observer
+  const observer = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          activeSection.value = entry.target.id;
+        }
+      });
+    },
+    { rootMargin: '-20% 0px -60% 0px', threshold: 0 }
+  );
+
+  const sections = document.querySelectorAll('section.card[id]');
+  sections.forEach((section) => {
+    observer.observe(section);
+  });
 });
 
 function toggleTheme() {
@@ -436,6 +564,7 @@ function testTTS() {
   --text-muted: #8e92a4;
   --accent-base: #5c35b4;
   --accent-light: #ece7f8;
+  --accent-transparent: rgba(92, 53, 180, 0.12);
   --btn-bg: #5c35b4;
   --btn-hover: #4e299c;
   --btn-text: #ffffff;
@@ -455,12 +584,64 @@ function testTTS() {
   --text-muted: #5e6675;
   --accent-base: #a78bfa;
   --accent-light: #211c34;
+  --accent-transparent: rgba(167, 139, 250, 0.15);
   --btn-bg: #3d355b;
   --btn-hover: #4b4170;
   --btn-text: #f3f4f6;
   --input-bg: #090a0d;
   --shadow-sm: 0 1px 2px rgba(0,0,0,0.5);
   --shadow-md: 0 10px 30px rgba(0,0,0,0.3);
+}
+
+/* ═══ Gem Accent Color Themes ═══ */
+/* Purple Amethyst (default — no overrides needed) */
+
+/* Pink Ruby */
+.gem-pink.theme-light {
+  --accent-base: #d6336c;
+  --accent-light: #fce4ec;
+  --accent-transparent: rgba(214, 51, 108, 0.12);
+  --btn-bg: #d6336c;
+  --btn-hover: #c2255c;
+}
+.gem-pink.theme-dark {
+  --accent-base: #f06595;
+  --accent-light: #2d1520;
+  --accent-transparent: rgba(240, 101, 149, 0.15);
+  --btn-bg: #5b2340;
+  --btn-hover: #73304f;
+}
+
+/* Yellow Citrine */
+.gem-yellow.theme-light {
+  --accent-base: #b8860b;
+  --accent-light: #fef9e7;
+  --accent-transparent: rgba(184, 134, 11, 0.12);
+  --btn-bg: #b8860b;
+  --btn-hover: #9a7209;
+}
+.gem-yellow.theme-dark {
+  --accent-base: #facc15;
+  --accent-light: #2a2510;
+  --accent-transparent: rgba(250, 204, 21, 0.15);
+  --btn-bg: #5c4d10;
+  --btn-hover: #74610e;
+}
+
+/* Blue Sapphire */
+.gem-blue.theme-light {
+  --accent-base: #2563eb;
+  --accent-light: #e0ecff;
+  --accent-transparent: rgba(37, 99, 235, 0.12);
+  --btn-bg: #2563eb;
+  --btn-hover: #1d4fd8;
+}
+.gem-blue.theme-dark {
+  --accent-base: #60a5fa;
+  --accent-light: #131c2e;
+  --accent-transparent: rgba(96, 165, 250, 0.15);
+  --btn-bg: #1e3a5f;
+  --btn-hover: #264b77;
 }
 
 body {
@@ -480,6 +661,15 @@ body {
   font-size: 14px;
 }
 
+/* Smooth gem accent color transitions across the entire page */
+.rubi-page-wrapper *,
+.rubi-page-wrapper *::before,
+.rubi-page-wrapper *::after {
+  transition-property: color, background-color, border-color, box-shadow, opacity, transform;
+  transition-duration: 0.35s;
+  transition-timing-function: ease;
+}
+
 .rubi-options-app {
   max-width: 1000px;
   margin: 0 auto;
@@ -491,9 +681,22 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: flex-end;
-  border-bottom: 2px solid var(--text-primary);
+  border-bottom: 2px solid var(--accent-base);
   padding-bottom: 16px;
   margin-bottom: 40px;
+  transition: border-color 0.4s ease;
+}
+
+.logo-area {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.app-logo {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
 }
 
 .logo-text h1 {
@@ -536,27 +739,31 @@ body {
   border-color: var(--accent-base);
 }
 
-.save-status {
+.lang-selector {
   display: flex;
   align-items: center;
-  gap: 6px;
-  font-size: 12px;
-  color: var(--text-muted);
+  gap: 8px;
+  color: var(--text-secondary);
 }
 
-.save-status .dot {
-  width: 4px;
-  height: 4px;
-  border-radius: 50%;
-  background-color: var(--border-strong);
+.lang-select {
+  background: transparent;
+  border: 1px solid var(--border-strong);
+  color: var(--text-primary);
+  font-size: 13px;
+  padding: 4px 24px 4px 8px;
+  border-radius: 4px;
+  outline: none;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 6px center;
+  background-size: 12px;
 }
 
-.save-status.saved {
-  color: var(--accent-base);
-}
-
-.save-status.saved .dot {
-  background-color: var(--accent-base);
+.lang-select:focus {
+  border-color: var(--accent-base);
 }
 
 /* Academic layout grid */
@@ -1024,10 +1231,19 @@ body {
 }
 
 .doc-label {
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
   margin-bottom: 4px;
+}
+
+.doc-label:hover {
+  color: var(--text-primary);
+}
+
+.doc-label.active {
+  color: var(--accent-base);
+  font-weight: 700;
 }
 
 .doc-desc {

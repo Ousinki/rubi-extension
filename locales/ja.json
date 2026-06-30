@@ -1,0 +1,100 @@
+{
+  "header": {
+    "subtitle": "日本語の読書・学習をサポート",
+    "theme_dark": "ダークモード",
+    "theme_light": "ライトモード",
+    "theme_toggle": "テーマ切替"
+  },
+  "nav": {
+    "title": "ナビゲーション"
+  },
+  "appearance": {
+    "title": "外観とハイライト設定",
+    "tag": "Appearance",
+    "highlight_label": "ハイライトカラーを選択",
+    "gems": {
+      "purple": "アメジスト",
+      "ruby": "ルビー",
+      "yellow": "シトリン",
+      "blue": "サファイア"
+    }
+  },
+  "llm": {
+    "title": "大規模言語モデル設定",
+    "tag": "API Settings",
+    "api_key": "API キー",
+    "api_key_placeholder": "API キーを入力してください",
+    "endpoint": "API エンドポイント",
+    "model": "モデル名",
+    "test_btn": "接続テスト",
+    "testing_btn": "テスト中...",
+    "show_key": "キーを表示",
+    "hide_key": "キーを隠す",
+    "test_success_pre": "接続成功 (レイテンシ: ",
+    "test_success_suf": "ms)",
+    "test_fail_pre": "接続失敗: ",
+    "test_fail_suf": ""
+  },
+  "furigana": {
+    "title": "ふりがな表示設定",
+    "tag": "Furigana Preferences",
+    "enable_label": "ふりがなを有効にする",
+    "enable_desc": "漢字の上にひらがなを表示する",
+    "jlpt_label": "JLPT フィルター",
+    "jlpt_all": "すべての漢字",
+    "jlpt_hint": "低難度の語彙を除外し、選択したJLPTレベル以上の単語にのみふりがなを表示します。",
+    "jlpt_above_pre": "",
+    "jlpt_above_suf": "以上"
+  },
+  "tts": {
+    "title": "音声合成 (TTS)",
+    "tag": "Speech Engine",
+    "engine_label": "音声エンジン",
+    "edge_desc": "AzureニューラルTTS — ネイティブスピーカーに近い品質",
+    "edge_badge": "ニューラル · 無料",
+    "google_desc": "Google翻訳TTS — 標準的で流暢な音声",
+    "google_badge": "標準 · 無料",
+    "webspeech_name": "ブラウザ内蔵 (Web Speech)",
+    "webspeech_desc": "システム・ブラウザ内蔵エンジンを使用、オフライン対応",
+    "webspeech_badge": "ローカル · オフライン可",
+    "voice_label": "音声 (Voice)",
+    "voice_local": "(ローカル合成)",
+    "voice_network": "(ネットワーク合成)",
+    "test_btn": "発音テスト",
+    "testing_btn": "再生中...",
+    "rate_label_pre": "読み上げ速度: ",
+    "rate_label_suf": "x",
+    "volume_label_pre": "音量: ",
+    "volume_label_suf": "%",
+    "edge_voice_nanami": "七海 (Nanami) — 女性、自然で明瞭 ⭐ おすすめ",
+    "edge_voice_keita": "圭太 (Keita) — 男性、プロフェッショナル",
+    "edge_voice_aoi": "葵 (Aoi) — 女性、明るく活発",
+    "edge_voice_daichi": "大地 (Daichi) — 男性、若々しい",
+    "edge_voice_shiori": "しおり (Shiori) — 女性、優しく親しみやすい",
+    "edge_voice_masaru": "マサル (Masaru) — 男性、多言語",
+    "google_voice_default": "Google 日本語 (推奨)"
+  },
+  "lookup": {
+    "title": "辞書検索と意味ポップアップ",
+    "tag": "Lookup & Panel",
+    "mt_label": "機械翻訳",
+    "mt_google": "Google 翻訳",
+    "mt_bing": "Bing 翻訳",
+    "mt_local": "ローカル辞書",
+    "position_label": "ポップアップ位置",
+    "pos_bottom": "真下 (推奨)",
+    "pos_top": "真上",
+    "pos_badge": "発音バーに統合",
+    "dict_source": "ローカル辞書データソース：",
+    "dict_license": "ライセンスで提供され、",
+    "dict_count": "合計419,643項目が収録されています。",
+    "dict_org": "(Electronic Dictionary Research & Development Group)、"
+  },
+  "lang": {
+    "zh_cn": "简体中文",
+    "zh_tw": "繁體中文",
+    "en": "English",
+    "ja": "日本語",
+    "ko": "한국어"
+  }
+}

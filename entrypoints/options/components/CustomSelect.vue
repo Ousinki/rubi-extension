@@ -42,18 +42,18 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 
 interface SelectOption {
-  value: string;
+  value: string | number;
   label: string;
 }
 
 const props = defineProps<{
-  modelValue: string;
+  modelValue: string | number;
   options: SelectOption[];
   compact?: boolean;
 }>();
 
 const emit = defineEmits<{
-  'update:modelValue': [value: string];
+  'update:modelValue': [value: string | number];
   'change': [];
 }>();
 
@@ -73,7 +73,7 @@ function close() {
   isOpen.value = false;
 }
 
-function selectOption(value: string) {
+function selectOption(value: string | number) {
   emit('update:modelValue', value);
   emit('change');
   isOpen.value = false;

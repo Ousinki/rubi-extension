@@ -402,38 +402,63 @@ export default defineBackground(() => {
   async function handleVoicevoxTTS(text: string, endpoint: string, speaker: number, rate: number, volume: number): Promise<any> {
     try {
       const baseUrl = endpoint.replace(/\/$/, '');
+      let audioBuffer: ArrayBuffer;
       
-      // Step 1: audio_query
-      const queryUrl = `${baseUrl}/audio_query?text=${encodeURIComponent(text)}&speaker=${speaker}`;
-      const queryRes = await fetch(queryUrl, { method: 'POST' });
-      
-      if (!queryRes.ok) {
-        throw new Error(`Voicevox audio_query failed: ${queryRes.statusText}`);
+      if (baseUrl.includes('tts.quest')) {
+        // Public API (api.tts.quest) does not use audio_query, it directly queues synthesis
+        const synthUrl = `${baseUrl}/synthesis?text=${encodeURIComponent(text)}&speaker=${speaker}`;
+        const synthRes = await fetch(synthUrl, { method: 'POST' });
+        
+        if (!synthRes.ok) {
+          throw new Error(`Voicevox public API failed: ${synthRes.statusText}`);
+        }
+        
+        const json = await synthRes.json();
+        if (!json.success || !json.wavDownloadUrl) {
+          throw new Error('Voicevox public API returned invalid response');
+        }
+        
+        // Fetch the WAV directly (api.tts.quest usually blocks or redirects until ready)
+        const audioRes = await fetch(json.wavDownloadUrl);
+        if (!audioRes.ok) {
+          throw new Error(`Failed to download audio from public API: ${audioRes.statusText}`);
+        }
+        audioBuffer = await audioRes.arrayBuffer();
+        
+      } else {
+        // Local/Standard Voicevox Engine
+        // Step 1: audio_query
+        const queryUrl = `${baseUrl}/audio_query?text=${encodeURIComponent(text)}&speaker=${speaker}`;
+        const queryRes = await fetch(queryUrl, { method: 'POST' });
+        
+        if (!queryRes.ok) {
+          throw new Error(`Voicevox audio_query failed: ${queryRes.statusText}`);
+        }
+        
+        const queryJson = await queryRes.json();
+        
+        // Apply speed and volume parameters
+        if (rate && rate !== 1.0) {
+          queryJson.speedScale = rate;
+        }
+        if (volume && volume !== 1.0) {
+          queryJson.volumeScale = volume;
+        }
+        
+        // Step 2: synthesis
+        const synthUrl = `${baseUrl}/synthesis?speaker=${speaker}`;
+        const synthRes = await fetch(synthUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(queryJson)
+        });
+        
+        if (!synthRes.ok) {
+          throw new Error(`Voicevox synthesis failed: ${synthRes.statusText}`);
+        }
+        
+        audioBuffer = await synthRes.arrayBuffer();
       }
-      
-      const queryJson = await queryRes.json();
-      
-      // Apply speed and volume parameters
-      if (rate && rate !== 1.0) {
-        queryJson.speedScale = rate;
-      }
-      if (volume && volume !== 1.0) {
-        queryJson.volumeScale = volume;
-      }
-      
-      // Step 2: synthesis
-      const synthUrl = `${baseUrl}/synthesis?speaker=${speaker}`;
-      const synthRes = await fetch(synthUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(queryJson)
-      });
-      
-      if (!synthRes.ok) {
-        throw new Error(`Voicevox synthesis failed: ${synthRes.statusText}`);
-      }
-      
-      const audioBuffer = await synthRes.arrayBuffer();
       
       // Convert ArrayBuffer to base64
       const uint8 = new Uint8Array(audioBuffer);

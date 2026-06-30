@@ -186,7 +186,7 @@ async function translateBing(text: string, sourceLang: string, targetLang: strin
       detectedLang: data[0].detectedLanguage?.language
     };
   }
-  throw new Error('Bing returned invalid format');
+  throw new Error(`Bing returned invalid format: ${JSON.stringify(data)}`);
 }
 
 // --- Main Handler ---

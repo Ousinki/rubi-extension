@@ -1,20 +1,13 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300" width="100%" height="100%">
   <defs>
     <!-- Drop shadow for the gem -->
     <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
-      <feDropShadow dx="0" dy="16" stdDeviation="24" flood-color="#000000" flood-opacity="0.2" />
-    </filter>
-    
-    <!-- Text shadow to make it pop when overlapping the gem -->
-    <filter id="textShadow" x="-20%" y="-20%" width="140%" height="140%">
-      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#000000" flood-opacity="0.6" />
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#000000" flood-opacity="0.3" />
     </filter>
   </defs>
 
-  <!-- Transparent Background - No Rectangles -->
-
-  <!-- The Ruby Gem returned to standard size (scale=1.0) -->
-  <g transform="translate(106, 130)" filter="url(#shadow)">
+  <!-- Gem tightly bounds to 300x300, 100% width, centered vertically (y=20 to 280) -->
+  <g transform="translate(0, 20)" filter="url(#shadow)">
     <polygon points="0,80 80,0 150,80" fill="#FF4D6D" />
     <polygon points="80,0 150,0 150,80" fill="#FF758F" />
     <polygon points="150,0 220,0 150,80" fill="#FFB3C1" />
@@ -22,7 +15,4 @@
     <polygon points="0,80 150,260 150,80" fill="#C9184A" />
     <polygon points="300,80 150,260 150,80" fill="#A4133C" />
   </g>
-
-  <!-- Text "Rubi" overlapping the lower edges of the gem -->
-  <text x="256" y="360" font-family="Avenir, Montserrat, system-ui, -apple-system, sans-serif" font-weight="900" font-size="108" fill="#FFFFFF" text-anchor="middle" letter-spacing="-2" filter="url(#textShadow)">Ru<tspan fill="#FF758F">bi</tspan></text>
 </svg>

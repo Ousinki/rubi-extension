@@ -163,10 +163,15 @@ async function translateBing(text: string, sourceLang: string, targetLang: strin
     isVertical: "1"
   });
 
+  // Map generic language codes to Bing-specific codes
+  let bingTarget = targetLang;
+  if (targetLang === 'zh-CN') bingTarget = 'zh-Hans';
+  if (targetLang === 'zh-TW') bingTarget = 'zh-Hant';
+
   const body = new URLSearchParams({
     text,
     fromLang: sourceLang === 'auto' ? 'auto-detect' : sourceLang,
-    to: targetLang,
+    to: bingTarget,
     token: auth.token,
     key: auth.key
   });

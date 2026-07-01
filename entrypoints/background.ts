@@ -28,15 +28,16 @@ export default defineBackground(() => {
   // Initialize dictionary downloading/loading in background
   initDictionary();
 
-  // ─── Setup declarativeNetRequest for Edge TTS Bypass ─────────
+  // ─── Setup declarativeNetRequest for Edge TTS & DeepL Bypass ─
   async function setupNetRules() {
     try {
-      const RULE_ID = 1;
+      const RULE_ID_EDGE = 1;
+      const RULE_ID_DEEPL = 2;
       await browser.declarativeNetRequest.updateDynamicRules({
-        removeRuleIds: [RULE_ID],
+        removeRuleIds: [RULE_ID_EDGE, RULE_ID_DEEPL],
         addRules: [
           {
-            id: RULE_ID,
+            id: RULE_ID_EDGE,
             priority: 1,
             action: {
               type: 'modifyHeaders',
@@ -50,6 +51,34 @@ export default defineBackground(() => {
             condition: {
               urlFilter: 'wss://speech.platform.bing.com/*',
               resourceTypes: ['websocket'],
+            },
+          },
+          {
+            id: RULE_ID_DEEPL,
+            priority: 1,
+            action: {
+              type: 'modifyHeaders',
+              requestHeaders: [
+                {
+                  header: 'Origin',
+                  operation: 'set',
+                  value: 'https://www.deepl.com',
+                },
+                {
+                  header: 'Referer',
+                  operation: 'set',
+                  value: 'https://www.deepl.com/',
+                },
+                {
+                  header: 'User-Agent',
+                  operation: 'set',
+                  value: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                },
+              ],
+            },
+            condition: {
+              urlFilter: 'https://www2.deepl.com/*',
+              resourceTypes: ['xmlhttprequest'],
             },
           },
         ],

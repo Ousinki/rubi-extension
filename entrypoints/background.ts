@@ -78,7 +78,7 @@ export default defineBackground(() => {
             },
             condition: {
               urlFilter: 'https://www2.deepl.com/*',
-              resourceTypes: ['xmlhttprequest'],
+              resourceTypes: ['xmlhttprequest', 'other'],
             },
           },
         ],

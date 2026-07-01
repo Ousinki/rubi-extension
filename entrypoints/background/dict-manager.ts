@@ -95,8 +95,7 @@ export async function searchNames(text: string) {
   const result = await nameSearch({
     input: text,
     inputLengths,
-    maxResults: 5,
-    getNames: async (params) => idbGetNames(params.input)
+    maxResults: 5
   });
   return result;
 }

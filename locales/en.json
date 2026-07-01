@@ -20,8 +20,8 @@
     }
   },
   "llm": {
-    "title": "LLM Configuration",
-    "tag": "API Settings",
+    "title": "AI Translation",
+    "tag": "AI Translation",
     "api_key": "API Key",
     "api_key_placeholder": "Enter your API Key",
     "endpoint": "API Endpoint",
@@ -33,18 +33,29 @@
     "test_success_pre": "Connection successful (latency: ",
     "test_success_suf": "ms)",
     "test_fail_pre": "Connection failed: ",
-    "test_fail_suf": ""
+    "test_fail_suf": "",
+    "long_press_note": "Tip: Long-press a word on the webpage to trigger AI context-aware translation."
   },
   "furigana": {
     "title": "Furigana Preferences",
     "tag": "Furigana Preferences",
-    "enable_label": "Enable Furigana",
-    "enable_desc": "Show hiragana above kanji characters",
+    "enable_label": "Full-page Furigana",
+    "enable_desc": "Allow using shortcut to generate full-page furigana annotations",
     "jlpt_label": "JLPT Filter",
     "jlpt_all": "All Kanji",
     "jlpt_hint": "Filter out easy vocabulary; only show furigana for words at or above the selected JLPT level.",
     "jlpt_above_pre": "",
-    "jlpt_above_suf": " & above"
+    "jlpt_above_suf": " & above",
+    "color_label": "Furigana Color",
+    "color_theme": "Theme Highlight",
+    "color_gray": "Subtle Gray",
+    "color_text": "Same as Text",
+    "font_label": "Furigana Font",
+    "font_system": "System Default",
+    "font_sans": "Sans-serif",
+    "font_serif": "Serif",
+    "font_mono": "Monospace",
+    "opacity_label": "Furigana Opacity"
   },
   "tts": {
     "title": "Speech Synthesis (TTS)",
@@ -80,20 +91,27 @@
     "google_voice_default": "Google Japanese (Recommended)"
   },
   "lookup": {
-    "title": "Dictionary Lookup & Panel",
-    "tag": "Lookup & Panel",
+    "title": "Machine Translation",
+    "tag": "Machine Translation",
     "mt_label": "Machine Translation",
     "mt_google": "Google Translate",
     "mt_bing": "Bing Translate",
-    "mt_local": "Local Dictionary",
+    "mt_local": "Disabled (Use local dictionary only)",
     "position_label": "Panel Position",
     "pos_bottom": "Bottom (Recommended)",
     "pos_top": "Top",
     "pos_badge": "Merge with Pronounce Badge",
+    "trigger_label": "Translation Trigger",
+    "trigger_hover": "Hover to Translate",
+    "trigger_click": "Click to Translate",
+    "trigger_dblclick": "Double-Click to Translate",
     "dict_source": "Local dictionary data source:",
     "dict_license": "License,",
     "dict_count": "Contains 419,643 entries in total.",
-    "dict_org": "(Electronic Dictionary Research & Development Group), licensed under"
+    "dict_org": "(Electronic Dictionary Research & Development Group), licensed under",
+    "mt_deepl": "DeepL Translate",
+    "inspiration_pre": "Some core features and UX are inspired by the open-source extension ",
+    "inspiration_suf": ". Special thanks."
   },
   "lang": {
     "zh_cn": "简体中文",
@@ -101,5 +119,24 @@
     "en": "English",
     "ja": "日本語",
     "ko": "한국어"
+  },
+  "paragraph": {
+    "title": "Paragraph Translation",
+    "tag": "Global Shortcuts & Paragraph Translation",
+    "desc": "Configure paragraph translation triggers. It injects translation above unfamiliar words like ruby text without breaking English layout.",
+    "enable_label": "Paragraph Translation Shortcut Trigger",
+    "enable_desc": "Allow using shortcut to translate the paragraph under current mouse pointer inline",
+    "trigger_label": "Trigger Mode",
+    "trigger_none": "Disabled",
+    "trigger_shift": "+ Shift Translate / Restore paragraph",
+    "trigger_ctrl": "+ Ctrl Translate / Restore paragraph",
+    "trigger_alt": "+ ⌥ Translate / Restore paragraph",
+    "trigger_longpress": "+ Long press left mouse button",
+    "trigger_direct": "Directly translate paragraph",
+    "trigger_custom": "Custom Shortcut",
+    "shortcut_label": "Custom Shortcut",
+    "recording": "Press shortcut keys...",
+    "click_to_set": "Click to set",
+    "direct_hint": "⚠ Direct mode auto-translates when hovering over new paragraphs, which may generate many translation requests."
   }
 }

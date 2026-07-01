@@ -4,7 +4,7 @@ import { expandChoon, kyuujitaiToShinjitai } from '@birchill/normal-jp';
 
 import type { NameSearchResult } from './search-result';
 
-function isNoSplitPoint(input: string, pos: number): boolean {
+function isNoSplitPoint(input: number | undefined, pos: number): boolean {
   return false;
 }
 
@@ -72,7 +72,6 @@ export async function nameSearch({
         names = await getNames(variant);
       } catch (e) {
         console.error('Error looking up names', e);
-        void Bugsnag.notify(e || '(Error looking up names)');
         return null;
       }
 

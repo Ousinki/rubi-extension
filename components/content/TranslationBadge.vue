@@ -142,6 +142,9 @@ const safeEngine = computed(() => {
 });
 
 const parsedText = computed(() => {
+  if (uiState.translationBadge.translationType !== 'dict') {
+    return null;
+  }
   // Regex to split: Original Word (Translation)
   const match = uiState.translationBadge.text.match(/^(.*?)\s*[\(（](.*?)[\)）]$/);
   if (match) {
@@ -448,7 +451,8 @@ const handleAskSubmit = async () => {
   font-size: 13px;
   line-height: 1.4;
 }
-.rubi-translation-tooltip .trans-translation {
+.rubi-translation-tooltip .trans-translation,
+.rubi-translation-tooltip strong {
   font-weight: 700;
   color: #1a1a1a;
   font-size: 14px;
@@ -548,7 +552,8 @@ const handleAskSubmit = async () => {
   .rubi-translation-tooltip .trans-original {
     color: #aaa;
   }
-  .rubi-translation-tooltip .trans-translation {
+  .rubi-translation-tooltip .trans-translation,
+  .rubi-translation-tooltip strong {
     color: #fff;
   }
   .rubi-translation-tooltip .engine-tag {

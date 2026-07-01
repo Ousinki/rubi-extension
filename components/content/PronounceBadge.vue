@@ -7,6 +7,7 @@
       isBottom ? 'pos-bottom' : 'pos-top'
     ]"
     :style="badgeStyle"
+    @click="handlePlayTts"
   >
     <!-- Top Row: Japanese Kanji / Word -->
     <div v-if="uiState.pronounceBadge.word" class="rubi-syl-word">
@@ -25,6 +26,8 @@
 import { computed, ref, onMounted, watch, nextTick } from 'vue';
 import { uiState } from '@/utils/content-state';
 import { checkFullscreen } from '@/utils/bilibili-state';
+import { speakText } from '@/utils/tts';
+import { settingsStorage } from '@/utils/storage';
 
 const badgeEl = ref<HTMLElement | null>(null);
 const hostEl = ref<HTMLElement | null>(null);
@@ -125,6 +128,18 @@ const badgeStyle = computed(() => {
     '--shift-x': `${shiftX}px`,
   };
 });
+
+const handlePlayTts = async () => {
+  let word = uiState.pronounceBadge.word || uiState.pronounceBadge.content;
+  // If the word contains only Latin characters (etymology word like "accent"),
+  // use the Kana reading instead so we pronounce the Japanese version of the word!
+  if (word && /^[a-zA-Z\s\-,'.（）()]+$/.test(word)) {
+    word = uiState.pronounceBadge.content;
+  }
+  if (!word) return;
+  const settings = await settingsStorage.getValue();
+  speakText(word, settings);
+};
 </script>
 
 <style scoped>
@@ -140,7 +155,8 @@ const badgeStyle = computed(() => {
   padding: 5px 12px;
   border-radius: 4px;
   box-shadow: 0 4px 14px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.02);
-  pointer-events: none;
+  pointer-events: auto !important;
+  cursor: pointer;
   white-space: nowrap;
   opacity: 0;
   visibility: hidden;
@@ -165,6 +181,11 @@ const badgeStyle = computed(() => {
   justify-content: center;
   color: #5a5d6a; /* Slate color for transcription */
   font-size: 12px;
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+#rubi-pronounce-badge:hover .rubi-badge-content {
+  transform: scale(1.1);
 }
 
 #rubi-pronounce-badge.pos-top {

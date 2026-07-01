@@ -20,8 +20,8 @@
     }
   },
   "llm": {
-    "title": "대규모 언어 모델 설정",
-    "tag": "API Settings",
+    "title": "AI 번역",
+    "tag": "AI Translation",
     "api_key": "API 키",
     "api_key_placeholder": "API 키를 입력하세요",
     "endpoint": "API 엔드포인트",
@@ -38,13 +38,23 @@
   "furigana": {
     "title": "후리가나 표시 설정",
     "tag": "Furigana Preferences",
-    "enable_label": "후리가나 활성화",
-    "enable_desc": "한자 위에 히라가나 표시",
+    "enable_label": "전체 후리가나",
+    "enable_desc": "단축키를 사용하여 전체 페이지 후리가나 생성을 허용합니다",
     "jlpt_label": "JLPT 필터",
     "jlpt_all": "모든 한자",
     "jlpt_hint": "낮은 난이도의 어휘를 제외하고, 선택한 JLPT 레벨 이상의 단어에만 후리가나를 표시합니다.",
     "jlpt_above_pre": "",
-    "jlpt_above_suf": " 이상"
+    "jlpt_above_suf": " 이상",
+    "color_label": "후리가나 색상",
+    "color_theme": "테마 하이라이트",
+    "color_gray": "회색",
+    "color_text": "텍스트 색상",
+    "font_label": "후리가나 폰트",
+    "font_system": "시스템 기본",
+    "font_sans": "고딕체",
+    "font_serif": "명조체",
+    "font_mono": "고정폭 폰트",
+    "opacity_label": "후리가나 불투명도"
   },
   "tts": {
     "title": "음성 합성 (TTS)",
@@ -75,12 +85,12 @@
     "google_voice_default": "Google 일본어 (추천)"
   },
   "lookup": {
-    "title": "단어 검색 및 의미 팝업",
-    "tag": "Lookup & Panel",
+    "title": "기계 번역",
+    "tag": "Machine Translation",
     "mt_label": "기계 번역",
     "mt_google": "Google 번역",
     "mt_bing": "Bing 번역",
-    "mt_local": "로컬 사전",
+    "mt_local": "비활성화 (내장 사전만 사용)",
     "position_label": "팝업 위치",
     "pos_bottom": "하단 (권장)",
     "pos_top": "상단",
@@ -88,7 +98,10 @@
     "dict_source": "로컬 사전 데이터 출처:",
     "dict_license": "라이선스로 제공되며,",
     "dict_count": "총 419,643개의 항목이 수록되어 있습니다.",
-    "dict_org": "(Electronic Dictionary Research & Development Group),"
+    "dict_org": "(Electronic Dictionary Research & Development Group),",
+    "mt_deepl": "DeepL 번역",
+    "inspiration_pre": "일부 핵심 기능과 상호 작용은 오픈 소스 확장 프로그램인 ",
+    "inspiration_suf": " 에서 영감을 받았습니다. 감사드립니다."
   },
   "lang": {
     "zh_cn": "简体中文",
@@ -96,5 +109,24 @@
     "en": "English",
     "ja": "日本語",
     "ko": "한국어"
+  },
+  "paragraph": {
+    "title": "단락 번역",
+    "tag": "Global Shortcuts & Paragraph Translation",
+    "desc": "단락 전체 번역을 트리거할 단축키를 설정합니다. 기존 레이아웃을 해치지 않고 번역을 원문 아래에 표시합니다.",
+    "enable_label": "단락 번역 단축키 트리거",
+    "enable_desc": "단축키를 사용하여 마우스 아래의 단락 전체를 즉시 번역합니다",
+    "trigger_label": "트리거 방식",
+    "trigger_none": "비활성화",
+    "trigger_shift": "+ Shift 번역 / 단락 되돌리기",
+    "trigger_ctrl": "+ Ctrl 번역 / 단락 되돌리기",
+    "trigger_alt": "+ ⌥ 번역 / 단락 되돌리기",
+    "trigger_longpress": "+ 마우스 왼쪽 버튼 길게 누르기",
+    "trigger_direct": "즉시 단락 번역",
+    "trigger_custom": "사용자 정의 단축키",
+    "shortcut_label": "사용자 정의 단축키",
+    "recording": "단축키를 누르세요...",
+    "click_to_set": "클릭하여 설정",
+    "direct_hint": "⚠ 즉시 모드는 마우스가 새 단락에 올라가면 자동으로 번역되어, 많은 번역 요청이 발생할 수 있습니다."
   }
 }

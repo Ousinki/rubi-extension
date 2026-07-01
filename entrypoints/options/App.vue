@@ -1,7 +1,8 @@
 <template>
-  <div :class="['rubi-page-wrapper', 'theme-' + theme, 'gem-' + settings.highlightStyle]">
-    <div class="rubi-options-app">
-      <!-- Header -->
+  <div class="rubi-theme-provider">
+    <div class="rubi-page-wrapper">
+      <div class="rubi-options-app">
+        <!-- Header -->
       <header class="rubi-header">
         <div class="logo-area">
           <img src="/icon/action-128.png" alt="Rubi Logo" class="app-logo" />
@@ -145,6 +146,17 @@
                 </div>
               </div>
 
+              <div class="row" style="margin-top: 20px;">
+                <div class="input-group half">
+                  <label>{{ t('lookup.trigger_label') }}</label>
+                  <CustomSelect
+                    v-model="settings.translationTrigger"
+                    :options="translationTriggerOptions"
+                    @change="saveSettings"
+                  />
+                </div>
+              </div>
+
               <p class="dict-attribution">
                 {{ t('lookup.dict_source') }}
                 <a href="https://www.edrdg.org/jmdict/j_jmdict.html" target="_blank" rel="noopener">JMdict</a>
@@ -219,6 +231,9 @@
               <div v-if="testResult" class="test-feedback" :class="testResult.success ? 'success' : 'error'">
                 {{ testResult.success ? t('llm.test_success_pre') + testResult.latency + t('llm.test_success_suf') : t('llm.test_fail_pre') + testResult.error + t('llm.test_fail_suf') }}
               </div>
+              <p class="description-hint" style="margin-top: 16px; margin-bottom: 0;">
+                {{ t('llm.long_press_note') }}
+              </p>
             </div>
           </section>
 
@@ -232,7 +247,20 @@
             <div class="card-body">
               <div class="toggle-row">
                 <div class="toggle-desc">
-                  <h3>{{ t('furigana.enable_label') }}</h3>
+                  <h3>
+                    {{ t('furigana.enable_label') }}
+                    <input 
+                      type="text" 
+                      class="shortcut-input" 
+                      readonly
+                      :value="recordingShortcutFor === 'furiganaShortcut' ? '输入快捷键...' : formatShortcut(settings.furiganaShortcut)"
+                      @focus="recordingShortcutFor = 'furiganaShortcut'"
+                      @blur="recordingShortcutFor = null"
+                      @keydown.prevent="recordShortcut($event, 'furiganaShortcut')"
+                      title="Click and press keys to set shortcut"
+                      :class="{ 'is-recording': recordingShortcutFor === 'furiganaShortcut' }"
+                    />
+                  </h3>
                   <p>{{ t('furigana.enable_desc') }}</p>
                 </div>
                 <button 
@@ -259,6 +287,92 @@
                   </label>
                 </div>
                 <p class="description-hint">{{ t('furigana.jlpt_hint') }}</p>
+              </div>
+
+              <div class="row" style="margin-top: 1.5rem;">
+                <div class="input-group third">
+                  <label>{{ t('furigana.color_label') }}</label>
+                  <CustomSelect 
+                    v-model="settings.furiganaColor" 
+                    :options="[
+                      { label: t('furigana.color_theme'), value: 'theme' },
+                      { label: t('furigana.color_gray'), value: 'gray' },
+                      { label: t('furigana.color_text'), value: 'text' }
+                    ]"
+                    @update:modelValue="saveSettings"
+                  />
+                </div>
+                <div class="input-group third">
+                  <label>{{ t('furigana.font_label') }}</label>
+                  <CustomSelect 
+                    v-model="settings.furiganaFont" 
+                    :options="[
+                      { label: t('furigana.font_system'), value: 'system' },
+                      { label: t('furigana.font_sans'), value: 'sans-serif' },
+                      { label: t('furigana.font_serif'), value: 'serif' },
+                      { label: t('furigana.font_mono'), value: 'monospace' }
+                    ]"
+                    @update:modelValue="saveSettings"
+                  />
+                </div>
+                <div class="input-group third">
+                  <label>{{ t('furigana.opacity_label') }}</label>
+                  <CustomSelect 
+                    v-model="settings.furiganaOpacity" 
+                    :options="[
+                      { label: '40%', value: '0.4' },
+                      { label: '60%', value: '0.6' },
+                      { label: '80%', value: '0.8' },
+                      { label: '100%', value: '1.0' }
+                    ]"
+                    @update:modelValue="saveSettings"
+                  />
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Paragraph Translation Preferences -->
+          <section class="card" id="paragraph-translation">
+            <div class="card-header">
+              <h2>{{ t('paragraph.title') }}</h2>
+              <span class="section-tag">{{ t('paragraph.tag') }}</span>
+            </div>
+            
+            <div class="card-body">
+              <div class="toggle-row">
+                <div class="toggle-desc">
+                  <h3>{{ t('paragraph.enable_label') }}</h3>
+                  <p>{{ t('paragraph.enable_desc') }}</p>
+                </div>
+                <CustomSelect
+                  v-model="settings.inlineParagraphTrigger"
+                  :options="inlineParagraphTriggerOptions"
+                  @change="saveSettings"
+                  style="width: 280px; flex-shrink: 0;"
+                />
+              </div>
+
+              <!-- Custom shortcut input -->
+              <div v-if="settings.inlineParagraphTrigger === 'custom'" class="input-group" style="margin-top: 16px; border-top: 1px solid var(--border-color); padding-top: 16px;">
+                <label>{{ t('paragraph.shortcut_label') }}</label>
+                <input 
+                  type="text" 
+                  class="shortcut-input" 
+                  readonly
+                  :value="recordingShortcutFor === 'inlineParagraphCustomShortcut' ? t('paragraph.recording') : formatShortcut(settings.inlineParagraphCustomShortcut)"
+                  @focus="recordingShortcutFor = 'inlineParagraphCustomShortcut'"
+                  @blur="recordingShortcutFor = null"
+                  @keydown.prevent="recordShortcut($event, 'inlineParagraphCustomShortcut')"
+                  title="Click and press keys to set shortcut"
+                  :class="{ 'is-recording': recordingShortcutFor === 'inlineParagraphCustomShortcut' }"
+                  style="width: 100%; max-width: 300px; text-align: left; padding: 8px 12px; font-family: monospace;"
+                />
+              </div>
+
+              <!-- Direct mode warning hint -->
+              <div v-if="settings.inlineParagraphTrigger === 'direct'" class="direct-mode-hint" style="margin-top: 16px; font-size: 13px; color: #eab308; background: rgba(234, 179, 8, 0.08); padding: 12px; border-radius: 8px; border: 1px solid rgba(234, 179, 8, 0.2);">
+                {{ t('paragraph.direct_hint') }}
               </div>
             </div>
           </section>
@@ -417,13 +531,25 @@
                 <a href="#furigana-preferences" class="doc-label" :class="{ active: activeSection === 'furigana-preferences' }">{{ t('furigana.title') }}</a>
               </li>
               <li>
+                <a href="#paragraph-translation" class="doc-label" :class="{ active: activeSection === 'paragraph-translation' }">{{ t('paragraph.title') }}</a>
+              </li>
+              <li>
                 <a href="#speech-engine" class="doc-label" :class="{ active: activeSection === 'speech-engine' }">{{ t('tts.title') }}</a>
               </li>
             </ul>
           </div>
         </aside>
       </div>
+
+      <footer class="page-footer">
+        <p class="dict-attribution" style="text-align: center; margin: 0; padding: 0; border: none;">
+          {{ t('lookup.inspiration_pre') }}
+          <a href="https://github.com/birchill/10ten-ja-reader" target="_blank" rel="noopener">10ten Japanese Reader</a>
+          {{ t('lookup.inspiration_suf') }}
+        </p>
+      </footer>
     </div>
+  </div>
   </div>
 </template>
 
@@ -491,16 +617,32 @@ const webSpeechVoiceOptions = computed(() => {
 });
 
 const translationEngineOptions = computed(() => [
-  { value: 'google', label: t('lookup.mt_google') },
-  { value: 'bing', label: t('lookup.mt_bing') },
-  { value: 'deepl', label: 'DeepL 翻译' },
-  { value: 'none', label: t('lookup.mt_local') },
+  { label: t('lookup.mt_local'), value: 'none' },
+  { label: t('lookup.mt_google'), value: 'google' },
+  { label: t('lookup.mt_deepl'), value: 'deepl' },
+  { label: t('lookup.mt_bing'), value: 'bing' },
 ]);
 
 const translationPositionOptions = computed(() => [
-  { value: 'bottom', label: t('lookup.pos_bottom') },
-  { value: 'top', label: t('lookup.pos_top') },
-  { value: 'pronounce-badge', label: t('lookup.pos_badge') },
+  { label: t('lookup.pos_bottom'), value: 'bottom' },
+  { label: t('lookup.pos_top'), value: 'top' },
+  { label: t('lookup.pos_badge'), value: 'pronounce-badge' },
+]);
+
+const translationTriggerOptions = computed(() => [
+  { label: t('lookup.trigger_hover'), value: 'hover' },
+  { label: t('lookup.trigger_click'), value: 'click' },
+  { label: t('lookup.trigger_dblclick'), value: 'dblclick' },
+]);
+
+const inlineParagraphTriggerOptions = computed(() => [
+  { value: 'none', label: t('paragraph.trigger_none') },
+  { value: 'shift', label: t('paragraph.trigger_shift') },
+  { value: 'ctrl', label: t('paragraph.trigger_ctrl') },
+  { value: 'alt', label: t('paragraph.trigger_alt') },
+  { value: 'longpress', label: t('paragraph.trigger_longpress') },
+  { value: 'direct', label: t('paragraph.trigger_direct') },
+  { value: 'custom', label: t('paragraph.trigger_custom') },
 ]);
 
 const getInitialTheme = (): 'light' | 'dark' => {
@@ -511,9 +653,47 @@ const getInitialTheme = (): 'light' | 'dark' => {
 };
 
 const theme = ref<'light' | 'dark'>(getInitialTheme());
+const recordingShortcutFor = ref<string | null>(null);
+
+const formatShortcut = (shortcut: string | undefined) => {
+  if (!shortcut) return '';
+  let formatted = shortcut;
+  // Replace modifiers with Mac symbols
+  formatted = formatted.replace(/Meta/g, '⌘');
+  formatted = formatted.replace(/Shift/g, '⇧');
+  formatted = formatted.replace(/Alt/g, '⌥');
+  formatted = formatted.replace(/Ctrl/g, '⌃');
+  // Remove the '+' for a cleaner look like ⌘⇧F
+  formatted = formatted.replace(/\+/g, '');
+  
+  formatted = formatted.replace('Key', '');
+  formatted = formatted.replace('Digit', '');
+  return formatted;
+};
+
+const recordShortcut = (e: KeyboardEvent, key: 'furiganaShortcut' | 'paragraphShortcut' | 'inlineParagraphCustomShortcut') => {
+  if (['Shift', 'Control', 'Alt', 'Meta', 'Escape', 'Enter', 'Tab', 'Backspace', 'Delete'].includes(e.key)) {
+    if (e.key === 'Backspace' || e.key === 'Escape') {
+      settings[key] = '';
+      saveSettings();
+    }
+    return;
+  }
+  
+  let keys = [];
+  if (e.ctrlKey) keys.push('Ctrl');
+  if (e.metaKey) keys.push('Meta');
+  if (e.altKey) keys.push('Alt');
+  if (e.shiftKey) keys.push('Shift');
+  
+  keys.push(e.code);
+  
+  settings[key] = keys.join('+');
+  saveSettings();
+  (e.target as HTMLElement).blur();
+};
 
 const activeSection = ref<string>('appearance');
-
 onMounted(async () => {
   // Load settings
   const stored = await settingsStorage.getValue();
@@ -521,6 +701,8 @@ onMounted(async () => {
   if (settings.uiLanguage) {
     locale.value = settings.uiLanguage;
   }
+  
+  applyThemeToDocument();
 
   // Load voices
   loadVoices();
@@ -547,8 +729,33 @@ onMounted(async () => {
 });
 
 function toggleTheme() {
-  theme.value = theme.value === 'light' ? 'dark' : 'light';
-  localStorage.setItem('rubi-theme', theme.value);
+  if ((document as any).startViewTransition) {
+    (document as any).startViewTransition(() => {
+      theme.value = theme.value === 'light' ? 'dark' : 'light';
+      localStorage.setItem('rubi-theme', theme.value);
+      applyThemeToDocument();
+    });
+  } else {
+    theme.value = theme.value === 'light' ? 'dark' : 'light';
+    localStorage.setItem('rubi-theme', theme.value);
+    applyThemeToDocument();
+  }
+}
+
+function applyThemeToDocument() {
+  if (typeof document !== 'undefined') {
+    const root = document.documentElement;
+    const classesToRemove: string[] = [];
+    root.classList.forEach(cls => {
+      if (cls.startsWith('theme-') || cls.startsWith('gem-')) {
+        classesToRemove.push(cls);
+      }
+    });
+    classesToRemove.forEach(cls => root.classList.remove(cls));
+    
+    root.classList.add('theme-' + theme.value);
+    root.classList.add('gem-' + settings.highlightStyle);
+  }
 }
 
 function loadVoices() {
@@ -559,6 +766,7 @@ function loadVoices() {
 
 async function saveSettings() {
   await settingsStorage.setValue({ ...settings });
+  applyThemeToDocument(); // Re-apply theme and gem class if highlightStyle changed
   showSavedStatus.value = true;
   setTimeout(() => {
     showSavedStatus.value = false;
@@ -618,7 +826,8 @@ function testTTS() {
 
 <style>
 /* CSS Variable Definitions for Day/Dark themes */
-.theme-light {
+:root.theme-light {
+  color-scheme: light;
   --bg-primary: #f6f6f9;
   --bg-secondary: #ffffff;
   --bg-card: #ffffff;
@@ -638,7 +847,8 @@ function testTTS() {
   --shadow-md: 0 4px 18px rgba(0, 0, 0, 0.04);
 }
 
-.theme-dark {
+:root.theme-dark {
+  color-scheme: dark;
   --bg-primary: #0d0e12;
   --bg-secondary: #14161d;
   --bg-card: #14161d;
@@ -662,14 +872,14 @@ function testTTS() {
 /* Purple Amethyst (default — no overrides needed) */
 
 /* Pink Ruby */
-.gem-pink.theme-light {
+:root.gem-pink.theme-light {
   --accent-base: #d6336c;
   --accent-light: #fce4ec;
   --accent-transparent: rgba(214, 51, 108, 0.12);
   --btn-bg: #d6336c;
   --btn-hover: #c2255c;
 }
-.gem-pink.theme-dark {
+:root.gem-pink.theme-dark {
   --accent-base: #f06595;
   --accent-light: #2d1520;
   --accent-transparent: rgba(240, 101, 149, 0.15);
@@ -678,14 +888,14 @@ function testTTS() {
 }
 
 /* Yellow Citrine */
-.gem-yellow.theme-light {
+:root.gem-yellow.theme-light {
   --accent-base: #b8860b;
   --accent-light: #fef9e7;
   --accent-transparent: rgba(184, 134, 11, 0.12);
   --btn-bg: #b8860b;
   --btn-hover: #9a7209;
 }
-.gem-yellow.theme-dark {
+:root.gem-yellow.theme-dark {
   --accent-base: #facc15;
   --accent-light: #2a2510;
   --accent-transparent: rgba(250, 204, 21, 0.15);
@@ -694,14 +904,14 @@ function testTTS() {
 }
 
 /* Blue Sapphire */
-.gem-blue.theme-light {
+:root.gem-blue.theme-light {
   --accent-base: #2563eb;
   --accent-light: #e0ecff;
   --accent-transparent: rgba(37, 99, 235, 0.12);
   --btn-bg: #2563eb;
   --btn-hover: #1d4fd8;
 }
-.gem-blue.theme-dark {
+:root.gem-blue.theme-dark {
   --accent-base: #60a5fa;
   --accent-light: #131c2e;
   --accent-transparent: rgba(96, 165, 250, 0.15);
@@ -709,30 +919,44 @@ function testTTS() {
   --btn-hover: #264b77;
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 body {
   margin: 0;
   padding: 0;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  transition: background-color var(--transition-speed), color var(--transition-speed);
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Apply transitions globally to everything under the theme provider,
+   including custom components to prevent asynchronous snapping/flashing. */
+.rubi-theme-provider,
+.rubi-theme-provider * {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
 }
 </style>
 
 <style scoped>
+.rubi-theme-provider {
+  min-height: 100vh;
+}
+
 .rubi-page-wrapper {
   min-height: 100vh;
   background-color: var(--bg-primary);
   color: var(--text-primary);
-  transition: background-color 0.3s ease, color 0.3s ease;
   font-size: 14px;
 }
 
-/* Smooth gem accent color transitions across the entire page */
-.rubi-page-wrapper *,
-.rubi-page-wrapper *::before,
-.rubi-page-wrapper *::after {
-  transition-property: color, background-color, border-color, box-shadow, opacity, transform;
-  transition-duration: 0.35s;
-  transition-timing-function: ease;
+.rubi-page-wrapper {
+  min-height: 100vh;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-size: 14px;
 }
 
 .rubi-options-app {
@@ -749,7 +973,7 @@ body {
   border-bottom: 2px solid var(--accent-base);
   padding-bottom: 16px;
   margin-bottom: 40px;
-  transition: border-color 0.4s ease;
+  transition: border-color 0.3s ease;
 }
 
 .logo-area {
@@ -850,7 +1074,15 @@ body {
   border: 1px solid var(--border-subtle);
   border-radius: 0; /* Boxy journal layout */
   box-shadow: var(--shadow-sm);
-  transition: box-shadow 0.3s ease;
+  transition: box-shadow 0.3s ease, background-color 0.3s ease, border-color 0.3s ease;
+}
+
+.page-footer {
+  margin-top: 40px;
+  padding-top: 20px;
+  padding-bottom: 20px;
+  border-top: 1px dashed var(--border-subtle);
+  text-align: center;
 }
 
 .card-header {
@@ -860,6 +1092,7 @@ body {
   padding: 16px 24px;
   border-bottom: 1px solid var(--border-subtle);
   background-color: var(--bg-primary);
+  transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
 .card-header h2 {
@@ -874,7 +1107,6 @@ body {
   font-family: monospace;
   font-size: 11px;
   color: var(--text-muted);
-  text-transform: uppercase;
 }
 
 .card-body {
@@ -898,7 +1130,7 @@ body {
   font-size: 12px;
   font-weight: 600;
   color: var(--text-secondary);
-  text-transform: uppercase;
+  text-transform: capitalize;
   letter-spacing: 0.5px;
 }
 
@@ -977,6 +1209,32 @@ body {
   border-bottom: 1px solid var(--border-subtle);
   padding-bottom: 18px;
   margin-bottom: 20px;
+}
+
+.shortcut-input {
+  margin-left: 8px;
+  width: 68px;
+  padding: 3px 6px;
+  font-size: 13px;
+  letter-spacing: 1.5px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  background-color: var(--bg-primary);
+  border: 1px solid var(--border-strong);
+  border-radius: 4px;
+  color: var(--text-secondary);
+  vertical-align: middle;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.shortcut-input.is-recording,
+.shortcut-input:focus {
+  outline: none;
+  width: 90px;
+  border-color: var(--accent-base);
+  box-shadow: 0 0 0 2px var(--accent-transparent);
+  color: var(--accent-base);
 }
 
 .toggle-desc h3 {
@@ -1164,6 +1422,19 @@ body {
   flex-shrink: 0;
 }
 
+.engine-inf.row {
+  display: flex;
+  gap: 1.5rem;
+}
+
+.input-group.half {
+  flex: 1;
+}
+
+.input-group.third {
+  flex: 1;
+}
+
 .engine-info {
   display: flex;
   flex-direction: column;
@@ -1283,7 +1554,7 @@ body {
   font-weight: 600;
   margin: 0 0 16px 0;
   color: var(--text-primary);
-  text-transform: uppercase;
+  text-transform: capitalize;
 }
 
 .doc-list {

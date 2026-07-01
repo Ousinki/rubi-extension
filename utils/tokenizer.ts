@@ -13,6 +13,7 @@ export interface DictEntry {
   p?: number[];       // pitch accents (optional)
   m: string[];        // meanings (translations)
   j?: string;         // JLPT level (N5-N1) (optional)
+  lemma?: string;     // Dictionary/prototype form (optional)
 }
 
 // Clean up search word by removing punctuation, spaces, and matching Japanese chars
@@ -97,6 +98,7 @@ export async function lookupWord(text: string): Promise<{ word: string; entry: D
   if (bestHit) {
     let reading = '';
     let meanings: string[] = [];
+    let lemma = '';
 
     if (isName) {
       reading = bestHit.r && bestHit.r.length > 0 ? bestHit.r[0] : '';
@@ -104,12 +106,63 @@ export async function lookupWord(text: string): Promise<{ word: string; entry: D
         const type = tr.type && tr.type.length > 0 ? `[${tr.type.join(', ')}] ` : '';
         return `${type}${tr.det.join(', ')}`;
       });
+      lemma = bestHit.k && bestHit.k.length > 0 ? bestHit.k[0] : (bestHit.r && bestHit.r.length > 0 ? bestHit.r[0] : '');
     } else {
       reading = bestHit.r && bestHit.r.length > 0 ? (bestHit.r[0].ent || '') : '';
       meanings = (bestHit.s || []).map((sense: any) => {
         if (!sense.g) return '';
         return sense.g.map((g: any) => g.str || g).join(', ');
       }).filter(Boolean);
+      lemma = bestHit.k && bestHit.k.length > 0 ? (bestHit.k[0].ent || '') : (bestHit.r && bestHit.r.length > 0 ? (bestHit.r[0].ent || '') : '');
+    }
+
+    let etymology = '';
+    if (!isName && bestHit.s) {
+      // 1. Try to find lsrc (loan source)
+      for (const sense of bestHit.s) {
+        if (sense.lsrc && sense.lsrc.length > 0) {
+          const validLsrc = sense.lsrc.find((l: any) => l.src);
+          if (validLsrc && typeof validLsrc.src === 'string') {
+            etymology = validLsrc.src;
+          } else if (sense.g && sense.g.length > 0) {
+            const firstGloss = sense.g[0];
+            etymology = typeof firstGloss === 'string' ? firstGloss : (firstGloss.str || '');
+          }
+          if (etymology) break;
+        }
+      }
+
+      // 2. Fallback: If no lsrc found, but the word is entirely Katakana, use the first gloss/meaning
+      if (!etymology && lemma) {
+        const isKatakanaWord = /^[\u30a0-\u30ffー]+$/.test(lemma);
+        if (isKatakanaWord) {
+          for (const sense of bestHit.s) {
+            if (sense.g && sense.g.length > 0) {
+              const firstGloss = sense.g[0];
+              etymology = typeof firstGloss === 'string' ? firstGloss : (firstGloss.str || '');
+              if (etymology) break;
+            }
+          }
+        }
+      }
+    }
+
+    if (etymology) {
+      // Clean up parentheses, e.g. "accent (music)" -> "accent"
+      etymology = etymology.replace(/\s*[\(（].*?[\)）]/g, '').trim();
+      lemma = etymology;
+    } else {
+      const isSuruVerb = !isName && bestHit.s && bestHit.s.some((sense: any) => 
+        sense.pos && sense.pos.some((pos: string) => pos.startsWith('vs'))
+      );
+
+      if (isSuruVerb && bestMatchLen > lemma.length) {
+        lemma += 'する';
+      }
+    }
+
+    if (!lemma) {
+      lemma = text.substring(0, bestMatchLen);
     }
 
     return {
@@ -118,7 +171,8 @@ export async function lookupWord(text: string): Promise<{ word: string; entry: D
       entry: {
         r: reading,
         m: meanings,
-        j: ''
+        j: '',
+        lemma
       }
     };
   }

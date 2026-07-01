@@ -20,8 +20,8 @@
     }
   },
   "llm": {
-    "title": "大型語言模型配置",
-    "tag": "API Settings",
+    "title": "AI 翻譯",
+    "tag": "AI Translation",
     "api_key": "API Key",
     "api_key_placeholder": "請輸入 API Key",
     "endpoint": "API Endpoint",
@@ -38,13 +38,23 @@
   "furigana": {
     "title": "假名渲染偏好",
     "tag": "Furigana Preferences",
-    "enable_label": "啟用假名標注",
-    "enable_desc": "在漢字上方顯示平假名",
+    "enable_label": "全文標注",
+    "enable_desc": "允許使用快捷鍵為當前網頁生成全文日文注音",
     "jlpt_label": "JLPT 過濾",
     "jlpt_all": "全部標注",
     "jlpt_hint": "過濾低難度詞彙，僅為所選級別以上的單詞顯示假名。",
     "jlpt_above_pre": "",
-    "jlpt_above_suf": "級以上"
+    "jlpt_above_suf": "級以上",
+    "color_label": "上標顏色",
+    "color_theme": "主體高亮顏色",
+    "color_gray": "低調灰色",
+    "color_text": "隨正文顏色",
+    "font_label": "上標字體",
+    "font_system": "系統預設",
+    "font_sans": "無襯線體 (黑體)",
+    "font_serif": "襯線體 (明朝體)",
+    "font_mono": "等寬字體",
+    "opacity_label": "上標透明度"
   },
   "tts": {
     "title": "語音合成 (TTS)",
@@ -80,12 +90,12 @@
     "google_voice_default": "Google 日本語 (推薦音源)"
   },
   "lookup": {
-    "title": "查詞與釋義彈窗",
-    "tag": "Lookup & Panel",
+    "title": "機器翻譯",
+    "tag": "Machine Translation",
     "mt_label": "機器翻譯",
     "mt_google": "Google 翻譯",
     "mt_bing": "Bing 翻譯",
-    "mt_local": "本地詞典",
+    "mt_local": "不啟用（僅使用內置本地詞典）",
     "position_label": "彈窗位置",
     "pos_bottom": "正下方 (推薦)",
     "pos_top": "正上方",
@@ -93,7 +103,10 @@
     "dict_source": "本地詞典數據來源：",
     "dict_license": "協議授權，",
     "dict_count": "共收錄 419,643 條詞條。",
-    "dict_org": "(Electronic Dictionary Research & Development Group)，以"
+    "dict_org": "(Electronic Dictionary Research & Development Group)，以",
+    "mt_deepl": "DeepL 翻译",
+    "inspiration_pre": "部分核心功能與交互靈感來源於開源擴展 ",
+    "inspiration_suf": "，特此致謝。"
   },
   "lang": {
     "zh_cn": "簡體中文",
@@ -101,5 +114,24 @@
     "en": "English",
     "ja": "日本語",
     "ko": "한국어"
+  },
+  "paragraph": {
+    "title": "段落翻譯",
+    "tag": "Global Shortcuts & Paragraph Translation",
+    "desc": "配置段落翻譯的觸發快捷鍵。它能在不破壞原有日文版面的前提下，將中文翻譯像拼音一樣注入到生詞上方。",
+    "enable_label": "段落翻譯快捷鍵觸發",
+    "enable_desc": "允許使用快捷鍵對當前滑鼠所在的段落進行整段內聯翻譯",
+    "trigger_label": "觸發方式",
+    "trigger_none": "關閉",
+    "trigger_shift": "+ Shift 翻譯 / 還原該段",
+    "trigger_ctrl": "+ Ctrl 翻譯 / 還原該段",
+    "trigger_alt": "+ ⌥ 翻譯 / 還原該段",
+    "trigger_longpress": "+ 長按滑鼠左鍵",
+    "trigger_direct": "直接翻譯該段",
+    "trigger_custom": "自訂快捷鍵",
+    "shortcut_label": "自訂快捷鍵",
+    "recording": "按下快捷鍵組合…",
+    "click_to_set": "點擊設定",
+    "direct_hint": "⚠ 直接模式會在滑鼠懸停新段落時自動翻譯，可能產生大量翻譯請求。"
   }
 }

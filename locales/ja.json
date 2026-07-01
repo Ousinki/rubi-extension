@@ -20,8 +20,8 @@
     }
   },
   "llm": {
-    "title": "大規模言語モデル設定",
-    "tag": "API Settings",
+    "title": "AI翻訳",
+    "tag": "AI Translation",
     "api_key": "API キー",
     "api_key_placeholder": "API キーを入力してください",
     "endpoint": "API エンドポイント",
@@ -38,13 +38,23 @@
   "furigana": {
     "title": "ふりがな表示設定",
     "tag": "Furigana Preferences",
-    "enable_label": "ふりがなを有効にする",
-    "enable_desc": "漢字の上にひらがなを表示する",
+    "enable_label": "全体ルビ振り",
+    "enable_desc": "ショートカットキーによるページ全体のルビ振りを許可する",
     "jlpt_label": "JLPT フィルター",
     "jlpt_all": "すべての漢字",
     "jlpt_hint": "低難度の語彙を除外し、選択したJLPTレベル以上の単語にのみふりがなを表示します。",
     "jlpt_above_pre": "",
-    "jlpt_above_suf": "以上"
+    "jlpt_above_suf": "以上",
+    "color_label": "ルビの色",
+    "color_theme": "テーマカラー",
+    "color_gray": "グレー",
+    "color_text": "テキスト色",
+    "font_label": "ルビのフォント",
+    "font_system": "システム標準",
+    "font_sans": "ゴシック体",
+    "font_serif": "明朝体",
+    "font_mono": "等幅フォント",
+    "opacity_label": "ルビの不透明度"
   },
   "tts": {
     "title": "音声合成 (TTS)",
@@ -80,12 +90,12 @@
     "google_voice_default": "Google 日本語 (推奨)"
   },
   "lookup": {
-    "title": "辞書検索と意味ポップアップ",
-    "tag": "Lookup & Panel",
+    "title": "機械翻訳",
+    "tag": "Machine Translation",
     "mt_label": "機械翻訳",
     "mt_google": "Google 翻訳",
     "mt_bing": "Bing 翻訳",
-    "mt_local": "ローカル辞書",
+    "mt_local": "無効 (内蔵辞書のみを使用)",
     "position_label": "ポップアップ位置",
     "pos_bottom": "真下 (推奨)",
     "pos_top": "真上",
@@ -93,7 +103,10 @@
     "dict_source": "ローカル辞書データソース：",
     "dict_license": "ライセンスで提供され、",
     "dict_count": "合計419,643項目が収録されています。",
-    "dict_org": "(Electronic Dictionary Research & Development Group)、"
+    "dict_org": "(Electronic Dictionary Research & Development Group)、",
+    "mt_deepl": "DeepL翻訳",
+    "inspiration_pre": "一部のコア機能とインタラクションは、オープンソースの拡張機能 ",
+    "inspiration_suf": " を参考にしています。感謝申し上げます。"
   },
   "lang": {
     "zh_cn": "简体中文",
@@ -101,5 +114,24 @@
     "en": "English",
     "ja": "日本語",
     "ko": "한국어"
+  },
+  "paragraph": {
+    "title": "段落翻訳",
+    "tag": "Global Shortcuts & Paragraph Translation",
+    "desc": "段落全体の翻訳を表示するトリガーショートカットを設定します。元のレイアウトを崩さずに翻訳を単語の上に挿入します。",
+    "enable_label": "段落翻訳ショートカットトリガー",
+    "enable_desc": "ショートカットキーを使用して、マウス位置の段落全体をその場で翻訳できるようにします",
+    "trigger_label": "トリガー方式",
+    "trigger_none": "無効",
+    "trigger_shift": "+ Shift 翻訳 / 段落を戻す",
+    "trigger_ctrl": "+ Ctrl 翻訳 / 段落を戻す",
+    "trigger_alt": "+ ⌥ 翻訳 / 段落を戻す",
+    "trigger_longpress": "+ マウス左ボタン長押し",
+    "trigger_direct": "直接段落を翻訳",
+    "trigger_custom": "カスタムショートカット",
+    "shortcut_label": "カスタムショートカット",
+    "recording": "ショートカットキーを押してください...",
+    "click_to_set": "クリックして設定",
+    "direct_hint": "⚠ ダイレクトモードでは新しい段落にホバーすると自動翻訳され、多くの翻訳リクエストが発生する可能性があります。"
   }
 }

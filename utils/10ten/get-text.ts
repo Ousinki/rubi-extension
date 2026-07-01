@@ -103,7 +103,7 @@ function getFirstCharBbox(position: CursorPosition): DOMRect | undefined {
   }
 
   const firstCharRange = getRangeForSingleCodepoint({
-    source: position.offsetNode as Node,
+    source: position.offsetNode as Text,
     offset: position.offset,
   });
 

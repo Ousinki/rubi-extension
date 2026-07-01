@@ -279,18 +279,33 @@ export async function explainWordJa(settings: RubiSettings, word: string, senten
 }
 
 // ─── AI 极简语境翻译 (仅翻译文本) ────────────────────────────────
-function getContextualTranslatePromptJa(langName: string): string {
-  return `你是一个高级的日语语境分析与翻译引擎。
+function getContextualTranslatePromptJa(langName: string, collocEnabled: boolean): string {
+  let prompt = `你是一个高级的日语语境 analysis 与翻译引擎。
 
 【核心任务】：
-用户在阅读日语文章时，鼠标点击（或长按）了其中一个单词。你需要结合整个句子的语境，判断用户想了解的是什么，并给出最精准的${langName}翻译。
+用户在阅读日语文章时，鼠标点击（或长按）了其中一个单词或汉字。你需要结合整个句子的语境，判断用户真正想了解的是什么，并给出最精准的${langName}翻译。
 
 【强制规则】：
-1. 绝不要输出任何多余的开头语或 Markdown 语法！
+1. 绝不要输出任何多余的开头语、拼音、假名或 Markdown 语法！（不要说“好的”之类的废话）
 2. 翻译必须精准贴合当前日语语境。
-3. 【专有名词/缩写词强制解释】：如果是人名、地名、软件名、二次元术语等，绝对禁止将其原样照抄作为翻译。你必须用一句话简明扼要地解释它是什么。
-4. 【输出格式（极其重要）】：必须严格输出 JSON 格式，不要包含任何 markdown 代码块标记（如 \`\`\`json）：
-{"word": "提取的日语原型", "translation": "译文及解释", "reading": "读音假名"}`;
+3. 【专有名词强制解释】：如果目标词汇是软件名、品牌名、人名、地名、技术专有词汇等（如 Wikipedia 等），**绝对禁止**将其原样照抄作为翻译。你必须用一句话简明扼要地解释它是什么。`;
+
+  if (collocEnabled) {
+    prompt += `
+4. 【智能语境搭配（最高优先级）】：请务必检查用户点击的单词/汉字，在句子中是否与相邻的助词、动词或名词组成了复合词、固定搭配（如「気がする」、「取り組む」）、惯用表达（如「〜に関して」）、或者语法句型。
+   - 如果是，你**必须自动向外扩展**，将整个词组或语法结构作为一个整体提取出来！
+   - 如果没有搭配，才只提取用户点击的独立单词。`;
+  }
+
+  prompt += `
+5. 【输出格式（极其重要）】：必须严格输出 JSON 格式，**不要包含 any markdown 代码块标记（如 \`\`\`json）**：
+{"word": "提取的日语原型或词组", "translation": "中文翻译或解释"}
+
+【专有名词/无翻译词汇的红线规则】：
+如果目标词汇是软件名、品牌等，或者在中文中没有对应的翻译词，**\`translation\` 字段的值绝对不允许和 \`word\` 字段相同**！
+你必须在 \`translation\` 中写一句话简明扼要地解释它是什么。`;
+
+  return prompt;
 }
 
 export async function contextualTranslateJa(settings: RubiSettings, word: string, sentence: string): Promise<string> {
@@ -308,11 +323,12 @@ export async function contextualTranslateJa(settings: RubiSettings, word: string
 
 【强制规则】：
 1. 翻译用户选中的完整文本，不要只翻译其中某个单词！
-2. 绝不要输出任何多余的开头语、解释或 Markdown 语法！
+2. 绝不要输出 any 多余的开头语、解释或 Markdown 语法！
 3. 【输出格式】：直接输出${langName}翻译结果，不需要日文原文。`;
     userContent = `【选中的文本】：${word}\n【所在上下文】：${sentence}`;
   } else {
-    systemPrompt = getContextualTranslatePromptJa(langName);
+    const collocEnabled = settings.enableContextualCollocation ?? true;
+    systemPrompt = getContextualTranslatePromptJa(langName, collocEnabled);
     userContent = `【用户点击的日语】：${word}\n【所在句子】：${sentence}`;
   }
 
@@ -359,9 +375,8 @@ export async function contextualTranslateJa(settings: RubiSettings, word: string
   try {
     const jsonStr = trimmed.replace(/^```json/, '').replace(/```$/, '').trim();
     const parsed = JSON.parse(jsonStr);
-    if (parsed.word && parsed.translation) {
-      const reading = parsed.reading ? ` [${parsed.reading}]` : '';
-      return `${parsed.word}${reading} (${parsed.translation})`;
+    if (parsed.translation) {
+      return parsed.translation;
     }
   } catch (e) {
     console.warn('[Rubi AI] AI Response was not valid JSON:', trimmed);

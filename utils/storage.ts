@@ -45,12 +45,16 @@ export interface RubiSettings {
   translationPosition: 'top' | 'bottom' | 'pronounce-badge';
   showTranslationEngine: boolean;
   showSingleClickReading: boolean; // Show furigana tooltip on single click
+  translationTrigger: 'hover' | 'click' | 'dblclick';
   
   enableAutoTranslate: boolean;
   enableClickTranslate: boolean;
   enableLongPressTranslate: boolean;
   enableContextualCollocation: boolean;
   paragraphShortcut: string;
+  enableInlineParagraphTranslate: boolean;
+  inlineParagraphTrigger: 'none' | 'shift' | 'ctrl' | 'alt' | 'longpress' | 'direct' | 'custom';
+  inlineParagraphCustomShortcut: string;
   uiLanguage: 'zh-CN' | 'zh-TW' | 'ja' | 'en' | 'ko';
   targetLanguage: 'zh-CN' | 'zh-TW' | 'ja' | 'en' | 'ko';
   
@@ -65,8 +69,12 @@ export interface RubiSettings {
 
   // Japanese specific settings
   enableFuriganaRuby: boolean;       // Enable full-page Furigana ruby annotations
+  furiganaShortcut: string;          // Shortcut to toggle Furigana (e.g. Alt+KeyF)
   furiganaDisplayMode: 'ruby' | 'overlay' | 'inline'; // Furigana display mode
   jlptFilterLevel: 'all' | 'N5' | 'N4' | 'N3' | 'N2' | 'N1'; // Filter annotations by JLPT difficulty
+  furiganaColor: 'theme' | 'gray' | 'text';          // Furigana color
+  furiganaFont: 'system' | 'sans-serif' | 'serif' | 'monospace'; // Furigana font
+  furiganaOpacity: '0.4' | '0.6' | '0.8' | '1.0';    // Furigana opacity
   
   highlightStyle: 'purple' | 'yellow' | 'pink' | 'blue'; // UI highlight color theme
 }
@@ -97,12 +105,16 @@ export const DEFAULT_SETTINGS: RubiSettings = {
   translationPosition: 'bottom',
   showTranslationEngine: true,
   showSingleClickReading: true,
+  translationTrigger: 'hover',
   
   enableAutoTranslate: true,
   enableClickTranslate: false,
   enableLongPressTranslate: true,
   enableContextualCollocation: true,
   paragraphShortcut: 'Alt+KeyT',
+  enableInlineParagraphTranslate: true,
+  inlineParagraphTrigger: 'shift',
+  inlineParagraphCustomShortcut: 'Alt+KeyP',
   uiLanguage: 'zh-CN',
   targetLanguage: 'zh-CN',
   
@@ -117,8 +129,12 @@ export const DEFAULT_SETTINGS: RubiSettings = {
 
   // Japanese specific settings default
   enableFuriganaRuby: false,
+  furiganaShortcut: 'Alt+KeyF',
   furiganaDisplayMode: 'ruby',
   jlptFilterLevel: 'N3',
+  furiganaColor: 'theme',
+  furiganaFont: 'system',
+  furiganaOpacity: '0.8',
   
   highlightStyle: 'purple',
 };

@@ -1,7 +1,7 @@
 import { AbortError } from '@birchill/jpdict-idb';
 import { expandChoon, kyuujitaiToShinjitai } from '@birchill/normal-jp';
 
-function isNoSplitPoint(input: string, pos: number): boolean { return false; }
+function isNoSplitPoint(input: number | undefined, pos: number): boolean { return false; }
 function isOnlyDigits(input: string): boolean { return /^\d+$/.test(input); }
 function toRomaji(input: string): string { return input; }
 

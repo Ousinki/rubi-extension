@@ -158,32 +158,52 @@
               </div>
 
               <!-- DeepL API Key Field -->
-              <div v-if="settings.translationEngine === 'deepl'" class="row" style="margin-top: 20px;">
-                <div class="input-group full">
-                  <label>{{ t('lookup.deepl_api_key_label') }}</label>
-                  <div class="password-wrapper">
-                    <input 
-                      :type="showDeeplApiKey ? 'text' : 'password'" 
-                      v-model="settings.deeplApiKey" 
-                      :placeholder="t('lookup.deepl_api_key_placeholder')" 
-                      @change="saveSettings"
-                    />
-                    <button type="button" class="toggle-password-btn" @click="showDeeplApiKey = !showDeeplApiKey" :title="showDeeplApiKey ? t('llm.hide_key') : t('llm.show_key')">
-                      <svg v-if="!showDeeplApiKey" viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                        <circle cx="12" cy="12" r="3"></circle>
-                      </svg>
-                      <svg v-else viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
-                        <line x1="1" y1="1" x2="23" y2="23"></line>
-                      </svg>
+              <template v-if="settings.translationEngine === 'deepl'">
+                <div class="row" style="margin-top: 20px;">
+                  <div class="input-group full">
+                    <label>{{ t('lookup.deepl_api_key_label') }}</label>
+                    <div class="password-wrapper">
+                      <input 
+                        :type="showDeeplApiKey ? 'text' : 'password'" 
+                        v-model="settings.deeplApiKey" 
+                        :placeholder="t('lookup.deepl_api_key_placeholder')" 
+                        @change="saveSettings"
+                      />
+                      <button type="button" class="toggle-password-btn" @click="showDeeplApiKey = !showDeeplApiKey" :title="showDeeplApiKey ? t('llm.hide_key') : t('llm.show_key')">
+                        <svg v-if="!showDeeplApiKey" viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                          <circle cx="12" cy="12" r="3"></circle>
+                        </svg>
+                        <svg v-else viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                          <line x1="1" y1="1" x2="23" y2="23"></line>
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="row" style="margin-top: 12px; align-items: center;">
+                  <div class="half">
+                    <p class="input-help" style="font-size: 12.5px; color: var(--text-tertiary); margin: 0; line-height: 1.4;" v-html="t('lookup.deepl_api_key_help')"></p>
+                  </div>
+                  <div class="half action-group" style="text-align: right;">
+                    <button 
+                      type="button"
+                      class="btn btn-action" 
+                      @click="testDeeplApi" 
+                      :disabled="isTestingDeepl"
+                      style="min-width: 120px;"
+                    >
+                      {{ isTestingDeepl ? t('lookup.deepl_testing_btn') : t('lookup.deepl_test_btn') }}
                     </button>
                   </div>
-                  <p class="input-help" style="margin-top: 6px; font-size: 12.5px; color: var(--text-tertiary);">
-                    {{ t('lookup.deepl_api_key_help') }}
-                  </p>
                 </div>
-              </div>
+
+                <div v-if="deeplTestResult" class="test-feedback" :class="deeplTestResult.success ? 'success' : 'error'" style="margin-top: 12px; width: 100%;">
+                  {{ deeplTestResult.success ? t('lookup.deepl_test_success_pre') + deeplTestResult.latency + t('lookup.deepl_test_success_suf') : t('lookup.deepl_test_fail_pre') + deeplTestResult.error }}
+                </div>
+              </template>
 
               <p class="dict-attribution">
                 {{ t('lookup.dict_source') }}
@@ -600,6 +620,8 @@ const jaVoices = ref<SpeechSynthesisVoice[]>([]);
 const isTestingApi = ref(false);
 const showApiKey = ref(false);
 const showDeeplApiKey = ref(false);
+const isTestingDeepl = ref(false);
+const deeplTestResult = ref<{ success: boolean; latency?: number; error?: string } | null>(null);
 const testResult = ref<{ success: boolean; latency?: number; error?: string } | null>(null);
 const isSpeaking = ref(false);
 const ttsWarning = ref<string | null>(null);
@@ -834,6 +856,41 @@ async function testApi() {
     };
   } finally {
     isTestingApi.value = false;
+  }
+}
+
+async function testDeeplApi() {
+  isTestingDeepl.value = true;
+  deeplTestResult.value = null;
+
+  try {
+    const startTime = Date.now();
+    const resp = await browser.runtime.sendMessage({
+      type: 'FETCH_TRANSLATION',
+      text: 'こんにちは',
+      sourceLang: 'ja',
+      targetLang: 'zh-CN',
+      engine: 'deepl'
+    });
+
+    if (resp && resp.targetText && resp.engine === 'deepl') {
+      deeplTestResult.value = {
+        success: true,
+        latency: Date.now() - startTime
+      };
+    } else {
+      deeplTestResult.value = {
+        success: false,
+        error: resp?.errorInfo || resp?.error || '接口请求失败，连接已被屏蔽或返回了 429 错误'
+      };
+    }
+  } catch (err: any) {
+    deeplTestResult.value = {
+      success: false,
+      error: err.message || '网络连接异常，无法访问 DeepL'
+    };
+  } finally {
+    isTestingDeepl.value = false;
   }
 }
 

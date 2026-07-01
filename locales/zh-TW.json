@@ -107,7 +107,12 @@
     "mt_deepl": "DeepL 翻译",
     "deepl_api_key_label": "DeepL API Key (選填)",
     "deepl_api_key_placeholder": "在此填入你的 DeepL 開發者 API Key",
-    "deepl_api_key_help": "如果填入，將透過官方免額度 API 接口翻譯（穩定且不限流）；留空則使用網頁免金鑰通道（易受 IP 限制導致 429 報錯並降級至 Google）。",
+    "deepl_api_key_help": "如果填入，將透過官方免額度 API 接口翻譯（穩定且不限流，可在 <a href='https://developers.deepl.com/docs/getting-started/quickstart' target='_blank' rel='noopener'>DeepL 官網免費申請</a>）；留空則使用網頁免金鑰通道（易受 IP 限制導致 429 報錯並降級至 Google）。",
+    "deepl_test_btn": "測試 DeepL 連線",
+    "deepl_testing_btn": "測試中...",
+    "deepl_test_success_pre": "連線成功！延遲 ",
+    "deepl_test_success_suf": " ms，DeepL API 能夠正常工作！",
+    "deepl_test_fail_pre": "連線失敗：",
     "inspiration_pre": "部分核心功能與交互靈感來源於開源擴展 ",
     "inspiration_suf": "，特此致謝。"
   },

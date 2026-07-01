@@ -112,7 +112,12 @@
     "mt_deepl": "DeepL Translate",
     "deepl_api_key_label": "DeepL API Key (Optional)",
     "deepl_api_key_placeholder": "Enter your DeepL Developer API Key",
-    "deepl_api_key_help": "If provided, translation will use the official API (stable & bypasses rate limits). If left blank, the unofficial free endpoint will be used (which may return 429 and fallback to Google).",
+    "deepl_api_key_help": "If provided, translation will use the official API (stable & bypasses rate limits, you can <a href='https://developers.deepl.com/docs/getting-started/quickstart' target='_blank' rel='noopener'>apply for free on DeepL website</a>). If left blank, the unofficial free endpoint will be used (which may return 429 and fallback to Google).",
+    "deepl_test_btn": "Test DeepL Connection",
+    "deepl_testing_btn": "Testing...",
+    "deepl_test_success_pre": "Connected successfully! Latency ",
+    "deepl_test_success_suf": " ms, DeepL API is working properly!",
+    "deepl_test_fail_pre": "Connection failed: ",
     "inspiration_pre": "Some core features and UX are inspired by the open-source extension ",
     "inspiration_suf": ". Special thanks."
   },

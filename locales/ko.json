@@ -102,7 +102,12 @@
     "mt_deepl": "DeepL 번역",
     "deepl_api_key_label": "DeepL API Key (선택)",
     "deepl_api_key_placeholder": "여기에 DeepL 개발자 API 키를 입력하세요",
-    "deepl_api_key_help": "입력하면 공식 API를 통해 번역을 수행합니다(안정적이고 한도 없음). 비워두면 비공식 무료 엔드포인트를 사용합니다(429 오류가 발생하여 Google로 폴백될 수 있습니다).",
+    "deepl_api_key_help": "입력하면 공식 API를 통해 번역을 수행합니다(안정적이고 한도 없음, <a href='https://developers.deepl.com/docs/getting-started/quickstart' target='_blank' rel='noopener'>DeepL 공식 사이트에서 무료 신청</a> 가능). 비워두면 비공식 무료 엔드포인트를 사용합니다(429 오류가 발생하여 Google로 폴백될 수 있습니다).",
+    "deepl_test_btn": "DeepL 연결 테스트",
+    "deepl_testing_btn": "테스트 중...",
+    "deepl_test_success_pre": "연결 성공! 지연 시간 ",
+    "deepl_test_success_suf": " ms, DeepL API가 정상적으로 작동합니다!",
+    "deepl_test_fail_pre": "연결 실패: ",
     "inspiration_pre": "일부 핵심 기능과 상호 작용은 오픈 소스 확장 프로그램인 ",
     "inspiration_suf": " 에서 영감을 받았습니다. 감사드립니다."
   },

@@ -139,9 +139,35 @@ export const DEFAULT_SETTINGS: RubiSettings = {
   highlightStyle: 'purple',
 };
 
-export const settingsStorage = storage.defineItem<RubiSettings>(
+const rawSettingsStorage = storage.defineItem<RubiSettings>(
   'sync:rubi-settings',
   { fallback: DEFAULT_SETTINGS }
 );
+
+export const settingsStorage = {
+  key: rawSettingsStorage.key,
+  remove: () => rawSettingsStorage.remove(),
+  async getValue(): Promise<RubiSettings> {
+    const val = await rawSettingsStorage.getValue();
+    return { ...DEFAULT_SETTINGS, ...val };
+  },
+  async setValue(val: RubiSettings): Promise<void> {
+    const cleanVal = { ...val };
+    for (const key of Object.keys(cleanVal) as Array<keyof RubiSettings>) {
+      if (cleanVal[key] === undefined) {
+        delete cleanVal[key];
+      }
+    }
+    await rawSettingsStorage.setValue(cleanVal);
+  },
+  watch(callback: (newVal: RubiSettings | null, oldVal: RubiSettings | null) => void): () => void {
+    return rawSettingsStorage.watch((newVal, oldVal) => {
+      const mergedNew = newVal ? { ...DEFAULT_SETTINGS, ...newVal } : null;
+      const mergedOld = oldVal ? { ...DEFAULT_SETTINGS, ...oldVal } : null;
+      callback(mergedNew, mergedOld);
+    });
+  }
+};
+
 export type RTTRSettings = RubiSettings; // Alias for ported component compatibility
 export type settingsStorageType = typeof settingsStorage;

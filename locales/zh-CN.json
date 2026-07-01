@@ -110,6 +110,9 @@
     "dict_count": "共收录 419,643 条词条。",
     "dict_org": "(Electronic Dictionary Research & Development Group)，以",
     "mt_deepl": "DeepL 翻译",
+    "deepl_api_key_label": "DeepL API Key (可选)",
+    "deepl_api_key_placeholder": "在此填入你的 DeepL 开发者 API Key",
+    "deepl_api_key_help": "如果填入，将通过官方免额度 API 接口翻译（稳定且不限流）；留空则使用网页免密钥通道（易受 IP 限制导致 429 报错并降级至 Google）。",
     "inspiration_pre": "部分核心功能与交互灵感来源于开源扩展 ",
     "inspiration_suf": "，特此致谢。"
   },

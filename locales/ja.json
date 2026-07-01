@@ -105,6 +105,9 @@
     "dict_count": "合計419,643項目が収録されています。",
     "dict_org": "(Electronic Dictionary Research & Development Group)、",
     "mt_deepl": "DeepL翻訳",
+    "deepl_api_key_label": "DeepL API Key (任意)",
+    "deepl_api_key_placeholder": "ここにDeepLデベロッパーAPIキーを入力します",
+    "deepl_api_key_help": "入力すると、公式API経由で翻訳します（安定・制限なし）。空白の場合、非公式のフリーAPIが使用されます（429エラーが発生しGoogleにフォールバックすることがあります）。",
     "inspiration_pre": "一部のコア機能とインタラクションは、オープンソースの拡張機能 ",
     "inspiration_suf": " を参考にしています。感謝申し上げます。"
   },

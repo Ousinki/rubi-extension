@@ -23,6 +23,7 @@ export interface RubiSettings {
   apiKey: string;
   apiEndpoint: string;
   model: string;
+  deeplApiKey: string;
 
   apiProfiles: ApiProfile[];
   activeApiProfileId: string;
@@ -83,6 +84,7 @@ export const DEFAULT_SETTINGS: RubiSettings = {
   apiKey: '',
   apiEndpoint: 'https://api.openai.com/v1/chat/completions',
   model: 'gpt-4o-mini',
+  deeplApiKey: '',
 
   apiProfiles: [],
   activeApiProfileId: '',

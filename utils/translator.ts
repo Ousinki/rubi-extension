@@ -1,3 +1,5 @@
+import { settingsStorage } from './storage';
+
 export type TranslationEngine = 'google' | 'deepl' | 'bing' | 'none' | 'AI';
 
 export interface FetchTranslationResponse {
@@ -61,7 +63,47 @@ function getTimeStamp(iCount: number) {
   }
 }
 
-async function translateDeepL(text: string, sourceLang: string, targetLang: string): Promise<FetchTranslationResponse> {
+async function translateDeepL(text: string, sourceLang: string, targetLang: string, apiKey?: string): Promise<FetchTranslationResponse> {
+  if (apiKey && apiKey.trim()) {
+    const isFreeKey = apiKey.trim().endsWith(':fx');
+    const endpoint = isFreeKey
+      ? 'https://api-free.deepl.com/v2/translate'
+      : 'https://api.deepl.com/v2/translate';
+
+    const sourceLangUpper = sourceLang === 'auto' ? undefined : sourceLang.toUpperCase();
+    let targetLangUpper = targetLang.toUpperCase();
+    if (targetLangUpper.startsWith('ZH')) {
+      targetLangUpper = 'ZH';
+    }
+
+    const res = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'Authorization': `DeepL-Auth-Key ${apiKey.trim()}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        text: [text],
+        source_lang: sourceLangUpper,
+        target_lang: targetLangUpper
+      })
+    });
+
+    if (!res.ok) {
+      throw new Error(`Official DeepL API error: ${res.status} ${res.statusText}`);
+    }
+
+    const data = await res.json();
+    if (data.translations && data.translations.length > 0) {
+      return {
+        engine: 'deepl',
+        targetText: data.translations[0].text,
+        detectedLang: data.translations[0].detected_source_language
+      };
+    }
+    throw new Error('Official DeepL API returned invalid format');
+  }
+
   const url = "https://www2.deepl.com/jsonrpc";
   
   // DeepL expects specific uppercase lang codes, ZH for Chinese
@@ -196,6 +238,9 @@ async function translateBing(text: string, sourceLang: string, targetLang: strin
 
 // --- Main Handler ---
 export async function handleFetchTranslation(text: string, sourceLang: string, targetLang: string, engine: TranslationEngine): Promise<FetchTranslationResponse> {
+  const settings = await settingsStorage.getValue();
+  const deeplApiKey = settings?.deeplApiKey;
+
   const engines: TranslationEngine[] = [engine];
   if (engine !== 'google') engines.push('google');
   if (engine !== 'bing') engines.push('bing');
@@ -208,7 +253,7 @@ export async function handleFetchTranslation(text: string, sourceLang: string, t
         case 'google':
           return { ...await translateGoogle(text, sourceLang, targetLang), errorInfo: lastError?.message };
         case 'deepl':
-          return { ...await translateDeepL(text, sourceLang, targetLang), errorInfo: lastError?.message };
+          return { ...await translateDeepL(text, sourceLang, targetLang, deeplApiKey), errorInfo: lastError?.message };
         case 'bing':
           return { ...await translateBing(text, sourceLang, targetLang), errorInfo: lastError?.message };
         default:

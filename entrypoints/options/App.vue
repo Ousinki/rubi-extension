@@ -157,6 +157,34 @@
                 </div>
               </div>
 
+              <!-- DeepL API Key Field -->
+              <div v-if="settings.translationEngine === 'deepl'" class="row" style="margin-top: 20px;">
+                <div class="input-group full">
+                  <label>{{ t('lookup.deepl_api_key_label') }}</label>
+                  <div class="password-wrapper">
+                    <input 
+                      :type="showDeeplApiKey ? 'text' : 'password'" 
+                      v-model="settings.deeplApiKey" 
+                      :placeholder="t('lookup.deepl_api_key_placeholder')" 
+                      @change="saveSettings"
+                    />
+                    <button type="button" class="toggle-password-btn" @click="showDeeplApiKey = !showDeeplApiKey" :title="showDeeplApiKey ? t('llm.hide_key') : t('llm.show_key')">
+                      <svg v-if="!showDeeplApiKey" viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                        <circle cx="12" cy="12" r="3"></circle>
+                      </svg>
+                      <svg v-else viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                        <line x1="1" y1="1" x2="23" y2="23"></line>
+                      </svg>
+                    </button>
+                  </div>
+                  <p class="input-help" style="margin-top: 6px; font-size: 12.5px; color: var(--text-tertiary);">
+                    {{ t('lookup.deepl_api_key_help') }}
+                  </p>
+                </div>
+              </div>
+
               <p class="dict-attribution">
                 {{ t('lookup.dict_source') }}
                 <a href="https://www.edrdg.org/jmdict/j_jmdict.html" target="_blank" rel="noopener">JMdict</a>
@@ -571,6 +599,7 @@ watch(() => settings.uiLanguage, (newLang) => {
 const jaVoices = ref<SpeechSynthesisVoice[]>([]);
 const isTestingApi = ref(false);
 const showApiKey = ref(false);
+const showDeeplApiKey = ref(false);
 const testResult = ref<{ success: boolean; latency?: number; error?: string } | null>(null);
 const isSpeaking = ref(false);
 const ttsWarning = ref<string | null>(null);

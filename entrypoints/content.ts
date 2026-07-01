@@ -785,6 +785,11 @@ function setupEventListeners() {
 function getFallbackWordLength(text: string): number {
   if (!text) return 0;
   
+  const numberMatch = text.match(/^[0-9０-９,\.一二三四五六七八九十百千万億兆]+/);
+  if (numberMatch && /^[0-9０-９]/.test(text)) {
+    return numberMatch[0].length;
+  }
+  
   const katakanaMatch = text.match(/^[\u30a0-\u30ffー]+/);
   if (katakanaMatch) {
     return katakanaMatch[0].length;
@@ -805,6 +810,8 @@ function getFallbackWordLength(text: string): number {
 
 // ─── Word Sourcing & Highlighting ───────────────────────────
 async function handleMouseMove(e: MouseEvent) {
+  if (uiState.translationBadge.pinned) return;
+
   try {
     await loadDictionary();
 
@@ -834,11 +841,12 @@ async function handleMouseMove(e: MouseEvent) {
 
     const startsWithKatakana = /^[\u30a0-\u30ffー]/.test(scanResult.text);
     const startsWithKanji = /^[\u4e00-\u9fff]/.test(scanResult.text);
+    const startsWithNumber = /^[0-9０-９]/.test(scanResult.text);
 
     const katakanaBlockLen = startsWithKatakana ? (scanResult.text.match(/^[\u30a0-\u30ffー]+/)?.[0].length || 0) : 0;
     if (katakanaBlockLen > 0 && matchedLength < katakanaBlockLen) {
       isAiFallback = true;
-    } else if (!match && (startsWithKatakana || startsWithKanji)) {
+    } else if (!match && (startsWithKatakana || startsWithKanji || startsWithNumber)) {
       isAiFallback = true;
     }
 
@@ -957,7 +965,7 @@ async function handleMouseMove(e: MouseEvent) {
 
         // 1. Show Top Pronounce Badge (Japanese Word & Hiragana Reading)
         uiActions.showPronounceBadge(
-          displayReading ? displayReading : (matchedEntry?.lemma || matchedWord),
+          displayReading || (isAiFallback ? '...' : ''), // Pass '...' for AI fallback to show loading dots, empty string otherwise
           rect,
           false,
           matchedEntry?.lemma || matchedWord,
@@ -993,6 +1001,11 @@ async function handleMouseMove(e: MouseEvent) {
             }).then((resp: any) => {
               if (currentWord !== wordSnapshot) return;
               if (uiState.translationBadge.pinned && uiState.translationBadge.askMode) return;
+              
+              if (resp?.reading) {
+                uiActions.updatePronounceBadgeContent(resp.reading);
+              }
+
               const result = resp?.translation || 'AI 翻译失败';
               const activeRect = getRect();
               uiActions.showTranslationBadge(
@@ -1128,6 +1141,10 @@ async function triggerTranslation(word: string, targetRange: Range, targetRectIn
       });
       if (currentWord !== wordSnapshot) return;
       if (uiState.translationBadge.pinned && uiState.translationBadge.askMode) return;
+      
+      if (response?.reading) {
+        uiActions.updatePronounceBadgeContent(response.reading);
+      }
       
       const result = response?.translation || 'AI 翻译失败';
       uiActions.showTranslationBadge(
@@ -1478,8 +1495,12 @@ function scheduleHide() {
   if (hoverTimer) return;
   hoverTimer = setTimeout(() => {
     if (!isMouseOverPopup) {
+      if (uiState.translationBadge.pinned) {
+        hoverTimer = null;
+        return;
+      }
       clearHoverHighlight();
-      uiActions.hidePronounceBadge();
+      if (!uiState.pronounceBadge.pinned) uiActions.hidePronounceBadge();
       uiActions.hideTranslationBadge();
     }
     hoverTimer = null;

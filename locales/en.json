@@ -17,6 +17,14 @@
       "ruby": "Ruby",
       "yellow": "Citrine",
       "blue": "Sapphire"
+    },
+    "tooltip_theme_label": "Tooltip Theme",
+    "tooltip_theme": {
+      "system": "System Default",
+      "light": "Light",
+      "dark": "Dark",
+      "beige": "Beige (Eye Care)",
+      "glass": "Glass"
     }
   },
   "llm": {
@@ -93,7 +101,7 @@
   "lookup": {
     "title": "Machine Translation",
     "tag": "Machine Translation",
-    "mt_label": "Machine Translation",
+    "mt_label": "Translation Engine",
     "mt_google": "Google Translate",
     "mt_bing": "Bing Translate",
     "mt_local": "Disabled (Use local dictionary only)",

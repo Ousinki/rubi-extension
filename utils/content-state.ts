@@ -204,6 +204,14 @@ export const uiActions = {
       syncAction('updatePronounceBadgeTranslation', translation);
     }
   },
+  updatePronounceBadgeContent(content: string, isSync = false) {
+    if (uiState.pronounceBadge.visible) {
+      uiState.pronounceBadge.content = content;
+    }
+    if (!isSync) {
+      syncAction('updatePronounceBadgeContent', content);
+    }
+  },
   hidePronounceBadge(isSync = false) {
     uiState.pronounceBadge.visible = false;
     uiState.pronounceBadge.pinned = false;

@@ -12,6 +12,9 @@ export const halfWidthNumbers = /[0-9]/;
 /** @public */
 export const fullWidthAlphanumerics = /[\uff01-\uff5e]/;
 
+/** @public */
+export const numberPunctuation = /[,\.]/;
+
 // On some platforms, Google Docs puts zero-width joiner characters between
 // _all_ the characters so we need to match on them in order to match runs of
 // characters.
@@ -150,6 +153,7 @@ export const japaneseChar = getCombinedCharRange([
   // We include half-width numbers so we can recognize things like 小1
   halfWidthNumbers,
   fullWidthAlphanumerics,
+  numberPunctuation,
   zeroWidthNonJoiner,
   whiteCircle,
   radicals,

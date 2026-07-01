@@ -17,6 +17,14 @@
       "ruby": "紅寶石",
       "yellow": "黃水晶",
       "blue": "藍寶石"
+    },
+    "tooltip_theme_label": "懸浮窗主題",
+    "tooltip_theme": {
+      "system": "跟隨系統",
+      "light": "明亮純白",
+      "dark": "暗夜黑",
+      "beige": "米色 (護眼)",
+      "glass": "毛玻璃"
     }
   },
   "llm": {
@@ -92,7 +100,7 @@
   "lookup": {
     "title": "機器翻譯",
     "tag": "Machine Translation",
-    "mt_label": "機器翻譯",
+    "mt_label": "翻譯引擎",
     "mt_google": "Google 翻譯",
     "mt_bing": "Bing 翻譯",
     "mt_local": "不啟用（僅使用內置本地詞典）",

@@ -6,7 +6,8 @@
     :class="[
       { 'rubi-visible': uiState.translationBadge.visible },
       { 'rubi-ask-mode': uiState.translationBadge.askMode },
-      actualPosition === 'top' ? 'pos-top' : 'pos-bottom'
+      actualPosition === 'top' ? 'pos-top' : 'pos-bottom',
+      'theme-' + tooltipTheme
     ]"
     :style="badgeStyle"
     @dblclick.prevent.stop="handleDblClick"
@@ -83,10 +84,17 @@ const badgeWidth = ref(0);
 const askInputEl = ref<HTMLTextAreaElement | null>(null);
 const askQuestion = ref('');
 const uiLanguage = ref('zh-CN');
+const tooltipTheme = ref('system');
 
 onMounted(() => {
-  settingsStorage.getValue().then(s => uiLanguage.value = s.uiLanguage || 'zh-CN');
-  settingsStorage.watch(s => uiLanguage.value = s.uiLanguage || 'zh-CN');
+  settingsStorage.getValue().then(s => {
+    uiLanguage.value = s?.uiLanguage || 'zh-CN';
+    tooltipTheme.value = s?.tooltipTheme || 'system';
+  });
+  settingsStorage.watch(s => {
+    uiLanguage.value = s?.uiLanguage || 'zh-CN';
+    tooltipTheme.value = s?.tooltipTheme || 'system';
+  });
   if (badgeEl.value) {
     const rootNode = badgeEl.value.getRootNode();
     if (rootNode instanceof ShadowRoot) {
@@ -543,50 +551,81 @@ const handleAskSubmit = async () => {
   font-size: 12px;
 }
 
+.rubi-translation-tooltip.theme-dark {
+  background-color: #222224;
+  color: #e0e0e0;
+  border-color: #333335;
+}
+.rubi-translation-tooltip.theme-dark .trans-original { color: #aaa; }
+.rubi-translation-tooltip.theme-dark .trans-translation,
+.rubi-translation-tooltip.theme-dark strong { color: #fff; }
+.rubi-translation-tooltip.theme-dark .engine-tag { border-left-color: #444; color: #777; }
+.rubi-translation-tooltip.theme-dark .engine-tag:hover { color: #ccc; }
+.rubi-translation-tooltip.theme-dark .ask-close { color: #666; }
+.rubi-translation-tooltip.theme-dark .ask-close:hover { color: #aaa; }
+.rubi-translation-tooltip.theme-dark .ask-answer { border-top-color: #333; color: #ccc; }
+.rubi-translation-tooltip.theme-dark .ask-loading { border-top-color: #333; }
+.rubi-translation-tooltip.theme-dark .ask-loading-dot { background: #666; }
+.rubi-translation-tooltip.theme-dark .ask-input-row { border-top-color: #333; }
+.rubi-translation-tooltip.theme-dark .ask-input { color: #e0e0e0; }
+.rubi-translation-tooltip.theme-dark .ask-input::placeholder { color: #555; }
+
+/* Beige theme */
+.rubi-translation-tooltip.theme-beige {
+  background-color: #fdf6e3;
+  color: #657b83;
+  border-color: #eee8d5;
+}
+.rubi-translation-tooltip.theme-beige .trans-original { color: #93a1a1; }
+.rubi-translation-tooltip.theme-beige .trans-translation,
+.rubi-translation-tooltip.theme-beige strong { color: #586e75; }
+.rubi-translation-tooltip.theme-beige .engine-tag { border-left-color: #eee8d5; color: #93a1a1; }
+.rubi-translation-tooltip.theme-beige .engine-tag:hover { color: #586e75; }
+.rubi-translation-tooltip.theme-beige .ask-close { color: #93a1a1; }
+.rubi-translation-tooltip.theme-beige .ask-close:hover { color: #586e75; }
+.rubi-translation-tooltip.theme-beige .ask-answer { border-top-color: #eee8d5; color: #586e75; }
+.rubi-translation-tooltip.theme-beige .ask-loading { border-top-color: #eee8d5; }
+.rubi-translation-tooltip.theme-beige .ask-loading-dot { background: #93a1a1; }
+.rubi-translation-tooltip.theme-beige .ask-input-row { border-top-color: #eee8d5; }
+.rubi-translation-tooltip.theme-beige .ask-input { color: #586e75; }
+.rubi-translation-tooltip.theme-beige .ask-input::placeholder { color: #93a1a1; }
+
+/* Glass theme */
+.rubi-translation-tooltip.theme-glass {
+  background-color: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-color: rgba(255, 255, 255, 0.5);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.1);
+}
+
 @media (prefers-color-scheme: dark) {
-  .rubi-translation-tooltip {
+  .rubi-translation-tooltip.theme-system {
     background-color: #222224;
     color: #e0e0e0;
     border-color: #333335;
   }
-  .rubi-translation-tooltip .trans-original {
-    color: #aaa;
-  }
-  .rubi-translation-tooltip .trans-translation,
-  .rubi-translation-tooltip strong {
+  .rubi-translation-tooltip.theme-system .trans-original { color: #aaa; }
+  .rubi-translation-tooltip.theme-system .trans-translation,
+  .rubi-translation-tooltip.theme-system strong { color: #fff; }
+  .rubi-translation-tooltip.theme-system .engine-tag { border-left-color: #444; color: #777; }
+  .rubi-translation-tooltip.theme-system .engine-tag:hover { color: #ccc; }
+  .rubi-translation-tooltip.theme-system .ask-close { color: #666; }
+  .rubi-translation-tooltip.theme-system .ask-close:hover { color: #aaa; }
+  .rubi-translation-tooltip.theme-system .ask-answer { border-top-color: #333; color: #ccc; }
+  .rubi-translation-tooltip.theme-system .ask-loading { border-top-color: #333; }
+  .rubi-translation-tooltip.theme-system .ask-loading-dot { background: #666; }
+  .rubi-translation-tooltip.theme-system .ask-input-row { border-top-color: #333; }
+  .rubi-translation-tooltip.theme-system .ask-input { color: #e0e0e0; }
+  .rubi-translation-tooltip.theme-system .ask-input::placeholder { color: #555; }
+  
+  .rubi-translation-tooltip.theme-glass {
+    background-color: rgba(0, 0, 0, 0.75);
+    border-color: rgba(255, 255, 255, 0.15);
     color: #fff;
   }
-  .rubi-translation-tooltip .engine-tag {
-    border-left-color: #444;
-    color: #777;
-  }
-  .rubi-translation-tooltip .engine-tag:hover {
-    color: #ccc;
-  }
-  .ask-close {
-    color: #666;
-  }
-  .ask-close:hover {
-    color: #aaa;
-  }
-  .ask-answer {
-    border-top-color: #333;
-    color: #ccc;
-  }
-  .ask-loading {
-    border-top-color: #333;
-  }
-  .ask-loading-dot {
-    background: #666;
-  }
-  .ask-input-row {
-    border-top-color: #333;
-  }
-  .ask-input {
-    color: #e0e0e0;
-  }
-  .ask-input::placeholder {
-    color: #555;
-  }
+  .rubi-translation-tooltip.theme-glass .trans-original { color: #ccc; }
+  .rubi-translation-tooltip.theme-glass .trans-translation,
+  .rubi-translation-tooltip.theme-glass strong { color: #fff; }
 }
 </style>

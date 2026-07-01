@@ -299,7 +299,7 @@ function getContextualTranslatePromptJa(langName: string, collocEnabled: boolean
 
   prompt += `
 5. 【输出格式（极其重要）】：必须严格输出 JSON 格式，**不要包含 any markdown 代码块标记（如 \`\`\`json）**：
-{"word": "提取的日语原型或词组", "translation": "中文翻译或解释"}
+{"word": "提取的日语原型或词组", "reading": "平假名/片假名注音（必需！包含数字的也必须标注读音，例如1億->いちおく，不要返回空字符串）", "translation": "中文翻译或解释"}
 
 【专有名词/无翻译词汇的红线规则】：
 如果目标词汇是软件名、品牌等，或者在中文中没有对应的翻译词，**\`translation\` 字段的值绝对不允许和 \`word\` 字段相同**！
@@ -308,7 +308,7 @@ function getContextualTranslatePromptJa(langName: string, collocEnabled: boolean
   return prompt;
 }
 
-export async function contextualTranslateJa(settings: RubiSettings, word: string, sentence: string): Promise<string> {
+export async function contextualTranslateJa(settings: RubiSettings, word: string, sentence: string): Promise<{translation: string, reading?: string}> {
   const langName = getLanguageName(settings.targetLanguage || 'zh-CN');
   const isMultiWord = word.length > 8 || word.includes('、') || word.includes(' ');
 
@@ -369,20 +369,20 @@ export async function contextualTranslateJa(settings: RubiSettings, word: string
   const trimmed = content.trim();
 
   if (isMultiWord) {
-    return trimmed;
+    return { translation: trimmed };
   }
 
   try {
     const jsonStr = trimmed.replace(/^```json/, '').replace(/```$/, '').trim();
     const parsed = JSON.parse(jsonStr);
     if (parsed.translation) {
-      return parsed.translation;
+      return { translation: parsed.translation, reading: parsed.reading };
     }
   } catch (e) {
     console.warn('[Rubi AI] AI Response was not valid JSON:', trimmed);
   }
 
-  return trimmed;
+  return { translation: trimmed };
 }
 
 // ─── 翻译悬浮窗追问 AI ──────────────────────────────────────

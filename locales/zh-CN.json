@@ -17,6 +17,14 @@
       "ruby": "红宝石",
       "yellow": "黄水晶",
       "blue": "蓝宝石"
+    },
+    "tooltip_theme_label": "悬浮窗主题",
+    "tooltip_theme": {
+      "system": "跟随系统",
+      "light": "明亮纯白",
+      "dark": "暗夜黑",
+      "beige": "米色 (护眼)",
+      "glass": "毛玻璃"
     }
   },
   "llm": {
@@ -93,7 +101,7 @@
   "lookup": {
     "title": "机器翻译",
     "tag": "Machine Translation",
-    "mt_label": "机器翻译",
+    "mt_label": "翻译引擎",
     "mt_google": "Google 翻译",
     "mt_bing": "Bing 翻译",
     "mt_local": "不启用（仅使用内置本地词典）",

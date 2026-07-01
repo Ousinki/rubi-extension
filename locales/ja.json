@@ -17,6 +17,14 @@
       "ruby": "ルビー",
       "yellow": "シトリン",
       "blue": "サファイア"
+    },
+    "tooltip_theme_label": "ツールチップのテーマ",
+    "tooltip_theme": {
+      "system": "システム設定",
+      "light": "ライト",
+      "dark": "ダーク",
+      "beige": "ベージュ (目に優しい)",
+      "glass": "ガラス (透過)"
     }
   },
   "llm": {
@@ -92,7 +100,7 @@
   "lookup": {
     "title": "機械翻訳",
     "tag": "Machine Translation",
-    "mt_label": "機械翻訳",
+    "mt_label": "翻訳エンジン",
     "mt_google": "Google 翻訳",
     "mt_bing": "Bing 翻訳",
     "mt_local": "無効 (内蔵辞書のみを使用)",

@@ -412,8 +412,8 @@ export default defineBackground(() => {
         throw new Error('Rubi 已禁用');
       }
 
-      const translation = await contextualTranslateJa(settings, word, sentence);
-      return { success: true, translation };
+      const res = await contextualTranslateJa(settings, word, sentence);
+      return { success: true, translation: res.translation, reading: res.reading };
     } catch (error: any) {
       console.error('[Rubi] Contextual Translate failed:', error);
       return { success: false, error: error.message };

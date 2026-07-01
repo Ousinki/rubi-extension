@@ -4,7 +4,8 @@
     id="rubi-pronounce-badge"
     :class="[
       { 'rubi-badge-visible': uiState.pronounceBadge.visible },
-      isBottom ? 'pos-bottom' : 'pos-top'
+      isBottom ? 'pos-bottom' : 'pos-top',
+      'theme-' + tooltipTheme
     ]"
     :style="badgeStyle"
     @click="handlePlayTts"
@@ -15,8 +16,11 @@
     </div>
     
     <!-- Bottom Row: Pronunciation (Hiragana Reading) -->
-    <div class="rubi-badge-content">
-      <span v-if="uiState.pronounceBadge.isHTML" v-html="uiState.pronounceBadge.content"></span>
+    <div v-if="uiState.pronounceBadge.content" class="rubi-badge-content">
+      <span v-if="uiState.pronounceBadge.content === '...'" class="rubi-loading-dots">
+        <span>.</span><span>.</span><span>.</span>
+      </span>
+      <span v-else-if="uiState.pronounceBadge.isHTML" v-html="uiState.pronounceBadge.content"></span>
       <span v-else>{{ uiState.pronounceBadge.content }}</span>
     </div>
   </div>
@@ -32,8 +36,11 @@ import { settingsStorage } from '@/utils/storage';
 const badgeEl = ref<HTMLElement | null>(null);
 const hostEl = ref<HTMLElement | null>(null);
 const badgeWidth = ref(0);
+const tooltipTheme = ref('system');
 
 onMounted(() => {
+  settingsStorage.getValue().then(s => tooltipTheme.value = s?.tooltipTheme || 'system');
+  settingsStorage.watch(s => tooltipTheme.value = s?.tooltipTheme || 'system');
   if (badgeEl.value) {
     const rootNode = badgeEl.value.getRootNode();
     if (rootNode instanceof ShadowRoot) {
@@ -188,6 +195,23 @@ const handlePlayTts = async () => {
   transform: scale(1.1);
 }
 
+.rubi-loading-dots span {
+  animation: rubi-dot-blink 1.4s infinite both;
+  font-size: 14px;
+  letter-spacing: 2px;
+}
+.rubi-loading-dots span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+.rubi-loading-dots span:nth-child(3) {
+  animation-delay: 0.4s;
+}
+@keyframes rubi-dot-blink {
+  0% { opacity: 0.2; }
+  20% { opacity: 1; }
+  100% { opacity: 0.2; }
+}
+
 #rubi-pronounce-badge.pos-top {
   transform: translate(calc(-50% + var(--shift-x, 0px)), -100%) scale(0.9);
 }
@@ -226,25 +250,94 @@ const handlePlayTts = async () => {
   border-color: transparent transparent #e2e2ea transparent;
 }
 
+/* Dark theme overrides */
+#rubi-pronounce-badge.theme-dark {
+  background: rgba(20, 22, 29, 0.96);
+  border-color: #242731;
+  color: #eaecef;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+}
+#rubi-pronounce-badge.theme-dark .rubi-syl-word {
+  color: var(--rubi-highlight-dark, #a78bfa);
+}
+#rubi-pronounce-badge.theme-dark .rubi-badge-content {
+  color: #9aa2b1;
+}
+#rubi-pronounce-badge.theme-dark.pos-top::after {
+  border-color: #242731 transparent transparent transparent;
+}
+#rubi-pronounce-badge.theme-dark.pos-bottom::after {
+  border-color: transparent transparent #242731 transparent;
+}
+
+/* Beige theme */
+#rubi-pronounce-badge.theme-beige {
+  background: #fdf6e3;
+  border-color: #eee8d5;
+  color: #657b83;
+}
+#rubi-pronounce-badge.theme-beige .rubi-syl-word {
+  color: var(--rubi-highlight-main, #d33682); 
+}
+#rubi-pronounce-badge.theme-beige .rubi-badge-content {
+  color: #93a1a1;
+}
+#rubi-pronounce-badge.theme-beige.pos-top::after {
+  border-color: #eee8d5 transparent transparent transparent;
+}
+#rubi-pronounce-badge.theme-beige.pos-bottom::after {
+  border-color: transparent transparent #eee8d5 transparent;
+}
+
+/* Glass theme */
+#rubi-pronounce-badge.theme-glass {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-color: rgba(255, 255, 255, 0.5);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.1);
+}
+#rubi-pronounce-badge.theme-glass.pos-top::after {
+  border-color: rgba(255, 255, 255, 0.5) transparent transparent transparent;
+}
+#rubi-pronounce-badge.theme-glass.pos-bottom::after {
+  border-color: transparent transparent rgba(255, 255, 255, 0.5) transparent;
+}
+
 /* System Dark Mode support */
 @media (prefers-color-scheme: dark) {
-  #rubi-pronounce-badge {
+  #rubi-pronounce-badge.theme-system {
     background: rgba(20, 22, 29, 0.96);
     border-color: #242731;
     color: #eaecef;
     box-shadow: 0 4px 20px rgba(0,0,0,0.3);
   }
-  .rubi-syl-word {
+  #rubi-pronounce-badge.theme-system .rubi-syl-word {
     color: var(--rubi-highlight-dark, #a78bfa);
   }
-  .rubi-badge-content {
+  #rubi-pronounce-badge.theme-system .rubi-badge-content {
     color: #9aa2b1;
   }
-  #rubi-pronounce-badge.pos-top::after {
+  #rubi-pronounce-badge.theme-system.pos-top::after {
     border-color: #242731 transparent transparent transparent;
   }
-  #rubi-pronounce-badge.pos-bottom::after {
+  #rubi-pronounce-badge.theme-system.pos-bottom::after {
     border-color: transparent transparent #242731 transparent;
+  }
+  
+  #rubi-pronounce-badge.theme-glass {
+    background: rgba(0, 0, 0, 0.75);
+    border-color: rgba(255, 255, 255, 0.15);
+    color: #fff;
+  }
+  #rubi-pronounce-badge.theme-glass .rubi-badge-content {
+    color: rgba(255, 255, 255, 0.7);
+  }
+  #rubi-pronounce-badge.theme-glass.pos-top::after {
+    border-color: rgba(255, 255, 255, 0.15) transparent transparent transparent;
+  }
+  #rubi-pronounce-badge.theme-glass.pos-bottom::after {
+    border-color: transparent transparent rgba(255, 255, 255, 0.15) transparent;
   }
 }
 </style>

@@ -17,6 +17,14 @@
       "ruby": "루비",
       "yellow": "황수정",
       "blue": "사파이어"
+    },
+    "tooltip_theme_label": "툴팁 테마",
+    "tooltip_theme": {
+      "system": "시스템 기본값",
+      "light": "라이트",
+      "dark": "다크",
+      "beige": "베이지 (눈 보호)",
+      "glass": "글래스"
     }
   },
   "llm": {
@@ -87,7 +95,7 @@
   "lookup": {
     "title": "기계 번역",
     "tag": "Machine Translation",
-    "mt_label": "기계 번역",
+    "mt_label": "번역 엔진",
     "mt_google": "Google 번역",
     "mt_bing": "Bing 번역",
     "mt_local": "비활성화 (내장 사전만 사용)",

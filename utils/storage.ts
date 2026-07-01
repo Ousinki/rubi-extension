@@ -78,6 +78,7 @@ export interface RubiSettings {
   furiganaOpacity: '0.4' | '0.6' | '0.8' | '1.0';    // Furigana opacity
   
   highlightStyle: 'purple' | 'yellow' | 'pink' | 'blue'; // UI highlight color theme
+  tooltipTheme: 'system' | 'light' | 'dark' | 'beige' | 'glass'; // Tooltip style/theme
 }
 
 export const DEFAULT_SETTINGS: RubiSettings = {
@@ -139,6 +140,7 @@ export const DEFAULT_SETTINGS: RubiSettings = {
   furiganaOpacity: '0.8',
   
   highlightStyle: 'purple',
+  tooltipTheme: 'system',
 };
 
 const rawSettingsStorage = storage.defineItem<RubiSettings>(
@@ -148,7 +150,7 @@ const rawSettingsStorage = storage.defineItem<RubiSettings>(
 
 export const settingsStorage = {
   key: rawSettingsStorage.key,
-  remove: () => rawSettingsStorage.remove(),
+  remove: () => rawSettingsStorage.removeValue(),
   async getValue(): Promise<RubiSettings> {
     const val = await rawSettingsStorage.getValue();
     return { ...DEFAULT_SETTINGS, ...val };

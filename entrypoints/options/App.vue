@@ -116,6 +116,14 @@
                   </label>
                 </div>
               </div>
+              <div class="input-group" style="margin-top: 20px;">
+                <label>{{ t('appearance.tooltip_theme_label') }}</label>
+                <CustomSelect
+                  v-model="settings.tooltipTheme"
+                  :options="tooltipThemeOptions"
+                  @change="saveSettings"
+                />
+              </div>
             </div>
           </section>
           
@@ -160,7 +168,7 @@
               <!-- DeepL API Key Field -->
               <template v-if="settings.translationEngine === 'deepl'">
                 <div class="row" style="margin-top: 20px;">
-                  <div class="input-group full">
+                  <div class="input-group half">
                     <label>{{ t('lookup.deepl_api_key_label') }}</label>
                     <div class="password-wrapper">
                       <input 
@@ -181,13 +189,7 @@
                       </button>
                     </div>
                   </div>
-                </div>
-
-                <div class="row" style="margin-top: 12px; align-items: center;">
-                  <div class="half">
-                    <p class="input-help" style="font-size: 12.5px; color: var(--text-tertiary); margin: 0; line-height: 1.4;" v-html="t('lookup.deepl_api_key_help')"></p>
-                  </div>
-                  <div class="half action-group" style="text-align: right;">
+                  <div class="half action-group">
                     <button 
                       type="button"
                       class="btn btn-action" 
@@ -198,6 +200,10 @@
                       {{ isTestingDeepl ? t('lookup.deepl_testing_btn') : t('lookup.deepl_test_btn') }}
                     </button>
                   </div>
+                </div>
+
+                <div style="margin-top: 12px;">
+                  <p class="input-help" style="font-size: 12.5px; color: var(--text-tertiary); margin: 0; line-height: 1.4;" v-html="t('lookup.deepl_api_key_help')"></p>
                 </div>
 
                 <div v-if="deeplTestResult" class="test-feedback" :class="deeplTestResult.success ? 'success' : 'error'" style="margin-top: 12px; width: 100%;">
@@ -678,6 +684,14 @@ const translationPositionOptions = computed(() => [
   { label: t('lookup.pos_bottom'), value: 'bottom' },
   { label: t('lookup.pos_top'), value: 'top' },
   { label: t('lookup.pos_badge'), value: 'pronounce-badge' },
+]);
+
+const tooltipThemeOptions = computed(() => [
+  { label: t('appearance.tooltip_theme.system'), value: 'system' },
+  { label: t('appearance.tooltip_theme.light'), value: 'light' },
+  { label: t('appearance.tooltip_theme.dark'), value: 'dark' },
+  { label: t('appearance.tooltip_theme.beige'), value: 'beige' },
+  { label: t('appearance.tooltip_theme.glass'), value: 'glass' },
 ]);
 
 const translationTriggerOptions = computed(() => [
@@ -1285,6 +1299,7 @@ body {
 .action-group {
   display: flex;
   align-items: flex-end;
+  justify-content: flex-end;
 }
 
 /* Switches & Knobs */

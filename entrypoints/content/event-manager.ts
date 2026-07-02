@@ -210,7 +210,8 @@ export function setupEventListeners(): void {
       }
       if (isInside && matchedRange) {
         const now = Date.now();
-        if (now - lastClickTime > 250) {
+        const pronounceTrigger = currentSettings?.pronounceTrigger || 'click';
+        if (pronounceTrigger === 'click' && now - lastClickTime > 250) {
           lastClickTime = now;
           triggerTTS(currentWord!);
         }
@@ -466,6 +467,13 @@ export function setupEventListeners(): void {
           e.preventDefault();
           e.stopPropagation();
           triggerTranslation(currentWord!, matchedRange, rangeIndex);
+        }
+
+        const pronounceTrigger = currentSettings?.pronounceTrigger || 'click';
+        if (pronounceTrigger === 'dblclick') {
+          e.preventDefault();
+          e.stopPropagation();
+          triggerTTS(currentWord!);
         }
       }
     }

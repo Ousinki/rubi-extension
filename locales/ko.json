@@ -71,6 +71,7 @@
   "tts": {
     "title": "음성 합성 (TTS)",
     "tag": "Speech Engine",
+    "trigger_label": "발음 트리거",
     "engine_label": "음성 엔진",
     "edge_desc": "Azure 신경망 TTS — 원어민에 가장 가까운 품질",
     "edge_badge": "신경망 · 무료",

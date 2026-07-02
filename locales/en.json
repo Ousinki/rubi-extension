@@ -70,9 +70,10 @@
     "opacity_label": "Furigana Opacity"
   },
   "tts": {
-    "title": "Speech Synthesis (TTS)",
+    "title": "Speech Engine (TTS)",
     "tag": "Speech Engine",
-    "engine_label": "Speech Engine",
+    "trigger_label": "Pronunciation Trigger",
+    "engine_label": "Engine",
     "edge_desc": "Azure Neural TTS — closest to native speaker quality",
     "edge_badge": "Neural · Free",
     "google_desc": "Google Translate TTS — standard and fluent",
@@ -100,7 +101,10 @@
     "edge_voice_daichi": "Daichi — Male, youthful",
     "edge_voice_shiori": "Shiori — Female, gentle & warm",
     "edge_voice_masaru": "Masaru — Male, multilingual",
-    "google_voice_default": "Google Japanese (Recommended)"
+    "google_voice_default": "Google Japanese (Recommended)",
+    "trigger_hover": "Hover to Pronounce",
+    "trigger_click": "Click to Pronounce",
+    "trigger_dblclick": "Double-Click to Pronounce"
   },
   "lookup": {
     "title": "Machine Translation",

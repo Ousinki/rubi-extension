@@ -260,6 +260,11 @@ export async function handleMouseMove(e: MouseEvent) {
         currentWord = matchedWord;
         currentHighlightedRanges = ranges;
 
+        const pronounceTrigger = currentSettings?.pronounceTrigger || 'click';
+        if (pronounceTrigger === 'hover') {
+          triggerTTS(matchedWord);
+        }
+
         if (typeof (CSS as any) !== 'undefined' && (CSS as any).highlights) {
           const hl = new (window as any).Highlight(...ranges);
           (CSS as any).highlights.set('rubi-hover-highlight', hl);

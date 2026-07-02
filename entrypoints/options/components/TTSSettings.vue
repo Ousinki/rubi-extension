@@ -92,6 +92,15 @@
         />
       </div>
 
+      <div class="input-group">
+        <label>{{ t('tts.trigger_label') || '发音触发方式' }}</label>
+        <CustomSelect
+          v-model="settings.pronounceTrigger"
+          :options="pronounceTriggerOptions"
+          @change="saveSettings"
+        />
+      </div>
+
       <div class="row">
         <div class="input-group half">
           <label>{{ t('tts.rate_label_pre') + settings.ttsRate + t('tts.rate_label_suf') }}</label>
@@ -146,6 +155,12 @@ const jaVoices = ref<SpeechSynthesisVoice[]>([]);
 const edgeVoiceOptions = computed(() => [
   { value: 'ja-JP-NanamiNeural', label: t('tts.edge_voice_nanami') },
   { value: 'ja-JP-KeitaNeural', label: t('tts.edge_voice_keita') },
+]);
+
+const pronounceTriggerOptions = computed(() => [
+  { label: t('tts.trigger_hover'), value: 'hover' },
+  { label: t('tts.trigger_click'), value: 'click' },
+  { label: t('tts.trigger_dblclick'), value: 'dblclick' },
 ]);
 
 const voicevoxSpeakerOptions = computed(() => [

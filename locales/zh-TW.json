@@ -71,6 +71,7 @@
   "tts": {
     "title": "語音合成 (TTS)",
     "tag": "Speech Engine",
+    "trigger_label": "發音觸發方式",
     "engine_label": "語音引擎",
     "edge_desc": "Azure 級別神經網絡發音，最接近真人母語者",
     "edge_badge": "神經網絡 · 免費",

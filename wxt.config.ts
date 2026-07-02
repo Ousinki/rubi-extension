@@ -49,11 +49,11 @@ export default defineConfig({
       default_title: 'Rubi — 点击开启/关闭',
     },
     icons: {
-      '16': 'icon/action-16.png',
-      '32': 'icon/action-32.png',
-      '48': 'icon/action-48.png',
-      '96': 'icon/action-96.png',
-      '128': 'icon/action-128.png',
+      '16': 'icon/16.png',
+      '32': 'icon/32.png',
+      '48': 'icon/48.png',
+      '96': 'icon/96.png',
+      '128': 'icon/128.png',
     },
     commands: {
       'translate-paragraph': {

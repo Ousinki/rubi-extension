@@ -37,10 +37,7 @@ export interface RubiSettings {
   edgeVoice: string;       // Microsoft Edge TTS voice name
   voicevoxEndpoint: string; // Voicevox API Endpoint
   voicevoxSpeaker: number; // Voicevox Speaker ID
-  enableAutoPronounce: boolean;
-  enableClickPronounce: boolean;
-  enableShortcutPronounce: boolean;
-  enableSingleClickPronounce: boolean;
+  pronounceTrigger: 'hover' | 'click' | 'dblclick';
   
   translationEngine: 'none' | 'google' | 'deepl' | 'bing';
   translationPosition: 'top' | 'bottom' | 'pronounce-badge';
@@ -105,10 +102,7 @@ export const DEFAULT_SETTINGS: RubiSettings = {
   edgeVoice: 'ja-JP-NanamiNeural',
   voicevoxEndpoint: 'https://api.tts.quest/v3/voicevox',
   voicevoxSpeaker: 2, // 2 is typically Shikoku Metan (Normal)
-  enableAutoPronounce: true,
-  enableClickPronounce: false,
-  enableShortcutPronounce: true,
-  enableSingleClickPronounce: true,
+  pronounceTrigger: 'click',
   
   translationEngine: 'google',
   translationPosition: 'bottom',

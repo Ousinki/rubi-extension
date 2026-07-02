@@ -71,6 +71,7 @@
   "tts": {
     "title": "音声合成 (TTS)",
     "tag": "Speech Engine",
+    "trigger_label": "発音トリガー",
     "engine_label": "音声エンジン",
     "edge_desc": "AzureニューラルTTS — ネイティブスピーカーに近い品質",
     "edge_badge": "ニューラル · 無料",

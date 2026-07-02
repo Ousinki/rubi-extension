@@ -121,12 +121,17 @@ watch(() => settings.customMenuConfig, (newVal) => {
 onMounted(() => {
   nextTick(() => {
     if (sortableListRef.value) {
+      let nextSibling: Node | null = null;
+
       Sortable.create(sortableListRef.value, {
         handle: '.drag-handle',
         animation: 200,
         forceFallback: true,
         fallbackClass: 'sortable-drag',
         ghostClass: 'sortable-ghost',
+        onStart: (e) => {
+          nextSibling = e.item.nextSibling;
+        },
         onUpdate: (e) => {
           const { oldIndex, newIndex } = e;
           if (oldIndex !== undefined && newIndex !== undefined && oldIndex !== newIndex) {
@@ -137,12 +142,10 @@ onMounted(() => {
             // Revert DOM change first so Vue can safely render the list based on VDOM updates
             const el = sortableListRef.value;
             if (el && e.item) {
-              const children = Array.from(el.children);
-              e.item.remove();
-              if (oldIndex >= children.length - 1) {
-                el.appendChild(e.item);
+              if (nextSibling) {
+                el.insertBefore(e.item, nextSibling);
               } else {
-                el.insertBefore(e.item, children[oldIndex]);
+                el.appendChild(e.item);
               }
             }
             

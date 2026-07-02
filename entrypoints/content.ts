@@ -28,8 +28,8 @@ export default defineContentScript({
     // Inject global host styling for CSS Custom Highlight & Ruby
     injectHostStyles(currentSettings);
 
-    // Watch settings changes
-    settingsStorage.watch((newSettings, oldSettings) => {
+    // Watch settings changes — register unwatch so it stops on context invalidation
+    const unwatch = settingsStorage.watch((newSettings, oldSettings) => {
       if (newSettings) {
         updateContentContext(newSettings, newSettings.enabled);
         injectHostStyles(newSettings);
@@ -56,6 +56,7 @@ export default defineContentScript({
         }
       }
     });
+    ctx.onInvalidated(unwatch);
 
     // Setup WXT ShadowRoot UI for Vue floating components
     await setupUi(ctx);
@@ -68,13 +69,15 @@ export default defineContentScript({
       console.log(`[Rubi] Initial dictionary state: WORDS=${res?.state?.words}, NAMES=${res?.state?.names}, KANJI=${res?.state?.kanji}`);
     });
 
-    setInterval(() => {
+    // Poll dict download status — cleared automatically when context is invalidated
+    const dictPollInterval = setInterval(() => {
       safeSendMessage({ type: 'GET_DICT_STATE' }).then(res => {
         if (res && res.state && (res.state.words === 'updating' || res.state.words === 'init')) {
           console.log('[Rubi] Dictionary is currently downloading in background... Please wait.', res.state);
         }
       });
     }, 5000);
+    ctx.onInvalidated(() => clearInterval(dictPollInterval));
   }
 });
 

@@ -5,10 +5,12 @@
  * these variables, every importer immediately sees the new value.
  */
 
-export let currentSettings: any = null;
+import type { RubiSettings } from '@/utils/storage';
+
+export let currentSettings: RubiSettings | null = null;
 export let isEnabled = true;
 
-export function updateContentContext(settings: any, enabled: boolean): void {
+export function updateContentContext(settings: RubiSettings, enabled: boolean): void {
   currentSettings = settings;
   isEnabled = enabled;
 }

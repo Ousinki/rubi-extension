@@ -422,8 +422,6 @@ export async function handleMouseMove(e: MouseEvent) {
              });
              if (newRubyChunks.length > 0) {
                 uiActions.updatePronounceBadgeChunks(newRubyChunks);
-             } else {
-                uiActions.hidePronounceBadge();
              }
           } else {
              uiActions.updatePronounceBadgeContent(newReading);
@@ -578,7 +576,7 @@ export async function triggerTranslation(word: string, targetRange: Range, targe
       'AI 翻译中...',
       'AI',
       rect,
-      false,
+      true,
       pos,
       showEngine,
       'ai',
@@ -607,7 +605,7 @@ export async function triggerTranslation(word: string, targetRange: Range, targe
         result,
         'AI',
         getRect(),
-        false,
+        true,
         pos,
         showEngine,
         'ai',
@@ -620,7 +618,7 @@ export async function triggerTranslation(word: string, targetRange: Range, targe
         `AI 翻译出错: ${err.message || err}`,
         'AI',
         getRect(),
-        false,
+        true,
         pos,
         showEngine,
         'ai',
@@ -643,7 +641,7 @@ export async function triggerTranslation(word: string, targetRange: Range, targe
       `${word} (${translationStr})`,
       'DICT',
       rect as DOMRect,
-      false,
+      true,
       pos,
       showEngine,
       'dict',
@@ -665,7 +663,7 @@ export async function triggerTranslation(word: string, targetRange: Range, targe
         result,
         resp?.targetText ? (resp.engine || engine) : 'DICT',
         activeRect,
-        false,
+        true,
         pos,
         showEngine,
         'machine',
@@ -680,7 +678,7 @@ export async function triggerTranslation(word: string, targetRange: Range, targe
         `${word} (${translationStr})`,
         'DICT',
         activeRect,
-        false,
+        true,
         pos,
         showEngine,
         'dict',
@@ -713,7 +711,7 @@ export async function triggerWordExplain(word: string, clientX: number, clientY:
     'AI 翻译中...',
     'AI',
     currentRect,
-    false,
+    true,
     pos,
     showEngine,
     'ai',
@@ -742,7 +740,7 @@ export async function triggerWordExplain(word: string, clientX: number, clientY:
         response.translation,
         'AI',
         getRect(),
-        false,
+        true,
         pos,
         showEngine,
         'ai',
@@ -753,7 +751,7 @@ export async function triggerWordExplain(word: string, clientX: number, clientY:
         response?.error ? `翻译失败: ${response.error}` : '翻译失败',
         'AI',
         getRect(),
-        false,
+        true,
         pos,
         showEngine,
         'ai',
@@ -766,7 +764,7 @@ export async function triggerWordExplain(word: string, clientX: number, clientY:
       `请求出错: ${err.message || err}`,
       'AI',
       getRect(),
-      false,
+      true,
       pos,
       showEngine,
       'ai',

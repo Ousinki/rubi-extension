@@ -70,11 +70,10 @@
 </template>
 
 <script setup lang="ts">
-import { inject, ref } from 'vue';
+import { ref } from 'vue';
+import { useOptions } from '../composables/useOptions';
 
-const settings = inject<any>('settings');
-const saveSettings = inject<() => void>('saveSettings')!;
-const t = inject<any>('t')!;
+const { settings, saveSettings, t } = useOptions();
 
 const showApiKey = ref(false);
 const isTestingApi = ref(false);

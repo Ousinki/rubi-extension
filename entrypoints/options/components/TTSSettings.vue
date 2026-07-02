@@ -132,13 +132,12 @@
 </template>
 
 <script setup lang="ts">
-import { inject, ref, computed, onMounted } from 'vue';
 import { speakText } from '@/utils/tts';
 import CustomSelect from './CustomSelect.vue';
 
-const settings = inject<any>('settings');
-const saveSettings = inject<() => void>('saveSettings')!;
-const t = inject<any>('t')!;
+import { useOptions } from '../composables/useOptions';
+
+const { settings, saveSettings, t } = useOptions();
 
 const isSpeaking = ref(false);
 const ttsWarning = ref<string | null>(null);

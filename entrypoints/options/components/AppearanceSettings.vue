@@ -89,12 +89,11 @@
 </template>
 
 <script setup lang="ts">
-import { inject, computed } from 'vue';
+import { computed } from 'vue';
 import CustomSelect from './CustomSelect.vue';
+import { useOptions } from '../composables/useOptions';
 
-const settings = inject<any>('settings');
-const saveSettings = inject<() => void>('saveSettings')!;
-const t = inject<any>('t')!;
+const { settings, saveSettings, t } = useOptions();
 
 const tooltipThemeOptions = computed(() => [
   { label: t('appearance.tooltip_theme.system'), value: 'system' },

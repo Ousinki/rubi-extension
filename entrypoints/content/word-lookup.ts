@@ -5,9 +5,9 @@
  * and handles UI badges rendering (pronounce badge / translation badge).
  */
 
-import { uiActions, uiState } from '@/utils/content-state';
+import { uiActions, uiState, type RubyChunkState } from '@/utils/content-state';
 import { settingsStorage } from '@/utils/storage';
-import { loadDictionary, lookupWord } from '@/utils/tokenizer';
+import { loadDictionary, lookupWord, type DictEntry, type LookupResult } from '@/utils/tokenizer';
 import { extractRuby } from '@/utils/ruby-extractor';
 import { safeSendMessage } from '@/utils/content-messaging';
 import { speakText } from '@/utils/tts';
@@ -19,7 +19,7 @@ import { getEffectiveFuriganaState } from './furigana-injector';
 
 export let currentWord: string | null = null;
 export let currentHighlightedRanges: Range[] | null = null;
-export let currentMatchedEntry: any = null;
+export let currentMatchedEntry: DictEntry | null = null;
 export let currentWordIsAiFallback = false;
 export let isMouseOverPopup = false;
 export let hoverTimer: ReturnType<typeof setTimeout> | null = null;
@@ -27,7 +27,7 @@ export let activeUpdateDynamicReading: ((reading: string) => void) | null = null
 
 export function setCurrentWord(val: string | null) { currentWord = val; }
 export function setCurrentHighlightedRanges(val: Range[] | null) { currentHighlightedRanges = val; }
-export function setCurrentMatchedEntry(val: any) { currentMatchedEntry = val; }
+export function setCurrentMatchedEntry(val: DictEntry | null) { currentMatchedEntry = val; }
 export function setCurrentWordIsAiFallback(val: boolean) { currentWordIsAiFallback = val; }
 export function setIsMouseOverPopup(val: boolean) { isMouseOverPopup = val; }
 export function setHoverTimer(val: ReturnType<typeof setTimeout> | null) { hoverTimer = val; }
@@ -127,7 +127,7 @@ export async function handleMouseMove(e: MouseEvent) {
 
     let matchedWord: string | null = null;
     let matchedReading: string = '';
-    let matchedEntry: any = null;
+    let matchedEntry: DictEntry | null = null;
     let matchedLength = -1;
     let isAiFallback = false;
 
@@ -141,7 +141,7 @@ export async function handleMouseMove(e: MouseEvent) {
       }
     }
 
-    const match = await lookupWord(scanResult.text, contextText, wordOffset);
+    const match: LookupResult | null = await lookupWord(scanResult.text, contextText, wordOffset);
     
     if (match) {
       matchedWord = match.word;

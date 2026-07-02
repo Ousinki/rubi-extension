@@ -95,12 +95,11 @@
 </template>
 
 <script setup lang="ts">
-import { inject, ref } from 'vue';
 import CustomSelect from './CustomSelect.vue';
 
-const settings = inject<any>('settings');
-const saveSettings = inject<() => void>('saveSettings')!;
-const t = inject<any>('t')!;
+import { useOptions } from '../composables/useOptions';
+
+const { settings, saveSettings, t } = useOptions();
 
 const isRecording = ref(false);
 

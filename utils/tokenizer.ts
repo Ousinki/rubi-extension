@@ -16,6 +16,13 @@ export interface DictEntry {
   lemma?: string;     // Dictionary/prototype form (optional)
 }
 
+export interface LookupResult {
+  word: string;
+  entry: DictEntry;
+  length: number;
+  reasonChains?: string[][];
+}
+
 // Clean up search word by removing punctuation, spaces, and matching Japanese chars
 export function cleanJapaneseSearchText(text: string): string {
   const result: string[] = [];
@@ -147,7 +154,7 @@ export function getDictionary(): Record<string, DictEntry> {
   return {};
 }
 
-export async function lookupWord(text: string, contextText: string = '', wordOffset: number = 0): Promise<{ word: string; entry: DictEntry; length: number; reasonChains?: any } | null> {
+export async function lookupWord(text: string, contextText: string = '', wordOffset: number = 0): Promise<LookupResult | null> {
   if (!text) return null;
 
   const cleaned = cleanJapaneseSearchText(text);

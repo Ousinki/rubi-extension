@@ -63,14 +63,17 @@
 </template>
 
 <script setup lang="ts">
-import { inject, ref, onMounted, nextTick, watch } from 'vue';
+import { ref, onMounted, nextTick, watch } from 'vue';
 import Sortable from 'sortablejs';
+import { useOptions } from '../composables/useOptions';
+import type { RubiSettings } from '@/utils/storage';
 
-const settings = inject<any>('settings');
-const saveSettings = inject<() => void>('saveSettings')!;
+const { settings, saveSettings } = useOptions();
+
+type MenuConfigItem = RubiSettings['customMenuConfig'][number];
 
 const sortableListRef = ref<HTMLElement | null>(null);
-const customMenuConfigList = ref<any[]>([]);
+const customMenuConfigList = ref<MenuConfigItem[]>([]);
 
 // Sync settings changes to the local sorting list
 watch(() => settings.customMenuConfig, (newVal) => {

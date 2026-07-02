@@ -7,7 +7,7 @@ export interface MenuItem {
   onClick?: () => void;
   onSpeakClick?: () => void;
   onMouseLeave?: () => void;
-  rubyChunks?: any[];
+  rubyChunks?: RubyChunkState[];
 }
 
 export interface RubyChunkState {

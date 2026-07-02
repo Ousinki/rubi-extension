@@ -63,16 +63,20 @@
         <h3 style="font-size: 14px; color: var(--text-secondary); margin-bottom: 8px; font-weight: 500;">自定义搜索引擎 (Custom Search Engines)</h3>
         <p style="font-size: 13px; color: var(--text-tertiary); margin-bottom: 16px; line-height: 1.5;">支持动态扩展右键菜单的搜索选项。使用 <code>%s</code> 代表选中的文本。例如：<code>https://github.com/search?q=%s</code></p>
         
-        <div style="display: flex; flex-direction: column; gap: 12px;">
-          <div v-for="(engine, index) in settings.customSearchEngines" :key="index" style="display: flex; gap: 8px; align-items: center;">
-            <input type="checkbox" v-model="engine.enabled" @change="saveSettings" style="width: 16px; height: 16px; cursor: pointer; accent-color: var(--primary-color);" />
-            <input type="text" v-model="engine.name" @change="saveSettings" placeholder="引擎名称" class="input-base" style="width: 140px; font-size: 13px; padding: 6px 10px;" />
-            <input type="text" v-model="engine.urlTemplate" @change="saveSettings" placeholder="URL 模板 (如: https://...?q=%s)" class="input-base" style="flex: 1; font-size: 13px; padding: 6px 10px;" />
-            <button @click="settings.customSearchEngines.splice(index, 1); saveSettings()" class="btn btn-secondary" style="padding: 6px; color: #ff4d4f; border-color: transparent;" title="删除">
-              <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          <div v-for="(engine, index) in (Array.isArray(settings.customSearchEngines) ? settings.customSearchEngines : [])" :key="index" 
+               style="display: flex; gap: 12px; align-items: center; padding: 12px 14px; background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 8px; transition: all 0.2s;"
+               :style="{ opacity: engine.enabled ? '1' : '0.6' }">
+            <input type="checkbox" v-model="engine.enabled" @change="saveSettings" style="width: 16px; height: 16px; cursor: pointer; accent-color: var(--primary-color); flex-shrink: 0;" />
+            <div style="display: flex; gap: 8px; flex: 1; align-items: center;">
+              <input type="text" v-model="engine.name" @change="saveSettings" placeholder="引擎名称" class="input-base" style="width: 140px; font-size: 13px; padding: 6px 10px;" />
+              <input type="text" v-model="engine.urlTemplate" @change="saveSettings" placeholder="URL 模板 (如: https://...?q=%s)" class="input-base" style="flex: 1; font-size: 13px; padding: 6px 10px; font-family: monospace;" />
+            </div>
+            <button @click="removeCustomEngine(index)" class="btn btn-secondary" style="padding: 6px; color: var(--text-tertiary); border-color: transparent;" title="删除">
+              <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
             </button>
           </div>
-          <button @click="settings.customSearchEngines.push({ name: '', urlTemplate: '', enabled: true }); saveSettings()" class="btn btn-secondary" style="align-self: flex-start; margin-top: 4px;">
+          <button @click="addCustomEngine" class="btn" style="align-self: flex-start; margin-top: 4px; padding: 6px 12px; display: flex; align-items: center; gap: 6px; background: transparent; border: 1px dashed var(--border-color); color: var(--text-secondary); box-shadow: none; border-radius: 6px;">
             <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
             添加自定义引擎
           </button>
@@ -94,6 +98,21 @@ type MenuConfigItem = RubiSettings['customMenuConfig'][number];
 
 const sortableListRef = ref<HTMLElement | null>(null);
 const customMenuConfigList = ref<MenuConfigItem[]>([]);
+
+const addCustomEngine = () => {
+  if (!Array.isArray(settings.customSearchEngines)) {
+    settings.customSearchEngines = [];
+  }
+  settings.customSearchEngines.push({ name: '', urlTemplate: '', enabled: true });
+  saveSettings();
+};
+
+const removeCustomEngine = (index: number) => {
+  if (Array.isArray(settings.customSearchEngines)) {
+    settings.customSearchEngines.splice(index, 1);
+    saveSettings();
+  }
+};
 
 // Sync settings changes to the local sorting list
 watch(() => settings.customMenuConfig, (newVal) => {

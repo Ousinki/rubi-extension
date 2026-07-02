@@ -8,8 +8,25 @@ export const uiDict: Record<string, Record<string, string>> = {
   "请求出错，请重试": { "zh-TW": "請求出錯，請重試", "ja": "エラーが発生しました。再試行してください", "en": "Request failed, please try again", "ko": "요청 오류, 다시 시도하세요" },
   "正在解析日语语境和用法...": { "zh-TW": "正在解析日語語境和用法...", "ja": "日本語の文脈と語彙の用法を分析中...", "en": "Analyzing Japanese context and usage...", "ko": "일본어 문맥 및 용법 분석 중..." },
   "语境含义": { "zh-TW": "語境含義", "ja": "文脈上の意味", "en": "Context Meaning", "ko": "문맥적 의미" },
-  "常用用法/搭配": { "zh-TW": "常用用法/搭配", "ja": "一般的なコロケーション/用法", "en": "Common Usage & Collocation", "ko": "자주 쓰는 용법/연어" }
+  "常用用法/搭配": { "zh-TW": "常用用法/搭配", "ja": "一般的なコロケーション/用法", "en": "Common Usage & Collocation", "ko": "자주 쓰는 용법/연어" },
+  "AI 翻译": { "zh-TW": "AI 翻譯", "ja": "AI 翻訳", "en": "AI Translation", "ko": "AI 번역" },
+  "翻译当前段落": { "zh-TW": "翻譯當前段落", "ja": "現在の段落を翻訳", "en": "Translate Paragraph", "ko": "현재 단락 번역" },
+  "全文注音": { "zh-TW": "全文注音", "ja": "ふりがなを追加", "en": "Add Furigana", "ko": "후리가나 추가" },
+  "在 Weblio 词典中查询": { "zh-TW": "在 Weblio 詞典中查詢", "ja": "Weblio辞書で検索", "en": "Search in Weblio", "ko": "Weblio 사전에서 검색" },
+  "在 Jisho 词典中查询": { "zh-TW": "在 Jisho 詞典中查詢", "ja": "Jisho辞書で検索", "en": "Search in Jisho", "ko": "Jisho 사전에서 검색" },
+  "在维基百科中查询": { "zh-TW": "在維基百科中查詢", "ja": "Wikipediaで検索", "en": "Search in Wikipedia", "ko": "위키백과에서 검색" },
+  "在 Google 中搜索": { "zh-TW": "在 Google 中搜索", "ja": "Googleで検索", "en": "Search in Google", "ko": "Google에서 검색" },
+  "在 X (Twitter) 中搜索": { "zh-TW": "在 X (Twitter) 中搜索", "ja": "X (Twitter)で検索", "en": "Search in X (Twitter)", "ko": "X (Twitter)에서 검색" },
+  "在自定义引擎中搜索": { "zh-TW": "在自定義引擎中搜索", "ja": "カスタムエンジンで検索", "en": "Search in Custom Engine", "ko": "사용자 정의 엔진에서 검색" },
+  "在 %s 中搜索": { "zh-TW": "在 %s 中搜索", "ja": "%s で検索", "en": "Search in %s", "ko": "%s 에서 검색" },
+  "机器翻译": { "zh-TW": "機器翻譯", "ja": "機械翻訳", "en": "Machine Translation", "ko": "기계 번역" },
+  "复制原文": { "zh-TW": "複製原文", "ja": "原文をコピー", "en": "Copy Text", "ko": "원문 복사" },
+  "翻译中...": { "zh-TW": "翻譯中...", "ja": "翻訳中...", "en": "Translating...", "ko": "번역 중..." },
+
+  "设置": { "zh-TW": "設定", "ja": "設定", "en": "Settings", "ko": "설정" }
 };
+
+
 
 export function t(key: string, lang = 'zh-CN'): string {
   const dict = uiDict[key];

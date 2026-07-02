@@ -260,11 +260,6 @@ export async function handleMouseMove(e: MouseEvent) {
         currentWord = matchedWord;
         currentHighlightedRanges = ranges;
 
-        const pronounceTrigger = currentSettings?.pronounceTrigger || 'click';
-        if (pronounceTrigger === 'hover') {
-          triggerTTS(matchedWord);
-        }
-
         if (typeof (CSS as any) !== 'undefined' && (CSS as any).highlights) {
           const hl = new (window as any).Highlight(...ranges);
           (CSS as any).highlights.set('rubi-hover-highlight', hl);
@@ -422,7 +417,7 @@ export async function handleMouseMove(e: MouseEvent) {
                 const cRect = getKanjiRect(currentHighlightedRanges!, c.startIdx, c.endIdx);
                 return {
                    reading: c.reading,
-                   centerOffset: cRect.left - wordRect.left + cRect.width / 2
+                   centerOffset: cRect ? (cRect.left - wordRect.left + cRect.width / 2) : 0
                 };
              });
              if (newRubyChunks.length > 0) {
@@ -436,13 +431,13 @@ export async function handleMouseMove(e: MouseEvent) {
 
         // 2. ================= TRANSLATION BADGE =================
         const trigger = currentSettings?.translationTrigger || 'hover';
-        if (trigger === 'hover') {
+        if (matchedEntry?.isAiFallback) {
           const pos = (currentSettings?.translationPosition === 'pronounce-badge' ? 'bottom' : currentSettings?.translationPosition) || 'bottom';
           const showEngine = currentSettings?.showTranslationEngine ?? true;
           const targetLang = currentSettings?.targetLanguage || 'zh-CN';
 
-          if (matchedEntry?.isAiFallback) {
-            // AI translation only
+          // AI translation only: always fetch to resolve the '...' in pronounce badge
+          if (trigger === 'hover') {
             uiActions.showTranslationBadge(
               'AI 翻译中...',
               'AI',
@@ -453,20 +448,26 @@ export async function handleMouseMove(e: MouseEvent) {
               'ai',
               matchedWord
             );
+          }
 
-            safeSendMessage({
-              type: 'CONTEXTUAL_TRANSLATE',
-              word: matchedWord,
-              sentence: getSentenceContext(),
-              forceReading: true
-            }).then((resp: any) => {
-              if (currentWord !== wordSnapshot) return;
+          safeSendMessage({
+            type: 'CONTEXTUAL_TRANSLATE',
+            word: matchedWord,
+            sentence: getSentenceContext(),
+            forceReading: true
+          }).then((resp: any) => {
+            if (currentWord !== wordSnapshot) return;
+            
+            if (resp?.reading) {
+              updateDynamicReading(resp.reading);
+            } else if (!resp?.success) {
+              updateDynamicReading('错误');
+            } else {
+              updateDynamicReading(matchedWord); // Fallback to the original word if AI omitted reading
+            }
+
+            if (trigger === 'hover') {
               if (uiState.translationBadge.pinned && uiState.translationBadge.askMode) return;
-              
-              if (resp?.reading) {
-                updateDynamicReading(resp.reading);
-              }
-
               const result = resp?.translation || 'AI 翻译失败';
               const activeRect = isRubyMode ? getDynamicWordRect() : getRect();
               uiActions.showTranslationBadge(
@@ -479,8 +480,11 @@ export async function handleMouseMove(e: MouseEvent) {
                 'ai',
                 wordSnapshot
               );
-            }).catch((err: any) => {
-              if (currentWord !== wordSnapshot) return;
+            }
+          }).catch((err: any) => {
+            if (currentWord !== wordSnapshot) return;
+            updateDynamicReading('错误');
+            if (trigger === 'hover') {
               if (uiState.translationBadge.pinned && uiState.translationBadge.askMode) return;
               const activeRect = isRubyMode ? getDynamicWordRect() : getRect();
               uiActions.showTranslationBadge(
@@ -493,64 +497,68 @@ export async function handleMouseMove(e: MouseEvent) {
                 'ai',
                 wordSnapshot
               );
-            });
+            }
+          });
+        } else if (trigger === 'hover') {
+          const pos = (currentSettings?.translationPosition === 'pronounce-badge' ? 'bottom' : currentSettings?.translationPosition) || 'bottom';
+          const showEngine = currentSettings?.showTranslationEngine ?? true;
+          const targetLang = currentSettings?.targetLanguage || 'zh-CN';
+          const engine = currentSettings?.translationEngine || 'none';
+
+          if (engine === 'none') {
+            uiActions.showTranslationBadge(
+              `${matchedWord} (${translationStr})`,
+              'DICT',
+              isRubyMode ? getDynamicWordRect() : (rect as DOMRect),
+              false,
+              pos,
+              showEngine,
+              'dict',
+              matchedWord
+            );
           } else {
-            const engine = currentSettings?.translationEngine || 'none';
-            if (engine === 'none') {
+            safeSendMessage({
+              type: 'FETCH_TRANSLATION',
+              text: matchedWord,
+              sourceLang: 'ja',
+              targetLang,
+              engine,
+            }).then((resp: any) => {
+              if (currentWord !== wordSnapshot) return;
+              if (uiState.translationBadge.pinned && uiState.translationBadge.askMode) return;
+              
+              if (resp?.reading && !displayReading && currentSettings?.enableAutoTranslate) {
+                updateDynamicReading(resp.reading);
+              }
+
+              const result = resp?.targetText || translationStr;
+              const activeRect = isRubyMode ? getDynamicWordRect() : getRect();
+              uiActions.showTranslationBadge(
+                result,
+                resp?.targetText ? (resp.engine || engine) : 'DICT',
+                activeRect,
+                false,
+                pos,
+                showEngine,
+                'machine',
+                wordSnapshot,
+                resp?.errorInfo
+              );
+            }).catch(() => {
+              if (currentWord !== wordSnapshot) return;
+              if (uiState.translationBadge.pinned && uiState.translationBadge.askMode) return;
+              const activeRect = isRubyMode ? getDynamicWordRect() : getRect();
               uiActions.showTranslationBadge(
                 `${matchedWord} (${translationStr})`,
                 'DICT',
-                isRubyMode ? getDynamicWordRect() : (rect as DOMRect),
+                activeRect,
                 false,
                 pos,
                 showEngine,
                 'dict',
-                matchedWord
+                wordSnapshot
               );
-            } else {
-              safeSendMessage({
-                type: 'FETCH_TRANSLATION',
-                text: matchedWord,
-                sourceLang: 'ja',
-                targetLang,
-                engine,
-              }).then((resp: any) => {
-                if (currentWord !== wordSnapshot) return;
-                if (uiState.translationBadge.pinned && uiState.translationBadge.askMode) return;
-                
-                if (resp?.reading && !displayReading && currentSettings?.enableAutoTranslate) {
-                  updateDynamicReading(resp.reading);
-                }
-
-                const result = resp?.targetText || translationStr;
-                const activeRect = isRubyMode ? getDynamicWordRect() : getRect();
-                uiActions.showTranslationBadge(
-                  result,
-                  resp?.targetText ? (resp.engine || engine) : 'DICT',
-                  activeRect,
-                  false,
-                  pos,
-                  showEngine,
-                  'machine',
-                  wordSnapshot,
-                  resp?.errorInfo
-                );
-              }).catch(() => {
-                if (currentWord !== wordSnapshot) return;
-                if (uiState.translationBadge.pinned && uiState.translationBadge.askMode) return;
-                const activeRect = isRubyMode ? getDynamicWordRect() : getRect();
-                uiActions.showTranslationBadge(
-                  `${matchedWord} (${translationStr})`,
-                  'DICT',
-                  activeRect,
-                  false,
-                  pos,
-                  showEngine,
-                  'dict',
-                  wordSnapshot
-                );
-              });
-            }
+            });
           }
         }
       }
@@ -777,6 +785,82 @@ export async function triggerWordExplain(word: string, clientX: number, clientY:
     );
   }
 }
+
+export async function triggerMachineTranslation(word: string, clientX: number, clientY: number) {
+  uiState.suppressClickUntil = 0;
+  if (!word) return;
+
+  if (!currentHighlightedRanges || currentHighlightedRanges.length === 0) return;
+  const hlRange = currentHighlightedRanges[0];
+  const getRect = () => hlRange.getBoundingClientRect();
+  const currentRect = getRect();
+
+  const settings = currentSettings || (await settingsStorage.getValue());
+  const pos = (settings.translationPosition === 'pronounce-badge' ? 'bottom' : settings.translationPosition) || 'bottom';
+  const showEngine = settings.showTranslationEngine ?? true;
+  const engine = settings.translationEngine === 'none' ? 'google' : settings.translationEngine; // Fallback to google if none
+
+  uiState.returnGrace = true;
+  uiActions.showTranslationBadge(
+    t('翻译中...', settings.uiLanguage), // Using generic translating text
+    engine.toUpperCase(),
+    currentRect,
+    false,
+    pos,
+    showEngine,
+    'machine',
+    word
+  );
+
+  try {
+    const response = await safeSendMessage({
+      type: 'FETCH_TRANSLATION',
+      text: word,
+      sourceLang: 'auto',
+      targetLang: settings.targetLanguage,
+      engine: engine
+    });
+
+    if (uiState.translationBadge.originalText !== word) return;
+
+    if (response?.targetText) {
+      uiActions.showTranslationBadge(
+        response.targetText,
+        response.engine.toUpperCase(),
+        getRect(),
+        false,
+        pos,
+        showEngine,
+        'machine',
+        word
+      );
+    } else {
+      uiActions.showTranslationBadge(
+        t('翻译失败', settings.uiLanguage),
+        engine.toUpperCase(),
+        getRect(),
+        false,
+        pos,
+        showEngine,
+        'machine',
+        word
+      );
+    }
+  } catch (err: any) {
+    if (uiState.translationBadge.originalText !== word) return;
+    uiActions.showTranslationBadge(
+      t('翻译出错', settings.uiLanguage) + `: ${err.message || err}`,
+      engine.toUpperCase(),
+      getRect(),
+      false,
+      pos,
+      showEngine,
+      'machine',
+      word
+    );
+  }
+}
+
 
 export function getSentenceContext(): string {
   if (currentHighlightedRanges && currentHighlightedRanges.length > 0) {

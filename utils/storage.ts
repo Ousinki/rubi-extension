@@ -51,7 +51,7 @@ export interface RubiSettings {
   enableContextualCollocation: boolean;
   paragraphShortcut: string;
   enableInlineParagraphTranslate: boolean;
-  inlineParagraphTrigger: 'none' | 'shift' | 'ctrl' | 'alt' | 'longpress' | 'direct' | 'custom';
+  inlineParagraphTrigger: 'none' | 'shift' | 'ctrl' | 'alt' | 'meta' | 'longpress' | 'direct' | 'custom';
   inlineParagraphCustomShortcut: string;
   fullPageTranslateShortcut: string;
   uiLanguage: 'zh-CN' | 'zh-TW' | 'ja' | 'en' | 'ko';
@@ -135,13 +135,17 @@ export const DEFAULT_SETTINGS: RubiSettings = {
   enableCustomContextMenu: true,
   customMenuConfig: [
     { id: 'translate', enabled: true },
+    { id: 'machine_translate', enabled: true },
     { id: 'furigana', enabled: true },
     { id: 'explain', enabled: true },
+    { id: 'copy', enabled: true },
     { id: 'weblio', enabled: true },
     { id: 'jisho', enabled: true },
     { id: 'wikipedia', enabled: true },
     { id: 'google', enabled: true },
-    { id: 'x', enabled: true }
+    { id: 'x', enabled: true },
+    { id: 'divider_default', enabled: true },
+    { id: 'settings', enabled: true }
   ],
 
   // Japanese specific settings default
@@ -199,8 +203,7 @@ export const settingsStorage = {
           }
         }
         
-        // 1. Remove obsolete items
-        merged.customMenuConfig = merged.customMenuConfig.filter((item: any) => item.id !== 'copy');
+        // Removed obsolete items check, 'copy' is now valid again
         
         // 2. Add new default items that are missing from user storage
         const existingIds = new Set(merged.customMenuConfig.map((i: any) => i.id));

@@ -161,7 +161,7 @@ export async function lookupWord(text: string, contextText: string = '', wordOff
   const cleaned = cleanJapaneseSearchText(text);
   if (!cleaned) return null;
 
-  console.log(`[Rubi] lookupWord requesting SEARCH_WORD and SEARCH_NAMES for: "${cleaned}"`);
+  // console.log(`[Rubi] lookupWord requesting SEARCH_WORD and SEARCH_NAMES for: "${cleaned}"`);
   
   const [wordResp, nameResp] = await Promise.all([
     safeSendMessage({ type: 'SEARCH_WORD', text: cleaned }),
@@ -184,16 +184,16 @@ export async function lookupWord(text: string, contextText: string = '', wordOff
       return kMatch || rMatch;
     });
 
-    console.log(`[Rubi] matchLen: ${matchLen}, matchedText: "${matchedText}"`);
-    console.log(`[Rubi] wordResp.result.data.length: ${wordResp.result.data.length}`);
-    console.log(`[Rubi] validEntries.length: ${validEntries.length}`);
+    // console.log(`[Rubi] matchLen: ${matchLen}, matchedText: "${matchedText}"`);
+    // console.log(`[Rubi] wordResp.result.data.length: ${wordResp.result.data.length}`);
+    // console.log(`[Rubi] validEntries.length: ${validEntries.length}`);
 
     const entriesToUse = validEntries.length > 0 ? validEntries : wordResp.result.data;
 
     // Start with the default sort (priority-based) among the valid longest matches
     bestHit = entriesToUse[0];
     bestMatchLen = matchLen;
-    console.log(`[Rubi] bestHit (initial):`, bestHit);
+    // console.log(`[Rubi] bestHit (initial):`, bestHit);
 
     // Use Kuromoji for true context-aware morphological disambiguation
     if (contextText) {
@@ -215,7 +215,7 @@ export async function lookupWord(text: string, contextText: string = '', wordOff
               String.fromCharCode(match.charCodeAt(0) - 0x60)
             );
             
-            console.log(`[Rubi] Kuromoji context analysis for "${targetToken.surface_form}": ${expectedHiragana}`);
+            // console.log(`[Rubi] Kuromoji context analysis for "${targetToken.surface_form}": ${expectedHiragana}`);
             
             // Find a JMdict entry that matches this exact context reading AMONG THE LONGEST MATCHES
             const contextuallyMatchedEntry = entriesToUse.find((entry: any) => {
@@ -223,7 +223,7 @@ export async function lookupWord(text: string, contextText: string = '', wordOff
             });
             
             if (contextuallyMatchedEntry) {
-              console.log(`[Rubi] Kuromoji successfully disambiguated to: ${expectedHiragana}`);
+              // console.log(`[Rubi] Kuromoji successfully disambiguated to: ${expectedHiragana}`);
               
               // CRITICAL FIX: Only overwrite bestHit if the Kuromoji token is the primary root word,
               // not a conjugated suffix of a longer JpdictIdb match.
@@ -235,7 +235,7 @@ export async function lookupWord(text: string, contextText: string = '', wordOff
               const exactReading = contextuallyMatchedEntry.r.find((r: any) => r.ent === expectedHiragana);
               if (exactReading) exactReading.match = true;
             } else {
-              console.log(`[Rubi] Kuromoji returned ${expectedHiragana}, but no matching entry found in JMdict for the matched length.`);
+              // console.log(`[Rubi] Kuromoji returned ${expectedHiragana}, but no matching entry found in JMdict for the matched length.`);
             }
           }
         }

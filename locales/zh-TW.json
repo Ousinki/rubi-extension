@@ -146,7 +146,8 @@
     "trigger_none": "關閉",
     "trigger_shift": "+ Shift 翻譯 / 還原該段",
     "trigger_ctrl": "+ Ctrl 翻譯 / 還原該段",
-    "trigger_alt": "+ ⌥ 翻譯 / 還原該段",
+    "trigger_alt": "+ Alt / ⌥ 翻譯 / 還原該段",
+    "trigger_meta": "+ Win / ⌘ 翻譯 / 還原該段",
     "trigger_longpress": "+ 長按滑鼠左鍵",
     "trigger_direct": "直接翻譯該段",
     "trigger_custom": "自訂快捷鍵",
@@ -174,11 +175,16 @@
     "translate": "翻譯當前段落",
     "furigana": "全文注音",
     "explain": "AI 翻譯",
+    "machine_translate": "機器翻譯",
+    "copy": "複製原文",
     "weblio": "在 Weblio 詞典中查詢",
     "jisho": "在 Jisho 詞典中查詢",
     "wikipedia": "在維基百科中查詢",
     "google": "在 Google 中搜索",
     "x": "在 X (Twitter) 中搜索",
+    "settings": "設定",
+    "divider": "分隔符",
+    "add_divider": "添加分隔符",
     "delete": "刪除"
   }
 }

@@ -312,6 +312,35 @@ export async function contextualTranslateJa(settings: RubiSettings, word: string
   const langName = getLanguageName(settings.targetLanguage || 'zh-CN');
   const isMultiWord = !forceReading && (word.length > 8 || word.includes('、') || word.includes(' '));
 
+  // ── Fast path for pure katakana loanwords (e.g. ウィキペディア) ──
+  // These are external loanwords; we only need the original spelling + brief explanation.
+  // Using a minimal prompt avoids service worker timeout on slow/large models.
+  const isPureKatakana = /^[\u30a0-\u30ffー]+$/.test(word);
+  if (isPureKatakana && !isMultiWord) {
+    const combinedContent = `For the Japanese katakana loanword「${word}」, output ONLY a JSON object (no markdown, no extra text):
+{"reading":"<original source-language spelling, e.g. Wikipedia>","translation":"<one short ${langName} sentence explaining what it is>"}`;
+    const messages = [{ role: 'user', content: combinedContent }];
+    const payload = { model: settings.model || 'gemini-2.5-pro', messages, temperature: 0.1 };
+    const url = normalizeEndpoint(settings.apiEndpoint);
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${settings.apiKey}` },
+      body: JSON.stringify(payload),
+    });
+    if (!response.ok) {
+      const errorBody = await response.text();
+      throw new Error(`请求目标 [${url}] 失败 (${response.status}): ${errorBody}`);
+    }
+    const data = await response.json();
+    const content = data.choices?.[0]?.message?.content?.trim();
+    if (!content) throw new Error('AI 返回内容为空');
+    try {
+      const parsed = JSON.parse(extractJson(content));
+      if (parsed.translation) return { translation: parsed.translation, reading: parsed.reading };
+    } catch (_) { /* fall through */ }
+    return { translation: content };
+  }
+
   let systemPrompt: string;
   let userContent: string;
 

@@ -69,7 +69,7 @@ async function updateDictionaries() {
 
 export async function searchWords(text: string) {
   if (!db) {
-    console.log('[Rubi] searchWords: db is null');
+    // console.log('[Rubi] searchWords: db is null');
     return null;
   }
   const inputLengths = Array.from({ length: text.length + 1 }, (_, i) => i);
@@ -80,7 +80,7 @@ export async function searchWords(text: string) {
       maxResults: 5,
       getWords: async (params) => idbGetWords(params.input, { matchType: 'exact', limit: params.maxResults })
     });
-    console.log(`[Rubi] searchWords: input="${text}", result=`, result);
+    // console.log(`[Rubi] searchWords: input="${text}", result=`, result);
     return result;
   } catch (e) {
     console.error('[Rubi] searchWords error:', e);

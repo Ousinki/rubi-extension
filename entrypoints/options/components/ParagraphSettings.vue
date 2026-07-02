@@ -6,38 +6,40 @@
     </div>
     
     <div class="card-body">
-      <div class="toggle-row">
-        <div class="toggle-desc">
-          <h3>{{ t('paragraph.enable_label') }}</h3>
-          <p>{{ t('paragraph.enable_desc') }}</p>
-        </div>
-        <CustomSelect
-          v-model="settings.inlineParagraphTrigger"
-          :options="inlineParagraphTriggerOptions"
-          @change="saveSettings"
-          style="width: 280px; flex-shrink: 0;"
-        />
-      </div>
-
-      <!-- Custom shortcut input -->
-      <div v-if="settings.inlineParagraphTrigger === 'custom'" class="input-group" style="margin-top: 16px; border-top: 1px solid var(--border-color); padding-top: 16px;">
-        <label>
-          {{ t('paragraph.shortcut_label') }}
-          <input 
-            type="text" 
-            class="shortcut-input" 
-            readonly
-            :value="recordingField === 'inlineParagraphCustomShortcut' ? t('paragraph.recording') : formatShortcut(settings.inlineParagraphCustomShortcut)"
-            @focus="recordingField = 'inlineParagraphCustomShortcut'"
-            @blur="recordingField = null"
-            @keydown.prevent="recordShortcut($event, 'inlineParagraphCustomShortcut')"
-            title="Click and press keys to set shortcut"
-            :class="{ 'is-recording': recordingField === 'inlineParagraphCustomShortcut' }"
+      <div class="toggle-row" style="flex-direction: column; align-items: stretch; gap: 16px;">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <div class="toggle-desc">
+            <h3>{{ t('paragraph.enable_label') }}</h3>
+            <p>{{ t('paragraph.enable_desc') }}</p>
+          </div>
+          <CustomSelect
+            v-model="settings.inlineParagraphTrigger"
+            :options="inlineParagraphTriggerOptions"
+            @change="saveSettings"
+            style="width: 280px; flex-shrink: 0;"
           />
-        </label>
+        </div>
+
+        <!-- Custom shortcut input -->
+        <div v-if="settings.inlineParagraphTrigger === 'custom'" class="input-group" style="margin-bottom: 0;">
+          <label style="display: flex; align-items: center;">
+            {{ t('paragraph.shortcut_label') }}
+            <input 
+              type="text" 
+              class="shortcut-input" 
+              readonly
+              :value="recordingField === 'inlineParagraphCustomShortcut' ? t('paragraph.recording') : formatShortcut(settings.inlineParagraphCustomShortcut)"
+              @focus="recordingField = 'inlineParagraphCustomShortcut'"
+              @blur="recordingField = null"
+              @keydown.prevent="recordShortcut($event, 'inlineParagraphCustomShortcut')"
+              title="Click and press keys to set shortcut"
+              :class="{ 'is-recording': recordingField === 'inlineParagraphCustomShortcut' }"
+            />
+          </label>
+        </div>
       </div>
 
-      <div class="toggle-row" style="margin-top: 16px; border-top: 1px solid var(--border-color); padding-top: 16px;">
+      <div class="toggle-row" style="border-bottom: none; margin-bottom: 0; padding-bottom: 0;">
         <div class="toggle-desc">
           <h3>
             {{ t('paragraph.full_page_shortcut_label') || '全文翻译快捷键' }}
@@ -88,6 +90,7 @@ const inlineParagraphTriggerOptions = computed(() => [
   { value: 'shift', label: t('paragraph.trigger_shift') },
   { value: 'ctrl', label: t('paragraph.trigger_ctrl') },
   { value: 'alt', label: t('paragraph.trigger_alt') },
+  { value: 'meta', label: t('paragraph.trigger_meta') },
   { value: 'longpress', label: t('paragraph.trigger_longpress') },
   { value: 'direct', label: t('paragraph.trigger_direct') },
   { value: 'custom', label: t('paragraph.trigger_custom') },

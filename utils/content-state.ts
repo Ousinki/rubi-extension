@@ -128,6 +128,7 @@ export const uiState = reactive({
     askAnswer: '',
     askContext: '',
   },
+  returnGrace: false,
   contextMenu: {
     visible: false,
     x: 0,
@@ -276,14 +277,16 @@ export const uiActions = {
       syncAction('showTranslationBadge', text, engine, toPlainRect(rect), pinned, position, showEngine, translationType, originalText, errorInfo);
     }
   },
-  hideTranslationBadge(isSync = false) {
+  hideTranslationBadge(isSync = false, suppressNext = false) {
     uiState.translationBadge.visible = false;
     uiState.translationBadge.pinned = false;
     uiState.translationBadge.askMode = false;
     uiState.translationBadge.askLoading = false;
     uiState.translationBadge.askAnswer = '';
     uiState.translationBadge.askContext = '';
-    uiState.suppressClickUntil = Date.now() + 300;
+    // Only suppress the next show() when the user explicitly clicked to dismiss.
+    // Hover-out dismissals should NOT suppress, so moving to a new word works immediately.
+    if (suppressNext) uiState.suppressClickUntil = Date.now() + 300;
     if (!isSync) {
       syncAction('hideTranslationBadge');
     }
@@ -345,11 +348,14 @@ export const uiActions = {
   },
   
   updateActiveRects() {
-    if (uiState.translationBadge.visible && uiState.translationBadge.updater) {
+    // In Ask AI mode, keep the badge fixed at its original position
+    const isAskMode = uiState.translationBadge.pinned && uiState.translationBadge.askMode;
+
+    if (uiState.translationBadge.visible && uiState.translationBadge.updater && !isAskMode) {
       const newRect = uiState.translationBadge.updater();
       if (newRect) uiState.translationBadge.rect = toRect(newRect, uiState.translationBadge.exactRect);
     }
-    if (uiState.pronounceBadge.visible && uiState.pronounceBadge.updater) {
+    if (uiState.pronounceBadge.visible && uiState.pronounceBadge.updater && !isAskMode) {
       const newRect = uiState.pronounceBadge.updater();
       if (newRect) uiState.pronounceBadge.rect = toRect(newRect, uiState.pronounceBadge.exactRect);
     }

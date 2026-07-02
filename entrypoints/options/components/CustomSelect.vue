@@ -10,6 +10,9 @@
       @keydown.up.prevent="selectPrev"
       @keydown.down.prevent="selectNext"
     >
+      <div v-if="$slots.icon" class="custom-select-icon">
+        <slot name="icon"></slot>
+      </div>
       <span class="custom-select-value">{{ selectedLabel }}</span>
       <svg class="custom-select-arrow" viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round">
         <polyline points="6 9 12 15 18 9"></polyline>
@@ -136,6 +139,14 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside));
 .custom-select.open .custom-select-trigger {
   border-color: var(--accent-base);
   box-shadow: 0 0 0 3px var(--accent-transparent);
+}
+
+.custom-select-icon {
+  display: flex;
+  align-items: center;
+  color: inherit;
+  opacity: 0.7;
+  flex-shrink: 0;
 }
 
 .custom-select-value {

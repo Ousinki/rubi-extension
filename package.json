@@ -21,9 +21,17 @@
   "dependencies": {
     "@birchill/jpdict-idb": "^3.3.0",
     "@birchill/normal-jp": "^1.7.1",
+    "@formkit/drag-and-drop": "^0.6.1",
+    "@sglkc/kuromoji": "^1.1.0",
+    "@types/sortablejs": "^1.15.9",
+    "@vueuse/core": "^14.3.0",
+    "@vueuse/integrations": "^14.3.0",
     "lru_map": "^0.4.1",
+    "sortablejs": "^1.15.7",
     "vue": "^3.5.29",
-    "vue-i18n": "^9.14.4"
+    "vue-draggable-plus": "^0.6.1",
+    "vue-i18n": "^9.14.4",
+    "vuedraggable": "^4.1.0"
   },
   "devDependencies": {
     "@intlify/unplugin-vue-i18n": "^11.2.4",

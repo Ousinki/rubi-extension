@@ -9,7 +9,7 @@
     "title": "Navigation"
   },
   "appearance": {
-    "title": "Appearance & Highlights",
+    "title": "Popup & Highlights",
     "tag": "Appearance",
     "highlight_label": "Choose Highlight Color",
     "gems": {
@@ -25,7 +25,10 @@
       "dark": "Dark",
       "beige": "Beige (Eye Care)",
       "glass": "Glass"
-    }
+    },
+    "lookup_display_label": "Lookup Display Style",
+    "lookup_display_tooltip": "Hover Popup",
+    "lookup_display_ruby": "Superscript Ruby"
   },
   "llm": {
     "title": "AI Translation",
@@ -54,10 +57,10 @@
     "jlpt_hint": "Filter out easy vocabulary; only show furigana for words at or above the selected JLPT level.",
     "jlpt_above_pre": "",
     "jlpt_above_suf": " & above",
-    "color_label": "Furigana Color",
-    "color_theme": "Theme Highlight",
-    "color_gray": "Subtle Gray",
-    "color_text": "Same as Text",
+    "color_label": "Color Style",
+    "color_theme": "Theme Color",
+    "color_gray": "Gray",
+    "color_text": "Text Color",
     "font_label": "Furigana Font",
     "font_system": "System Default",
     "font_sans": "Sans-serif",
@@ -137,7 +140,7 @@
     "ko": "한국어"
   },
   "paragraph": {
-    "title": "Paragraph Translation",
+    "title": "Paragraph & Full Page Translation",
     "tag": "Global Shortcuts & Paragraph Translation",
     "desc": "Configure paragraph translation triggers. It injects translation above unfamiliar words like ruby text without breaking English layout.",
     "enable_label": "Paragraph Translation Shortcut Trigger",
@@ -150,7 +153,11 @@
     "trigger_longpress": "+ Long press left mouse button",
     "trigger_direct": "Directly translate paragraph",
     "trigger_custom": "Custom Shortcut",
-    "shortcut_label": "Custom Shortcut",
+    "display_mode": "Display Mode",
+    "display_mode_append": "Below Original",
+    "display_mode_replace": "Cover Original",
+    "paragraph_custom_shortcut_label": "Custom Shortcut",
+    "full_page_shortcut_label": "Full-Page Translation Shortcut",
     "recording": "Press shortcut keys...",
     "click_to_set": "Click to set",
     "direct_hint": "⚠ Direct mode auto-translates when hovering over new paragraphs, which may generate many translation requests."

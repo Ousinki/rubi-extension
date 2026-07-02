@@ -4,6 +4,9 @@
     :class="{ 'rubi-cm-visible': uiState.contextMenu.visible }"
     :style="menuStyle"
     ref="menuRef"
+    @mousedown.stop
+    @mouseup.stop
+    @contextmenu.stop.prevent
   >
     <template v-for="(item, index) in uiState.contextMenu.items" :key="index">
       
@@ -17,10 +20,26 @@
            @click="item.onSpeakClick ? handleSpeakClick($event, item.onSpeakClick, index) : null"
            @mouseleave="item.onMouseLeave ? item.onMouseLeave() : null">
         
-        <span v-if="!item.onSpeakClick">{{ item.label }}</span>
+        <span v-if="!item.onSpeakClick">
+          <template v-if="item.rubyChunks && item.rubyChunks.length > 0">
+            <template v-for="(chunk, cIdx) in splitTextByChunks(item.label, item.rubyChunks)" :key="cIdx">
+              <ruby v-if="chunk.isRuby">{{ chunk.text }}<rt>{{ chunk.reading }}</rt></ruby>
+              <span v-else>{{ chunk.text }}</span>
+            </template>
+          </template>
+          <template v-else>{{ item.label }}</template>
+        </span>
         
         <template v-else>
-          <span class="rubi-cm-header-text">{{ item.label }}</span>
+          <span class="rubi-cm-header-text">
+            <template v-if="item.rubyChunks && item.rubyChunks.length > 0">
+              <template v-for="(chunk, cIdx) in splitTextByChunks(item.label, item.rubyChunks)" :key="cIdx">
+                <ruby v-if="chunk.isRuby">{{ chunk.text }}<rt>{{ chunk.reading }}</rt></ruby>
+                <span v-else>{{ chunk.text }}</span>
+              </template>
+            </template>
+            <template v-else>{{ item.label }}</template>
+          </span>
           <span class="rubi-cm-header-speak" :class="{ 'rubi-speaking': speakingIndex === index }">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
@@ -83,6 +102,27 @@ watch(() => [uiState.contextMenu.visible, uiState.contextMenu.x, uiState.context
 const handleItemClick = (onClick?: () => void) => {
   uiActions.hideContextMenu();
   if (onClick) onClick();
+};
+
+const splitTextByChunks = (word: string, chunks: {text: string, reading: string, startIdx: number, endIdx: number}[]) => {
+  if (!chunks || chunks.length === 0) return [{ text: word, isRuby: false }];
+  
+  const result = [];
+  let currentIdx = 0;
+  
+  for (const chunk of chunks) {
+    if (chunk.startIdx > currentIdx) {
+      result.push({ text: word.substring(currentIdx, chunk.startIdx), isRuby: false });
+    }
+    result.push({ text: chunk.text, reading: chunk.reading, isRuby: true });
+    currentIdx = chunk.endIdx + 1;
+  }
+  
+  if (currentIdx < word.length) {
+    result.push({ text: word.substring(currentIdx), isRuby: false });
+  }
+  
+  return result;
 };
 
 const handleSpeakClick = (e: MouseEvent, onSpeakClick: () => void, index: number) => {
@@ -157,6 +197,17 @@ const handleSpeakClick = (e: MouseEvent, onSpeakClick: () => void, index: number
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  line-height: 1.2;
+}
+
+.rubi-cm-header-text ruby {
+  ruby-align: center;
+}
+
+.rubi-cm-header-text rt {
+  font-size: 0.6em;
+  color: inherit;
+  opacity: 0.85;
 }
 
 .rubi-cm-header-speak {

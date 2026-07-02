@@ -9,7 +9,7 @@
     "title": "導航目錄"
   },
   "appearance": {
-    "title": "界面外觀與高亮樣式",
+    "title": "懸浮窗與高亮樣式",
     "tag": "Appearance",
     "highlight_label": "選擇查詞高亮顏色",
     "gems": {
@@ -25,7 +25,10 @@
       "dark": "暗夜黑",
       "beige": "米色 (護眼)",
       "glass": "毛玻璃"
-    }
+    },
+    "lookup_display_label": "查詞/懸停顯示模式",
+    "lookup_display_tooltip": "預設懸浮窗",
+    "lookup_display_ruby": "上標注音"
   },
   "llm": {
     "title": "AI 翻譯",
@@ -53,9 +56,9 @@
     "jlpt_hint": "過濾低難度詞彙，僅為所選級別以上的單詞顯示假名。",
     "jlpt_above_pre": "",
     "jlpt_above_suf": "級以上",
-    "color_label": "上標顏色",
-    "color_theme": "主體高亮顏色",
-    "color_gray": "低調灰色",
+    "color_label": "注音顏色",
+    "color_theme": "主題色",
+    "color_gray": "淡灰色",
     "color_text": "隨正文顏色",
     "font_label": "上標字體",
     "font_system": "系統預設",
@@ -132,7 +135,7 @@
     "ko": "한국어"
   },
   "paragraph": {
-    "title": "段落翻譯",
+    "title": "段落和全文翻譯",
     "tag": "Global Shortcuts & Paragraph Translation",
     "desc": "配置段落翻譯的觸發快捷鍵。它能在不破壞原有日文版面的前提下，將中文翻譯像拼音一樣注入到生詞上方。",
     "enable_label": "段落翻譯快捷鍵觸發",
@@ -145,7 +148,13 @@
     "trigger_longpress": "+ 長按滑鼠左鍵",
     "trigger_direct": "直接翻譯該段",
     "trigger_custom": "自訂快捷鍵",
-    "shortcut_label": "自訂快捷鍵",
+    "trigger_shortcut_custom": "自訂快捷鍵",
+    "display_mode": "顯示模式",
+    "display_mode_append": "原文下方顯示",
+    "display_mode_replace": "替代覆蓋原文",
+    "paragraph_custom_shortcut_label": "自訂快捷鍵",
+    "shortcut_label": "段落翻譯快捷鍵",
+    "full_page_shortcut_label": "全文翻譯快捷鍵",
     "recording": "按下快捷鍵組合…",
     "click_to_set": "點擊設定",
     "direct_hint": "⚠ 直接模式會在滑鼠懸停新段落時自動翻譯，可能產生大量翻譯請求。"

@@ -25,7 +25,10 @@
       "dark": "다크",
       "beige": "베이지 (눈 보호)",
       "glass": "글래스"
-    }
+    },
+    "lookup_display_label": "단어 검색 표시 방식",
+    "lookup_display_tooltip": "툴팁 팝업",
+    "lookup_display_ruby": "루비 (윗첨자)"
   },
   "llm": {
     "title": "AI 번역",
@@ -54,9 +57,9 @@
     "jlpt_above_pre": "",
     "jlpt_above_suf": " 이상",
     "color_label": "후리가나 색상",
-    "color_theme": "테마 하이라이트",
-    "color_gray": "회색",
-    "color_text": "텍스트 색상",
+    "color_theme": "테마 색상",
+    "color_gray": "연한 회색",
+    "color_text": "텍스트 색상과 동일",
     "font_label": "후리가나 폰트",
     "font_system": "시스템 기본",
     "font_sans": "고딕체",
@@ -127,7 +130,7 @@
     "ko": "한국어"
   },
   "paragraph": {
-    "title": "단락 번역",
+    "title": "단락 및 전체 페이지 번역",
     "tag": "Global Shortcuts & Paragraph Translation",
     "desc": "단락 전체 번역을 트리거할 단축키를 설정합니다. 기존 레이아웃을 해치지 않고 번역을 원문 아래에 표시합니다.",
     "enable_label": "단락 번역 단축키 트리거",
@@ -139,8 +142,12 @@
     "trigger_alt": "+ ⌥ 번역 / 단락 되돌리기",
     "trigger_longpress": "+ 마우스 왼쪽 버튼 길게 누르기",
     "trigger_direct": "즉시 단락 번역",
-    "trigger_custom": "사용자 정의 단축키",
-    "shortcut_label": "사용자 정의 단축키",
+    "trigger_shortcut_custom": "사용자 지정 단축키",
+    "display_mode": "표시 모드",
+    "display_mode_append": "원문 아래에 표시",
+    "display_mode_replace": "원문 덮어쓰기",
+    "paragraph_custom_shortcut_label": "사용자 지정 단축키",
+    "full_page_shortcut_label": "전체 페이지 번역 단축키",
     "recording": "단축키를 누르세요...",
     "click_to_set": "클릭하여 설정",
     "direct_hint": "⚠ 즉시 모드는 마우스가 새 단락에 올라가면 자동으로 번역되어, 많은 번역 요청이 발생할 수 있습니다."

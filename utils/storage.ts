@@ -56,8 +56,10 @@ export interface RubiSettings {
   enableInlineParagraphTranslate: boolean;
   inlineParagraphTrigger: 'none' | 'shift' | 'ctrl' | 'alt' | 'longpress' | 'direct' | 'custom';
   inlineParagraphCustomShortcut: string;
+  fullPageTranslateShortcut: string;
   uiLanguage: 'zh-CN' | 'zh-TW' | 'ja' | 'en' | 'ko';
   targetLanguage: 'zh-CN' | 'zh-TW' | 'ja' | 'en' | 'ko';
+  translationDisplayMode: 'append' | 'replace';
   
   enableContextMenu: boolean;
   enableSearchGoogle: boolean;
@@ -67,6 +69,9 @@ export interface RubiSettings {
   enableContextMenuTranslate: boolean;
   enableContextMenuBlockTranslate: boolean;
   enableContextMenuFocus: boolean;
+  
+  enableCustomContextMenu: boolean;
+  customMenuConfig: { id: string, enabled: boolean }[];
 
   // Japanese specific settings
   enableFuriganaRuby: boolean;       // Enable full-page Furigana ruby annotations
@@ -79,6 +84,7 @@ export interface RubiSettings {
   
   highlightStyle: 'purple' | 'yellow' | 'pink' | 'blue'; // UI highlight color theme
   tooltipTheme: 'system' | 'light' | 'dark' | 'beige' | 'glass'; // Tooltip style/theme
+  lookupDisplayStyle: 'tooltip' | 'ruby'; // Display Word Lookup as tooltip or inline ruby
 }
 
 export const DEFAULT_SETTINGS: RubiSettings = {
@@ -118,8 +124,10 @@ export const DEFAULT_SETTINGS: RubiSettings = {
   enableInlineParagraphTranslate: true,
   inlineParagraphTrigger: 'shift',
   inlineParagraphCustomShortcut: 'Alt+KeyP',
+  fullPageTranslateShortcut: '',
   uiLanguage: 'zh-CN',
   targetLanguage: 'zh-CN',
+  translationDisplayMode: 'append',
   
   enableContextMenu: true,
   enableSearchGoogle: true,
@@ -129,6 +137,18 @@ export const DEFAULT_SETTINGS: RubiSettings = {
   enableContextMenuTranslate: true,
   enableContextMenuBlockTranslate: false,
   enableContextMenuFocus: true,
+
+  enableCustomContextMenu: true,
+  customMenuConfig: [
+    { id: 'translate', enabled: true },
+    { id: 'furigana', enabled: true },
+    { id: 'explain', enabled: true },
+    { id: 'weblio', enabled: true },
+    { id: 'jisho', enabled: true },
+    { id: 'wikipedia', enabled: true },
+    { id: 'google', enabled: true },
+    { id: 'x', enabled: true }
+  ],
 
   // Japanese specific settings default
   enableFuriganaRuby: false,
@@ -141,6 +161,7 @@ export const DEFAULT_SETTINGS: RubiSettings = {
   
   highlightStyle: 'purple',
   tooltipTheme: 'system',
+  lookupDisplayStyle: 'tooltip'
 };
 
 const rawSettingsStorage = storage.defineItem<RubiSettings>(
@@ -152,24 +173,66 @@ export const settingsStorage = {
   key: rawSettingsStorage.key,
   remove: () => rawSettingsStorage.removeValue(),
   async getValue(): Promise<RubiSettings> {
-    const val = await rawSettingsStorage.getValue();
-    return { ...DEFAULT_SETTINGS, ...val };
+    try {
+      const val = await rawSettingsStorage.getValue();
+      const merged = { ...DEFAULT_SETTINGS, ...val };
+      
+      // Smart migration for array settings like customMenuConfig
+      if (val && val.customMenuConfig) {
+        if (!Array.isArray(val.customMenuConfig)) {
+          if (typeof val.customMenuConfig === 'object') {
+            merged.customMenuConfig = Object.values(val.customMenuConfig);
+          } else {
+            merged.customMenuConfig = [...DEFAULT_SETTINGS.customMenuConfig];
+          }
+        }
+        
+        // 1. Remove obsolete items
+        merged.customMenuConfig = merged.customMenuConfig.filter((item: any) => item.id !== 'copy');
+        
+        // 2. Add new default items that are missing from user storage
+        const existingIds = new Set(merged.customMenuConfig.map((i: any) => i.id));
+        for (const defItem of DEFAULT_SETTINGS.customMenuConfig) {
+          if (!existingIds.has(defItem.id)) {
+            merged.customMenuConfig.push(defItem);
+          }
+        }
+      }
+      
+      return merged;
+    } catch (e: any) {
+      console.warn('[Rubi] 扩展存储读取失败，回退到默认设置以防崩溃:', e);
+      return DEFAULT_SETTINGS;
+    }
   },
   async setValue(val: RubiSettings): Promise<void> {
-    const cleanVal = { ...val };
-    for (const key of Object.keys(cleanVal) as Array<keyof RubiSettings>) {
-      if (cleanVal[key] === undefined) {
-        delete cleanVal[key];
+    try {
+      const cleanVal = { ...val };
+      for (const key of Object.keys(cleanVal) as Array<keyof RubiSettings>) {
+        if (cleanVal[key] === undefined) {
+          delete cleanVal[key];
+        }
       }
+      await rawSettingsStorage.setValue(cleanVal);
+    } catch (e: any) {
+      if (e?.message?.includes('context invalidated') || e?.message?.includes('storage') || e?.message?.includes('undefined')) {
+        console.warn('[Rubi] 扩展上下文已失效 (Storage setValue)，请刷新页面以恢复正常', e);
+        return;
+      }
+      throw e;
     }
-    await rawSettingsStorage.setValue(cleanVal);
   },
   watch(callback: (newVal: RubiSettings | null, oldVal: RubiSettings | null) => void): () => void {
-    return rawSettingsStorage.watch((newVal, oldVal) => {
-      const mergedNew = newVal ? { ...DEFAULT_SETTINGS, ...newVal } : null;
-      const mergedOld = oldVal ? { ...DEFAULT_SETTINGS, ...oldVal } : null;
-      callback(mergedNew, mergedOld);
-    });
+    try {
+      return rawSettingsStorage.watch((newVal, oldVal) => {
+        const mergedNew = newVal ? { ...DEFAULT_SETTINGS, ...newVal } : null;
+        const mergedOld = oldVal ? { ...DEFAULT_SETTINGS, ...oldVal } : null;
+        callback(mergedNew, mergedOld);
+      });
+    } catch (e: any) {
+      console.warn('[Rubi] 扩展上下文已失效 (Storage watch)，无法监听设置变化', e);
+      return () => {};
+    }
   }
 };
 

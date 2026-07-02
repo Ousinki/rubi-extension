@@ -11,6 +11,7 @@ import { getTextAtPoint } from '@/utils/10ten/get-text';
 import { safeSendMessage, showErrorToast } from '@/utils/content-messaging';
 import { speakText } from '@/utils/tts';
 import { loadDictionary, lookupWord, tokenizeJa } from '@/utils/tokenizer';
+import { extractRuby } from '@/utils/ruby-extractor';
 import { shouldSkipJa } from '@/utils/skip-words-ja';
 import { t } from '@/utils/i18n';
 // Removed Kuromoji imports
@@ -18,11 +19,13 @@ import { t } from '@/utils/i18n';
 import type { RubiSettings } from '@/utils/storage';
 
 let isEnabled = true;
-let currentSettings: RubiSettings | null = null;
+let isThrottled = false;
+let currentSettings: any = null;
 let hoverTimer: ReturnType<typeof setTimeout> | null = null;
 let currentHighlightedRanges: Range[] | null = null;
 let currentWord: string | null = null;
 let currentWordIsAiFallback = false;
+let currentMatchedEntry: any = null;
 let lastClickTime = 0;
 
 let localFuriganaState: boolean = false;
@@ -197,6 +200,7 @@ function injectHostStyles(settings: any = {}) {
     rubi-ui-root {
       --rubi-highlight-main: ${theme.main};
       --rubi-highlight-dark: ${theme.dark};
+      --rubi-highlight-bg: ${theme.bg};
     }
 
     /* CSS Custom Highlight API styling */
@@ -439,6 +443,12 @@ function setupEventListeners() {
   let inlineLongPressTimer: ReturnType<typeof setTimeout> | null = null;
   let lastDirectTranslatedParagraph: HTMLElement | null = null;
 
+  window.addEventListener('scroll', () => {
+    uiActions.updateActiveRects();
+    // Do not hide context menu on scroll; macOS trackpad right-clicks often trigger micro-scrolls which immediately dismiss the menu.
+    uiActions.hideLongPressRing();
+  });
+
   document.addEventListener('mousemove', (e) => {
     lastMouseX = e.clientX;
     lastMouseY = e.clientY;
@@ -473,17 +483,23 @@ function setupEventListeners() {
     // ── Synchronous fast-path: check if cursor has left the highlighted word ──
     // This runs even during throttle so the badge disappears immediately.
     if (currentHighlightedRanges && currentWord) {
-      const hlRects = currentHighlightedRanges[0].getClientRects(); // Use first range for fast check
       let stillOverWord = false;
       const padding = 4;
-      for (let i = 0; i < hlRects.length; i++) {
-        const r = hlRects[i];
-        if (e.clientX >= r.left - padding && e.clientX <= r.right + padding &&
-            e.clientY >= r.top - padding && e.clientY <= r.bottom + padding) {
-          stillOverWord = true;
-          break;
+      
+      // Check all ranges to properly handle elements that wrap across nodes/lines
+      for (let j = 0; j < currentHighlightedRanges.length; j++) {
+        const hlRects = currentHighlightedRanges[j].getClientRects();
+        for (let i = 0; i < hlRects.length; i++) {
+          const r = hlRects[i];
+          if (e.clientX >= r.left - padding && e.clientX <= r.right + padding &&
+              e.clientY >= r.top - padding && e.clientY <= r.bottom + padding) {
+            stillOverWord = true;
+            break;
+          }
         }
+        if (stillOverWord) break;
       }
+      
       if (!stillOverWord) {
         scheduleHide();
         return;
@@ -549,7 +565,7 @@ function setupEventListeners() {
   });
 
   document.addEventListener('mouseup', (e) => {
-    if (!isEnabled) return;
+    if (!isEnabled || e.button !== 0) return;
     if (ringDelayTimer) {
       clearTimeout(ringDelayTimer);
       ringDelayTimer = null;
@@ -560,7 +576,25 @@ function setupEventListeners() {
     }
     uiActions.hideLongPressRing();
 
+    // Ignore events that originated from the extension UI
+    const path = e.composedPath ? e.composedPath() : [];
+    if (path.some((el: any) => 
+      (el.tagName && el.tagName.toLowerCase() === 'rubi-ui-root') ||
+      el.id === 'rubi-translation-badge' ||
+      el.id === 'rubi-pronounce-badge'
+    )) {
+      longPressActive = false;
+      return;
+    }
+
     if (currentHighlightedRanges && currentWord && !longPressActive) {
+      // When context menu is open, don't trigger background TTS on mouseup —
+      // the user is interacting with the menu, not the highlighted word.
+      if (uiState.contextMenu.visible) {
+        longPressActive = false;
+        return;
+      }
+
       let isInside = false;
       let matchedRange: Range | null = null;
       let rangeIndex = 0;
@@ -594,7 +628,167 @@ function setupEventListeners() {
     longPressActive = false;
   });
 
+  let lastContextMenuTime = 0;
+
+  document.addEventListener('contextmenu', (e) => {
+    if (!isEnabled) return;
+    if (currentSettings?.enableCustomContextMenu === false) return;
+    
+    let targetWord = '';
+    let isLemma = false;
+    
+    const selection = window.getSelection();
+    const selectedText = selection?.toString().trim();
+    
+    let isInsideHighlight = false;
+    if (currentHighlightedRanges) {
+      const padding = 15; // Generous padding for right-clicks
+      for (const hlRange of currentHighlightedRanges) {
+        const rects = hlRange.getClientRects();
+        for (let i = 0; i < rects.length; i++) {
+          const r = rects[i];
+          if (e.clientX >= r.left - padding && e.clientX <= r.right + padding &&
+              e.clientY >= r.top - padding && e.clientY <= r.bottom + padding) {
+            isInsideHighlight = true;
+            break;
+          }
+        }
+        if (isInsideHighlight) break;
+      }
+    }
+    
+    // If they right-clicked the popup itself, we can still show the context menu for the current word
+    if (!isInsideHighlight && isMouseOverPopup && currentWord) {
+      isInsideHighlight = true;
+    }
+    
+    if (selectedText) {
+      targetWord = selectedText;
+    } else if (isInsideHighlight && currentWord) {
+      targetWord = currentWord;
+      if (currentMatchedEntry && currentMatchedEntry.lemma && currentMatchedEntry.lemma !== currentWord) {
+         targetWord = currentMatchedEntry.lemma;
+         isLemma = true;
+      }
+    }
+
+    if (targetWord) {
+      e.preventDefault();
+      
+      let rubyChunks: any[] | undefined = undefined;
+      if (currentMatchedEntry && isInsideHighlight && !selectedText) {
+          const matchedReading = currentMatchedEntry.r || '';
+          const { chunks } = extractRuby(targetWord, matchedReading, currentMatchedEntry.lemma || targetWord, !!currentMatchedEntry.isAiFallback);
+          if (chunks.length > 0) {
+              rubyChunks = chunks;
+          }
+      }
+      
+      const items: any[] = [
+        {
+          label: targetWord,
+          type: 'header',
+          rubyChunks,
+          onSpeakClick: () => triggerTTS(targetWord)
+        },
+        { type: 'divider' }
+      ];
+
+      let config = currentSettings?.customMenuConfig;
+      if (!Array.isArray(config)) {
+        if (config && typeof config === 'object') {
+          config = Object.values(config) as any[];
+        } else {
+          config = [
+            { id: 'translate', enabled: true },
+            { id: 'furigana', enabled: true },
+            { id: 'explain', enabled: true },
+            { id: 'weblio', enabled: true },
+            { id: 'jisho', enabled: true },
+            { id: 'wikipedia', enabled: true },
+            { id: 'google', enabled: true },
+            { id: 'x', enabled: true }
+          ];
+        }
+      }
+
+      const actions: Record<string, any> = {
+        translate: {
+          label: '翻译当前段落',
+          icon: '<svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path><line x1="4" y1="22" x2="4" y2="15"></line></svg>',
+          onClick: () => {
+             const paragraph = findParagraph(e.target as HTMLElement);
+             if (paragraph) handleInlineParagraphTranslate(paragraph);
+          }
+        },
+        furigana: {
+          label: '全文注音',
+          icon: '<svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none"><polyline points="4 7 4 4 20 4 20 7"></polyline><line x1="9" y1="20" x2="15" y2="20"></line><line x1="12" y1="4" x2="12" y2="20"></line></svg>',
+          onClick: () => {
+             localFuriganaState = !localFuriganaState;
+             if (localFuriganaState) injectRubyAnnotations();
+             else removeRubyAnnotations();
+          }
+        },
+        explain: {
+          label: 'AI 翻译',
+          icon: '<svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>',
+          onClick: () => {
+             triggerWordExplain(targetWord, e.clientX, e.clientY);
+          }
+        },
+        weblio: {
+          label: '在 Weblio 词典中查询',
+          icon: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"></path></svg>',
+          onClick: () => {
+             window.open(`https://www.weblio.jp/content/${encodeURIComponent(targetWord)}`, '_blank');
+          }
+        },
+        jisho: {
+          label: '在 Jisho 词典中查询',
+          icon: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>',
+          onClick: () => {
+             window.open(`https://jisho.org/search/${encodeURIComponent(targetWord)}`, '_blank');
+          }
+        },
+        wikipedia: {
+          label: '在维基百科中查询',
+          icon: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>',
+          onClick: () => {
+             window.open(`https://ja.wikipedia.org/wiki/${encodeURIComponent(targetWord)}`, '_blank');
+          }
+        },
+        google: {
+          label: '在 Google 中搜索',
+          icon: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>',
+          onClick: () => {
+             window.open(`https://www.google.com/search?q=${encodeURIComponent(targetWord)}`, '_blank');
+          }
+        },
+        x: {
+          label: '在 X (Twitter) 中搜索',
+          icon: '<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"></path></svg>',
+          onClick: () => {
+             window.open(`https://twitter.com/search?q=${encodeURIComponent(targetWord)}`, '_blank');
+          }
+        }
+      };
+
+      for (const item of config) {
+        if (item.enabled && actions[item.id]) {
+          items.push(actions[item.id]);
+        }
+      }
+      
+      uiActions.showContextMenu(items, e.clientX, e.clientY);
+      lastContextMenuTime = Date.now();
+    }
+  });
+
   document.addEventListener('click', (e) => {
+    // Ignore non-primary clicks (like right-click context menu triggers on some systems)
+    if (e.button !== 0) return;
+
     const path = e.composedPath ? e.composedPath() : [];
     const isUiClick = path.some((el: any) => 
       (el.tagName && el.tagName.toLowerCase() === 'rubi-ui-root') ||
@@ -602,6 +796,10 @@ function setupEventListeners() {
       el.id === 'rubi-pronounce-badge'
     );
     if (!isUiClick) {
+      if (Date.now() - lastContextMenuTime > 50) {
+        uiActions.hideContextMenu();
+      }
+      
       // Don't hide if clicking on the currently highlighted word itself
       if (currentHighlightedRanges) {
         let isInside = false;
@@ -626,6 +824,16 @@ function setupEventListeners() {
 
   document.addEventListener('dblclick', (e) => {
     if (!isEnabled || e.button !== 0) return;
+
+    // Ignore events that originated from the extension UI
+    const path = e.composedPath ? e.composedPath() : [];
+    if (path.some((el: any) => 
+      (el.tagName && el.tagName.toLowerCase() === 'rubi-ui-root') ||
+      el.id === 'rubi-translation-badge' ||
+      el.id === 'rubi-pronounce-badge'
+    )) {
+      return;
+    }
 
     if (currentHighlightedRanges && currentWord) {
       let isInside = false;
@@ -785,7 +993,8 @@ function setupEventListeners() {
 function getFallbackWordLength(text: string): number {
   if (!text) return 0;
   
-  const numberMatch = text.match(/^[0-9０-９,\.一二三四五六七八九十百千万億兆]+/);
+  // Smart number matching: Digits + Optional Counter (Kanji/Kana/Letters/%)
+  const numberMatch = text.match(/^([0-9０-９,\.]+(?:[万億兆])?)+(?:(?:(?!以上|以下|未満)[\u4e00-\u9faf]){1,2}|[ヶヵ][\u4e00-\u9faf]|[a-zA-Z]+|%|％|つ|えん)?/);
   if (numberMatch && /^[0-9０-９]/.test(text)) {
     return numberMatch[0].length;
   }
@@ -809,6 +1018,8 @@ function getFallbackWordLength(text: string): number {
 }
 
 // ─── Word Sourcing & Highlighting ───────────────────────────
+let activeUpdateDynamicReading: ((reading: string) => void) | null = null;
+
 async function handleMouseMove(e: MouseEvent) {
   if (uiState.translationBadge.pinned) return;
 
@@ -817,7 +1028,7 @@ async function handleMouseMove(e: MouseEvent) {
 
     const scanResult = getTextAtPoint({
       point: { x: e.clientX, y: e.clientY },
-      maxLength: 16
+      maxLength: 32
     });
 
     if (!scanResult || !scanResult.text || !scanResult.textRange) {
@@ -831,7 +1042,18 @@ async function handleMouseMove(e: MouseEvent) {
     let matchedLength = -1;
     let isAiFallback = false;
 
-    const match = await lookupWord(scanResult.text);
+    let contextText = scanResult.text;
+    let wordOffset = 0;
+    if (scanResult.textRange && scanResult.textRange.length > 0) {
+      const firstRange = scanResult.textRange[0];
+      if (firstRange.node && firstRange.node.textContent) {
+        contextText = firstRange.node.textContent;
+        wordOffset = firstRange.start;
+      }
+    }
+
+    const match = await lookupWord(scanResult.text, contextText, wordOffset);
+    console.log(`[Rubi] lookupWord returned:`, match);
     
     if (match) {
       matchedWord = match.word;
@@ -844,7 +1066,9 @@ async function handleMouseMove(e: MouseEvent) {
     const startsWithNumber = /^[0-9０-９]/.test(scanResult.text);
 
     const katakanaBlockLen = startsWithKatakana ? (scanResult.text.match(/^[\u30a0-\u30ffー]+/)?.[0].length || 0) : 0;
-    if (katakanaBlockLen > 0 && matchedLength < katakanaBlockLen) {
+    
+    // Force AI fallback for all pure Katakana to retrieve English Etymology instead of local kana reading
+    if (katakanaBlockLen > 0 && matchedLength <= katakanaBlockLen) {
       isAiFallback = true;
     } else if (!match && (startsWithKatakana || startsWithKanji || startsWithNumber)) {
       isAiFallback = true;
@@ -876,6 +1100,8 @@ async function handleMouseMove(e: MouseEvent) {
     }
 
     if (matchedWord) {
+      currentMatchedEntry = matchedEntry;
+
       // Check if it's the exact same word and range
       if (currentWord === matchedWord && currentHighlightedRanges && currentHighlightedRanges.length > 0) {
         if (currentHighlightedRanges[0].startContainer === scanResult.textRange[0].node &&
@@ -952,6 +1178,80 @@ async function handleMouseMove(e: MouseEvent) {
         } else {
           console.warn('[Rubi] CSS.highlights is not supported in this browser!');
         }
+        
+
+
+        const getKanjiRect = (ranges: Range[], wStart: number, wEnd: number) => {
+          if (wStart > wEnd || ranges.length === 0) {
+            return ranges[0]?.getClientRects()[0];
+          }
+          try {
+            let currentLen = 0;
+            let startRect: DOMRect | null = null;
+            let endRect: DOMRect | null = null;
+
+            for (const range of ranges) {
+              const treeWalker = document.createTreeWalker(
+                range.commonAncestorContainer,
+                NodeFilter.SHOW_TEXT,
+                {
+                  acceptNode: (node) => {
+                    return range.intersectsNode(node) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
+                  }
+                }
+              );
+
+              let nodes: Node[] = [];
+              if (range.commonAncestorContainer.nodeType === Node.TEXT_NODE) {
+                nodes.push(range.commonAncestorContainer);
+              } else {
+                let node: Node | null;
+                while ((node = treeWalker.nextNode())) {
+                  nodes.push(node);
+                }
+              }
+
+              for (const node of nodes) {
+                const nodeStartOffset = node === range.startContainer ? range.startOffset : 0;
+                const nodeEndOffset = node === range.endContainer ? range.endOffset : node.textContent?.length || 0;
+                const nodeLen = nodeEndOffset - nodeStartOffset;
+
+                if (!startRect && currentLen + nodeLen > wStart) {
+                  const newRange = document.createRange();
+                  newRange.setStart(node, nodeStartOffset + (wStart - currentLen));
+                  newRange.setEnd(node, Math.min(nodeStartOffset + (wStart - currentLen) + 1, nodeEndOffset));
+                  startRect = newRange.getClientRects()[0];
+                }
+
+                if (startRect && currentLen + nodeLen > wEnd) {
+                  const newRange = document.createRange();
+                  newRange.setStart(node, nodeStartOffset + (wEnd - currentLen));
+                  newRange.setEnd(node, Math.min(nodeStartOffset + (wEnd - currentLen) + 1, nodeEndOffset));
+                  endRect = newRange.getClientRects()[0];
+                  break;
+                }
+
+                currentLen += nodeLen;
+              }
+              if (endRect) break;
+            }
+
+            if (startRect && endRect) {
+              return {
+                left: startRect.left,
+                right: endRect.right,
+                top: Math.min(startRect.top, endRect.top),
+                bottom: Math.max(startRect.bottom, endRect.bottom),
+                width: endRect.right - startRect.left,
+                height: Math.max(startRect.bottom, endRect.bottom) - Math.min(startRect.top, endRect.top)
+              } as DOMRect;
+            }
+          } catch (e) {
+            console.warn('[Rubi] Failed to create kanji sub-range', e);
+          }
+          // Fallback to first range's rect
+          return ranges[0]?.getClientRects()[0];
+        };
 
         const rect = targetRect;
         const translationStr = matchedEntry?.m?.length ? matchedEntry.m.join('; ') : '';
@@ -963,30 +1263,107 @@ async function handleMouseMove(e: MouseEvent) {
           return currentRects.length > targetRectIndex ? currentRects[targetRectIndex] : currentRects[0];
         };
 
-        // 1. Show Top Pronounce Badge (Japanese Word & Hiragana Reading)
-        uiActions.showPronounceBadge(
-          displayReading || (isAiFallback ? '...' : ''), // Pass '...' for AI fallback to show loading dots, empty string otherwise
-          rect,
-          false,
-          matchedEntry?.lemma || matchedWord,
-          '', // pass empty translation here as it goes to translation badge!
-          false,
-          getRect
-        );
+        const wordSnapshot = matchedWord;
 
+        const isRubyMode = currentSettings?.lookupDisplayStyle === 'ruby';
+
+        // Helper for combined word rect
+        const getCombinedRect = (rangesList: Range[]) => {
+            if (!rangesList || rangesList.length === 0) return targetRange!.getBoundingClientRect();
+            const rcts = rangesList.map(r => r.getBoundingClientRect());
+            const left = Math.min(...rcts.map(r => r.left));
+            const right = Math.max(...rcts.map(r => r.right));
+            const top = Math.min(...rcts.map(r => r.top));
+            const bottom = Math.max(...rcts.map(r => r.bottom));
+            return {
+                left, right, top, bottom,
+                width: right - left,
+                height: bottom - top,
+                x: left, y: top
+            } as DOMRect;
+        };
+        const getDynamicWordRect = () => getCombinedRect(currentHighlightedRanges!);
+        const lemma = matchedEntry?.lemma || matchedWord;
+
+        // 1. ================= PRONOUNCE BADGE =================
+        if (isRubyMode) {
+          uiState.pronounceBadge.displayStyle = 'ruby';
+          const { chunks } = extractRuby(matchedWord, displayReading, lemma, !!matchedEntry?.isAiFallback);
+          const wordRect = getCombinedRect(currentHighlightedRanges!);
+
+          const rubyChunks = chunks.map(c => {
+             const cRect = getKanjiRect(currentHighlightedRanges!, c.startIdx, c.endIdx);
+             return {
+                reading: c.reading,
+                centerOffset: cRect ? (cRect.left - wordRect.left + cRect.width / 2) : 0
+             };
+          });
+
+          console.log(`[Rubi] isRubyMode: true. chunks:`, chunks, `rubyChunks:`, rubyChunks);
+
+          if (rubyChunks.length > 0) {
+            uiActions.showPronounceBadge(
+              '', // No global content
+              wordRect,
+              false,
+              matchedWord,
+              '', 
+              false,
+              getDynamicWordRect,
+              rubyChunks
+            );
+          } else {
+            uiActions.hidePronounceBadge();
+          }
+        } else {
+          uiState.pronounceBadge.displayStyle = 'tooltip';
+          uiActions.showPronounceBadge(
+            displayReading || (matchedEntry?.isAiFallback ? '...' : ''), // Pass '...' for AI fallback to show loading dots, empty string otherwise
+            rect,
+            false,
+            lemma,
+            '', // pass empty translation here as it goes to translation badge!
+            false,
+            getRect
+          );
+        }
+
+        // Helper to update reading dynamically (for AI / background translation)
+        const updateDynamicReading = (newReading: string) => {
+          if (isRubyMode) {
+             const { chunks } = extractRuby(matchedWord, newReading, lemma);
+             const wordRect = getDynamicWordRect();
+             const newRubyChunks = (chunks || []).map(c => {
+                const cRect = getKanjiRect(currentHighlightedRanges!, c.startIdx, c.endIdx);
+                return {
+                   reading: c.reading,
+                   centerOffset: cRect.left - wordRect.left + cRect.width / 2
+                };
+             });
+             if (newRubyChunks.length > 0) {
+               uiActions.updatePronounceBadgeChunks(newRubyChunks);
+             } else {
+               uiActions.hidePronounceBadge();
+             }
+          } else {
+             uiActions.updatePronounceBadgeContent(newReading);
+          }
+        };
+        activeUpdateDynamicReading = updateDynamicReading;
+
+        // 2. ================= TRANSLATION BADGE =================
         const trigger = currentSettings?.translationTrigger || 'hover';
         if (trigger === 'hover') {
           const pos = (currentSettings?.translationPosition === 'pronounce-badge' ? 'bottom' : currentSettings?.translationPosition) || 'bottom';
           const showEngine = currentSettings?.showTranslationEngine ?? true;
           const targetLang = currentSettings?.targetLanguage || 'zh-CN';
-          const wordSnapshot = matchedWord;
 
           if (matchedEntry?.isAiFallback) {
             // AI translation only (forced because of dictionary miss)
             uiActions.showTranslationBadge(
               'AI 翻译中...',
               'AI',
-              rect as DOMRect,
+              isRubyMode ? getDynamicWordRect() : (rect as DOMRect),
               false, // Not pinned on hover
               pos,
               showEngine,
@@ -997,17 +1374,18 @@ async function handleMouseMove(e: MouseEvent) {
             safeSendMessage({
               type: 'CONTEXTUAL_TRANSLATE',
               word: matchedWord,
-              sentence: getSentenceContext()
+              sentence: getSentenceContext(),
+              forceReading: true
             }).then((resp: any) => {
               if (currentWord !== wordSnapshot) return;
               if (uiState.translationBadge.pinned && uiState.translationBadge.askMode) return;
               
               if (resp?.reading) {
-                uiActions.updatePronounceBadgeContent(resp.reading);
+                updateDynamicReading(resp.reading);
               }
 
               const result = resp?.translation || 'AI 翻译失败';
-              const activeRect = getRect();
+              const activeRect = isRubyMode ? getDynamicWordRect() : getRect();
               uiActions.showTranslationBadge(
                 result,
                 'AI',
@@ -1021,7 +1399,7 @@ async function handleMouseMove(e: MouseEvent) {
             }).catch((err: any) => {
               if (currentWord !== wordSnapshot) return;
               if (uiState.translationBadge.pinned && uiState.translationBadge.askMode) return;
-              const activeRect = getRect();
+              const activeRect = isRubyMode ? getDynamicWordRect() : getRect();
               uiActions.showTranslationBadge(
                 `AI 翻译出错: ${err.message || err}`,
                 'AI',
@@ -1040,7 +1418,7 @@ async function handleMouseMove(e: MouseEvent) {
               uiActions.showTranslationBadge(
                 `${matchedWord} (${translationStr})`,
                 'DICT',
-                rect as DOMRect,
+                isRubyMode ? getDynamicWordRect() : (rect as DOMRect),
                 false,
                 pos,
                 showEngine,
@@ -1058,8 +1436,14 @@ async function handleMouseMove(e: MouseEvent) {
               }).then((resp: any) => {
                 if (currentWord !== wordSnapshot) return; // User moved away
                 if (uiState.translationBadge.pinned && uiState.translationBadge.askMode) return; // AI analysis is open
+                
+                // If the translation returns a reading and we don't have one, update it!
+                if (resp?.reading && !displayReading && currentSettings?.enableAutoTranslate) {
+                  updateDynamicReading(resp.reading);
+                }
+
                 const result = resp?.targetText || translationStr; // fallback to dict on error
-                const activeRect = getRect();
+                const activeRect = isRubyMode ? getDynamicWordRect() : getRect();
                 uiActions.showTranslationBadge(
                   result,
                   resp?.targetText ? (resp.engine || engine) : 'DICT',
@@ -1075,7 +1459,7 @@ async function handleMouseMove(e: MouseEvent) {
                 // API failed — fall back to dictionary result silently
                 if (currentWord !== wordSnapshot) return;
                 if (uiState.translationBadge.pinned && uiState.translationBadge.askMode) return; // AI analysis is open
-                const activeRect = getRect();
+                const activeRect = isRubyMode ? getDynamicWordRect() : getRect();
                 uiActions.showTranslationBadge(
                   `${matchedWord} (${translationStr})`,
                   'DICT',
@@ -1143,7 +1527,11 @@ async function triggerTranslation(word: string, targetRange: Range, targetRectIn
       if (uiState.translationBadge.pinned && uiState.translationBadge.askMode) return;
       
       if (response?.reading) {
-        uiActions.updatePronounceBadgeContent(response.reading);
+        if (activeUpdateDynamicReading) {
+          activeUpdateDynamicReading(response.reading);
+        } else {
+          uiActions.updatePronounceBadgeContent(response.reading);
+        }
       }
       
       const result = response?.translation || 'AI 翻译失败';
@@ -1275,6 +1663,13 @@ async function triggerWordExplain(word: string, clientX: number, clientY: number
     if (uiState.translationBadge.originalText !== word) return; // User moved away
 
     if (response?.success && response.translation) {
+      if (response.reading) {
+        if (activeUpdateDynamicReading) {
+          activeUpdateDynamicReading(response.reading);
+        } else {
+          uiActions.updatePronounceBadgeContent(response.reading);
+        }
+      }
       uiActions.showTranslationBadge(
         response.translation,
         'AI',

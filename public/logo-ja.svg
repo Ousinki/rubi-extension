@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="106 100 300 300" width="100%" height="100%">
+  <defs>
+    <!-- Drop shadow for the gem -->
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#000000" flood-opacity="0.3" />
+    </filter>
+    
+    <!-- Text shadow to make it pop when overlapping the gem -->
+    <filter id="textShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#000000" flood-opacity="0.6" />
+    </filter>
+  </defs>
+
+  <!-- The Ruby Gem -->
+  <g transform="translate(106, 120)" filter="url(#shadow)">
+    <polygon points="0,80 80,0 150,80" fill="#FF4D6D" />
+    <polygon points="80,0 150,0 150,80" fill="#FF758F" />
+    <polygon points="150,0 220,0 150,80" fill="#FFB3C1" />
+    <polygon points="220,0 300,80 150,80" fill="#FF4D6D" />
+    <polygon points="0,80 150,260 150,80" fill="#C9184A" />
+    <polygon points="300,80 150,260 150,80" fill="#A4133C" />
+  </g>
+
+  <!-- Text "ルビ" (Rubi in Katakana) -->
+  <text x="256" y="375" font-family="'Hiragino Kaku Gothic ProN', 'Yu Gothic', Meiryo, system-ui, sans-serif" font-weight="900" font-size="124" fill="#FFFFFF" text-anchor="middle" letter-spacing="-2" filter="url(#textShadow)">ル<tspan fill="#FF758F">ビ</tspan></text>
+</svg>

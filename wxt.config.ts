@@ -10,7 +10,12 @@ export default defineConfig({
     description: '__MSG_extDescription__',
     default_locale: 'zh_CN',
     permissions: ['storage', 'activeTab', 'declarativeNetRequest'],
-    web_accessible_resources: [],
+    web_accessible_resources: [
+      {
+        resources: ['kuromoji/dict/*'],
+        matches: ['*://*/*'],
+      }
+    ],
     host_permissions: [
       '*://*.googleapis.com/*',
       '*://api.deepl.com/*',

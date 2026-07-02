@@ -3,26 +3,48 @@
     ref="badgeEl"
     id="rubi-pronounce-badge"
     :class="[
-      { 'rubi-badge-visible': uiState.pronounceBadge.visible },
+      { 'rubi-badge-visible': uiState.pronounceBadge.visible && !(uiState.pronounceBadge.displayStyle === 'ruby' && (!uiState.pronounceBadge.rubyChunks || uiState.pronounceBadge.rubyChunks.length === 0) && !uiState.pronounceBadge.content) },
       isBottom ? 'pos-bottom' : 'pos-top',
-      'theme-' + tooltipTheme
+      uiState.pronounceBadge.displayStyle === 'ruby' ? 'display-ruby' : 'theme-' + tooltipTheme
     ]"
     :style="badgeStyle"
     @click="handlePlayTts"
   >
-    <!-- Top Row: Japanese Kanji / Word -->
-    <div v-if="uiState.pronounceBadge.word" class="rubi-syl-word">
+    <div v-if="uiState.pronounceBadge.displayStyle !== 'ruby' && uiState.pronounceBadge.word" class="rubi-syl-word">
       {{ uiState.pronounceBadge.word }}
     </div>
+      <template v-if="uiState.pronounceBadge.displayStyle !== 'ruby'">
+      <div v-if="uiState.pronounceBadge.isHTML" class="rubi-html-content" v-html="uiState.pronounceBadge.content"></div>
+      <div v-else-if="uiState.pronounceBadge.content" class="rubi-text-content">
+        <span class="rubi-reading">{{ uiState.pronounceBadge.content }}</span>
+        <span v-if="uiState.pronounceBadge.translation" class="rubi-translation">{{ uiState.pronounceBadge.translation }}</span>
+      </div>
+    </template>
     
-    <!-- Bottom Row: Pronunciation (Hiragana Reading) -->
-    <div v-if="uiState.pronounceBadge.content" class="rubi-badge-content">
-      <span v-if="uiState.pronounceBadge.content === '...'" class="rubi-loading-dots">
-        <span>.</span><span>.</span><span>.</span>
-      </span>
-      <span v-else-if="uiState.pronounceBadge.isHTML" v-html="uiState.pronounceBadge.content"></span>
-      <span v-else>{{ uiState.pronounceBadge.content }}</span>
-    </div>
+    <!-- Ruby Mode -->
+    <template v-else>
+      <div v-for="(chunk, idx) in uiState.pronounceBadge.rubyChunks" :key="idx" 
+           class="rubi-ruby-chunk"
+           :style="{ left: `${chunk.centerOffset}px` }">
+        <span v-if="chunk.reading === '...'" class="rubi-loading-dots">
+           <span>.</span><span>.</span><span>.</span>
+        </span>
+        <template v-else>
+          {{ chunk.reading }}
+        </template>
+      </div>
+      <!-- Fallback just in case -->
+      <div v-if="(!uiState.pronounceBadge.rubyChunks || uiState.pronounceBadge.rubyChunks.length === 0) && uiState.pronounceBadge.content" 
+           class="rubi-ruby-chunk"
+           :style="{ left: '50%' }">
+        <span v-if="uiState.pronounceBadge.content === '...'" class="rubi-loading-dots">
+           <span>.</span><span>.</span><span>.</span>
+        </span>
+        <template v-else>
+          {{ uiState.pronounceBadge.content }}
+        </template>
+      </div>
+    </template>
   </div>
 </template>
 
@@ -85,11 +107,23 @@ const badgeStyle = computed(() => {
     const scrollX = isFullscreen ? 0 : window.scrollX;
     const scrollY = isFullscreen ? 0 : window.scrollY;
 
+    if (uiState.pronounceBadge.displayStyle === 'ruby' && uiState.pronounceBadge.rubyChunks && uiState.pronounceBadge.rubyChunks.length > 0) {
+      // In ruby mode with chunks, the main container perfectly overlays the word's bounding box
+      return {
+        top: `${rect.top + scrollY}px`,
+        left: `${rect.left + scrollX}px`,
+        width: `${rect.width}px`,
+        height: `${rect.height}px`,
+        transform: 'none',
+        padding: '0',
+      };
+    }
+
     x = rect.left + scrollX + rect.width / 2;
     if (isBottom.value) {
-      y = rect.bottom + scrollY + 6;
+      y = rect.bottom + scrollY + 10;
     } else {
-      y = rect.top + scrollY - 6;
+      y = rect.top + scrollY - 10;
     }
   } else {
     let rootRect = host.getBoundingClientRect();
@@ -107,10 +141,11 @@ const badgeStyle = computed(() => {
     const rootTop = rootRect.top ?? (rootRect as any).y ?? 0;
     
     x = rect.left - rootRect.left + rect.width / 2;
+    const offset = uiState.pronounceBadge.displayStyle === 'ruby' ? 0 : 6;
     if (isBottom.value) {
-      y = rect.bottom - rootTop + 6;
+      y = rect.bottom - rootTop + offset;
     } else {
-      y = rect.top - rootTop - 6;
+      y = rect.top - rootTop - offset;
     }
   }
 
@@ -174,6 +209,62 @@ const handlePlayTts = async () => {
   gap: 2px;
 }
 
+#rubi-pronounce-badge.display-ruby {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+}
+
+/* Tooltip Theme Base */
+#rubi-pronounce-badge:not(.display-ruby) {
+  /* Tooltip styles that shouldn't apply to ruby mode */
+}
+
+/* Ruby Theme Overrides */
+#rubi-pronounce-badge.display-ruby {
+  background: none !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
+  pointer-events: none !important;
+}
+
+#rubi-pronounce-badge.display-ruby::after,
+#rubi-pronounce-badge.display-ruby::before {
+  display: none !important;
+}
+
+.rubi-ruby-chunk {
+  position: absolute;
+  bottom: 100%;
+  transform: translateX(-50%);
+  background-image: linear-gradient(var(--rubi-highlight-bg, rgba(92, 53, 180, 0.28)), var(--rubi-highlight-bg, rgba(92, 53, 180, 0.28))), linear-gradient(#ffffff, #ffffff) !important;
+  padding: 2px 4px 1px 4px !important;
+  border-radius: 4px 4px 0 0 !important;
+  white-space: nowrap;
+  
+  /* Restored original typography and color */
+  color: var(--rubi-highlight-main, #5c35b4) !important;
+  font-size: 0.7em !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.5px !important;
+  line-height: 1 !important;
+  pointer-events: auto;
+}
+
+@media (prefers-color-scheme: dark) {
+  .rubi-ruby-chunk {
+    background-image: linear-gradient(var(--rubi-highlight-bg, rgba(92, 53, 180, 0.28)), var(--rubi-highlight-bg, rgba(92, 53, 180, 0.28))), linear-gradient(#1a1a1a, #1a1a1a) !important;
+    color: var(--rubi-highlight-dark, #a78bfa) !important;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  .rubi-ruby-content {
+    color: var(--rubi-highlight-dark, #a78bfa);
+  }
+}
+
 .rubi-syl-word {
   color: var(--rubi-highlight-main, #5c35b4);
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
@@ -218,6 +309,12 @@ const handlePlayTts = async () => {
 #rubi-pronounce-badge.pos-top.rubi-badge-visible {
   opacity: 1;
   visibility: visible;
+  transform: translate(calc(-50% + var(--shift-x, 0px)), -100%) scale(1);
+}
+#rubi-pronounce-badge.pos-top.display-ruby {
+  transform: translate(calc(-50% + var(--shift-x, 0px)), -100%) scale(0.9);
+}
+#rubi-pronounce-badge.pos-top.display-ruby.rubi-badge-visible {
   transform: translate(calc(-50% + var(--shift-x, 0px)), -100%) scale(1);
 }
 

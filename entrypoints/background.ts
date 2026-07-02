@@ -27,6 +27,7 @@ export default defineBackground(() => {
 
   // Initialize dictionary downloading/loading in background
   initDictionary();
+  import('./background/kuromoji-manager').then(({ initKuromoji }) => initKuromoji()).catch(e => console.error('[Rubi] Kuromoji init failed:', e));
 
   // ─── Setup declarativeNetRequest for Edge TTS & DeepL Bypass ─
   async function setupNetRules() {
@@ -181,7 +182,7 @@ export default defineBackground(() => {
           return true;
 
         case 'CONTEXTUAL_TRANSLATE':
-          handleContextualTranslateJa(message.word, message.sentence)
+          handleContextualTranslateJa(message.word, message.sentence, message.forceReading)
             .then(sendResponse)
             .catch((err) => sendResponse({ success: false, error: err.message }));
           return true;
@@ -244,6 +245,14 @@ export default defineBackground(() => {
           handleFetchTranslation(message.text, message.sourceLang, message.targetLang, message.engine)
             .then((res) => sendResponse(res))
             .catch((err) => sendResponse({ targetText: '', engine: message.engine, error: err.message }));
+          return true;
+
+        case 'KUROMOJI_PARSE':
+          import('./background/kuromoji-manager').then(({ parseWithKuromoji }) => {
+            parseWithKuromoji(message.text)
+              .then((result) => sendResponse({ success: true, result }))
+              .catch((err) => sendResponse({ success: false, error: err.message }));
+          });
           return true;
 
         default:
@@ -402,7 +411,7 @@ export default defineBackground(() => {
   }
 
   // ─── Contextual Translate ──────────────────────────────────
-  async function handleContextualTranslateJa(word: string, sentence: string): Promise<any> {
+  async function handleContextualTranslateJa(word: string, sentence: string, forceReading: boolean = false): Promise<any> {
     try {
       const settings = await settingsStorage.getValue();
       if (!settings.apiKey) {
@@ -412,7 +421,7 @@ export default defineBackground(() => {
         throw new Error('Rubi 已禁用');
       }
 
-      const res = await contextualTranslateJa(settings, word, sentence);
+      const res = await contextualTranslateJa(settings, word, sentence, forceReading);
       return { success: true, translation: res.translation, reading: res.reading };
     } catch (error: any) {
       console.error('[Rubi] Contextual Translate failed:', error);

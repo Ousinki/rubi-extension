@@ -7,6 +7,12 @@ export interface MenuItem {
   onClick?: () => void;
   onSpeakClick?: () => void;
   onMouseLeave?: () => void;
+  rubyChunks?: any[];
+}
+
+export interface RubyChunkState {
+  reading: string;
+  centerOffset: number;
 }
 
 export interface Rect {
@@ -98,9 +104,11 @@ export const uiState = reactive({
     content: '', // contains furigana/hiragana readings
     isHTML: false,
     rect: null as Rect | null,
-    translation: null as string | null,
-    exactRect: false,
+    translation: null as string | null, // Stores translation for tooltip mode
+    exactRect: false, // If true, places badge strictly next to the rect without expanding width
     updater: null as (() => DOMRect | null) | null,
+    displayStyle: 'tooltip' as 'tooltip' | 'ruby',
+    rubyChunks: [] as RubyChunkState[]
   },
   translationBadge: {
     visible: false,
@@ -165,7 +173,7 @@ export const uiActions = {
     uiState.tooltip.visible = false;
   },
 
-  showPronounceBadge(content: string, rect: DOMRect, isHTML = false, word: string | null = null, translation: string | null = null, exactRect = false, updater: (() => DOMRect | null) | null = null, isSync = false) {
+  showPronounceBadge(content: string, rect: DOMRect, isHTML = false, word: string | null = null, translation: string | null = null, exactRect = false, updater: (() => DOMRect | null) | null = null, rubyChunks: RubyChunkState[] = [], isSync = false) {
     const b = uiState.pronounceBadge;
     const newRect = toRect(rect, exactRect);
 
@@ -189,11 +197,12 @@ export const uiActions = {
     b.rect = newRect;
     b.exactRect = exactRect;
     b.updater = updater;
+    b.rubyChunks = rubyChunks;
     if (translation !== null) b.translation = translation;
     b.visible = true;
 
     if (!isSync) {
-      syncAction('showPronounceBadge', content, toPlainRect(rect), isHTML, word, translation, exactRect, null);
+      syncAction('showPronounceBadge', content, toPlainRect(rect), isHTML, word, translation, exactRect, null, rubyChunks);
     }
   },
   updatePronounceBadgeTranslation(translation: string, isSync = false) {
@@ -210,6 +219,14 @@ export const uiActions = {
     }
     if (!isSync) {
       syncAction('updatePronounceBadgeContent', content);
+    }
+  },
+  updatePronounceBadgeChunks(rubyChunks: RubyChunkState[], isSync = false) {
+    if (uiState.pronounceBadge.visible) {
+      uiState.pronounceBadge.rubyChunks = rubyChunks;
+    }
+    if (!isSync) {
+      syncAction('updatePronounceBadgeChunks', rubyChunks);
     }
   },
   hidePronounceBadge(isSync = false) {
@@ -285,19 +302,28 @@ export const uiActions = {
     uiState.translationBadge.askLoading = false;
   },
 
-  showContextMenu(items: MenuItem[], x: number, y: number) {
+  showContextMenu(items: MenuItem[], x: number, y: number, isSync = false) {
     uiState.contextMenu.items = items;
     uiState.contextMenu.x = x;
     uiState.contextMenu.y = y;
     uiState.contextMenu.visible = true;
+    if (!isSync) {
+      syncAction('showContextMenu', items, x, y);
+    }
   },
-  updateContextMenuItem(index: number, item: Partial<MenuItem>) {
+  updateContextMenuItem(index: number, item: Partial<MenuItem>, isSync = false) {
     const current = uiState.contextMenu.items[index];
     if (!current) return;
     uiState.contextMenu.items[index] = { ...current, ...item };
+    if (!isSync) {
+      syncAction('updateContextMenuItem', index, item);
+    }
   },
-  hideContextMenu() {
+  hideContextMenu(isSync = false) {
     uiState.contextMenu.visible = false;
+    if (!isSync) {
+      syncAction('hideContextMenu');
+    }
   },
 
   showLongPressRing(x: number, y: number) {

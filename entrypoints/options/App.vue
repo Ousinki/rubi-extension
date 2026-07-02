@@ -5,7 +5,7 @@
         <!-- Header -->
       <header class="rubi-header">
         <div class="logo-area">
-          <img src="/icon/action-128.png" alt="Rubi Logo" class="app-logo" />
+          <img :src="locale === 'ja' ? '/logo-ja.svg' : '/icon/action-128.png'" alt="Rubi Logo" :class="['app-logo', { 'is-ja': locale === 'ja' }]" />
           <div class="logo-text">
             <h1>Rubi Settings</h1>
             <p class="subtitle">{{ t('header.subtitle') }}</p>
@@ -33,17 +33,20 @@
 
           <!-- UI Language Selector -->
           <div class="lang-selector">
-            <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="12" cy="12" r="10"></circle>
-              <line x1="2" y1="12" x2="22" y2="12"></line>
-              <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
-            </svg>
             <CustomSelect
               v-model="settings.uiLanguage"
               :options="langOptions"
               compact
               @change="saveSettings"
-            />
+            >
+              <template #icon>
+                <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="2" y1="12" x2="22" y2="12"></line>
+                  <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+                </svg>
+              </template>
+            </CustomSelect>
           </div>
         </div>
       </header>
@@ -116,13 +119,26 @@
                   </label>
                 </div>
               </div>
-              <div class="input-group" style="margin-top: 20px;">
-                <label>{{ t('appearance.tooltip_theme_label') }}</label>
-                <CustomSelect
-                  v-model="settings.tooltipTheme"
-                  :options="tooltipThemeOptions"
-                  @change="saveSettings"
-                />
+              <div class="row" style="margin-top: 20px;">
+                <div class="input-group half">
+                  <label>{{ t('appearance.tooltip_theme_label') }}</label>
+                  <CustomSelect
+                    v-model="settings.tooltipTheme"
+                    :options="tooltipThemeOptions"
+                    @change="saveSettings"
+                  />
+                </div>
+                <div class="input-group half">
+                  <label>{{ t('appearance.lookup_display_label') }}</label>
+                  <CustomSelect
+                    v-model="settings.lookupDisplayStyle"
+                    :options="[
+                      { label: t('appearance.lookup_display_tooltip'), value: 'tooltip' },
+                      { label: t('appearance.lookup_display_ruby'), value: 'ruby' }
+                    ]"
+                    @update:modelValue="saveSettings"
+                  />
+                </div>
               </div>
             </div>
           </section>
@@ -218,6 +234,69 @@
                 <a href="https://www.edrdg.org/edrdg/licence.html" target="_blank" rel="noopener">CC BY-SA 4.0</a> {{ t('lookup.dict_license') }}
                 {{ t('lookup.dict_count') }}
               </p>
+            </div>
+          </section>
+
+          <!-- Custom Context Menu Preferences -->
+          <section class="card" id="context-menu-panel">
+            <div class="card-header">
+              <h2>高级右键菜单</h2>
+              <span class="section-tag">Context Menu</span>
+            </div>
+            
+            <div class="card-body">
+              <div class="toggle-row" style="margin-bottom: 12px;">
+                <div class="toggle-desc">
+                  <h3>启用悬浮右键菜单卡片</h3>
+                  <p>右键点击高亮单词时，将展示精美的悬浮菜单并支持快速发音、翻译等操作，不再弹出原生浏览器菜单。</p>
+                </div>
+                <button 
+                  class="toggle-btn" 
+                  :class="{ active: settings.enableCustomContextMenu }" 
+                  @click="settings.enableCustomContextMenu = !settings.enableCustomContextMenu; saveSettings()"
+                >
+                  <span class="toggle-dot"></span>
+                </button>
+              </div>
+
+              <!-- Sub options -->
+              <div 
+                v-show="settings.enableCustomContextMenu" 
+                ref="sortableListRef"
+                class="draggable-list" 
+                style="padding-left: 20px; margin-top: 16px; display: flex; flex-direction: column; gap: 8px;"
+              >
+                <div 
+                  v-for="item in customMenuConfigList" 
+                  :key="item.id"
+                  class="draggable-item"
+                  style="display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 8px; transition: background 0.2s, box-shadow 0.2s;"
+                  :style="{ opacity: item.enabled ? '1' : '0.6' }"
+                >
+                  <div style="display: flex; align-items: center; gap: 12px;">
+                    <span class="drag-handle" style="color: var(--text-tertiary); cursor: grab; display: flex; align-items: center;">
+                      <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="8" y1="6" x2="21" y2="6"></line>
+                        <line x1="8" y1="12" x2="21" y2="12"></line>
+                        <line x1="8" y1="18" x2="21" y2="18"></line>
+                        <line x1="3" y1="6" x2="3.01" y2="6"></line>
+                        <line x1="3" y1="12" x2="3.01" y2="12"></line>
+                        <line x1="3" y1="18" x2="3.01" y2="18"></line>
+                      </svg>
+                    </span>
+                    <span style="display: flex; align-items: center; justify-content: center; width: 16px; height: 16px; color: var(--text-secondary);" v-html="getMenuIcon(item.id)"></span>
+                    <span style="font-size: 13.5px; color: var(--text-primary); font-weight: 500; user-select: none;">{{ getMenuLabel(item.id) }}</span>
+                  </div>
+                  <div style="display: flex; align-items: center; justify-content: center;">
+                    <input 
+                      type="checkbox" 
+                      v-model="item.enabled" 
+                      @change="saveSettings"
+                      style="width: 16px; height: 16px; cursor: pointer; accent-color: var(--primary-color);"
+                    />
+                  </div>
+                </div>
+              </div>
             </div>
           </section>
           
@@ -409,19 +488,49 @@
 
               <!-- Custom shortcut input -->
               <div v-if="settings.inlineParagraphTrigger === 'custom'" class="input-group" style="margin-top: 16px; border-top: 1px solid var(--border-color); padding-top: 16px;">
-                <label>{{ t('paragraph.shortcut_label') }}</label>
-                <input 
-                  type="text" 
-                  class="shortcut-input" 
-                  readonly
-                  :value="recordingShortcutFor === 'inlineParagraphCustomShortcut' ? t('paragraph.recording') : formatShortcut(settings.inlineParagraphCustomShortcut)"
-                  @focus="recordingShortcutFor = 'inlineParagraphCustomShortcut'"
-                  @blur="recordingShortcutFor = null"
-                  @keydown.prevent="recordShortcut($event, 'inlineParagraphCustomShortcut')"
-                  title="Click and press keys to set shortcut"
-                  :class="{ 'is-recording': recordingShortcutFor === 'inlineParagraphCustomShortcut' }"
-                  style="width: 100%; max-width: 300px; text-align: left; padding: 8px 12px; font-family: monospace;"
-                />
+                <label>
+                  {{ t('paragraph.shortcut_label') }}
+                  <input 
+                    type="text" 
+                    class="shortcut-input" 
+                    readonly
+                    :value="recordingShortcutFor === 'inlineParagraphCustomShortcut' ? t('paragraph.recording') : formatShortcut(settings.inlineParagraphCustomShortcut)"
+                    @focus="recordingShortcutFor = 'inlineParagraphCustomShortcut'"
+                    @blur="recordingShortcutFor = null"
+                    @keydown.prevent="recordShortcut($event, 'inlineParagraphCustomShortcut')"
+                    title="Click and press keys to set shortcut"
+                    :class="{ 'is-recording': recordingShortcutFor === 'inlineParagraphCustomShortcut' }"
+                  />
+                </label>
+              </div>
+
+              <div class="toggle-row" style="margin-top: 16px; border-top: 1px solid var(--border-color); padding-top: 16px;">
+                <div class="toggle-desc">
+                  <h3>
+                    {{ t('paragraph.full_page_shortcut_label') || '全文翻译快捷键' }}
+                    <input 
+                      type="text" 
+                      class="shortcut-input" 
+                      readonly
+                      :value="recordingShortcutFor === 'fullPageTranslateShortcut' ? t('paragraph.recording') : formatShortcut(settings.fullPageTranslateShortcut)"
+                      @focus="recordingShortcutFor = 'fullPageTranslateShortcut'"
+                      @blur="recordingShortcutFor = null"
+                      @keydown.prevent="recordShortcut($event, 'fullPageTranslateShortcut')"
+                      title="Click and press keys to set shortcut"
+                      :class="{ 'is-recording': recordingShortcutFor === 'fullPageTranslateShortcut' }"
+                    />
+                  </h3>
+                </div>
+
+                <div style="display: flex; align-items: center; gap: 12px; flex-shrink: 0;">
+                  <span style="font-size: 13px; color: var(--text-secondary); font-weight: 500;">{{ t('paragraph.display_mode') || '显示模式' }}</span>
+                  <CustomSelect
+                    v-model="settings.translationDisplayMode"
+                    :options="translationDisplayModeOptions"
+                    @change="saveSettings"
+                    style="width: 200px;"
+                  />
+                </div>
               </div>
 
               <!-- Direct mode warning hint -->
@@ -579,6 +688,9 @@
                 <a href="#lookup-panel" class="doc-label" :class="{ active: activeSection === 'lookup-panel' }">{{ t('lookup.title') }}</a>
               </li>
               <li>
+                <a href="#context-menu-panel" class="doc-label" :class="{ active: activeSection === 'context-menu-panel' }">右键菜单</a>
+              </li>
+              <li>
                 <a href="#api-settings" class="doc-label" :class="{ active: activeSection === 'api-settings' }">{{ t('llm.title') }}</a>
               </li>
               <li>
@@ -608,7 +720,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, reactive, watch, computed } from 'vue';
+import { ref, reactive, watch, onMounted, computed, nextTick, toRef } from 'vue';
+import Sortable from 'sortablejs';
 import { useI18n } from '@/utils/i18n-plugin';
 import type { SupportedLocale } from '@/utils/i18n-plugin';
 import { settingsStorage, DEFAULT_SETTINGS } from '@/utils/storage';
@@ -632,6 +745,37 @@ const testResult = ref<{ success: boolean; latency?: number; error?: string } | 
 const isSpeaking = ref(false);
 const ttsWarning = ref<string | null>(null);
 const showSavedStatus = ref(false);
+
+const getMenuLabel = (id: string) => {
+  const map: Record<string, string> = {
+    translate: '翻译当前段落',
+    furigana: '全文注音',
+    explain: 'AI 翻译',
+    weblio: '在 Weblio 词典中查询',
+    jisho: '在 Jisho 词典中查询',
+    wikipedia: '在维基百科中查询',
+    google: '在 Google 中搜索',
+    x: '在 X (Twitter) 中搜索'
+  };
+  return map[id] || id;
+};
+
+const getMenuIcon = (id: string) => {
+  const map: Record<string, string> = {
+    translate: '<svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path><line x1="4" y1="22" x2="4" y2="15"></line></svg>',
+    furigana: '<svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none"><polyline points="4 7 4 4 20 4 20 7"></polyline><line x1="9" y1="20" x2="15" y2="20"></line><line x1="12" y1="4" x2="12" y2="20"></line></svg>',
+    explain: '<svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>',
+    weblio: '<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><rect x="2" y="2" width="20" height="20" rx="4" fill="none" stroke="currentColor" stroke-width="2" /><text x="12" y="17" fill="currentColor" font-size="14" font-weight="bold" font-family="serif" text-anchor="middle">W</text></svg>',
+    jisho: '<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><rect x="2" y="2" width="20" height="20" rx="4" fill="none" stroke="currentColor" stroke-width="2" /><text x="12" y="17" fill="currentColor" font-size="14" font-weight="bold" font-family="sans-serif" text-anchor="middle">辞</text></svg>',
+    wikipedia: '<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M18.82 4.86c0-.34.12-.51.36-.51.07 0 .22.02.46.06v-.3h-5v.3c.23 0 .37.02.41.02.25 0 .37.17.37.51 0 .17-.07.47-.21.89l-2.6 8.5-1.92-6.52 1.63-5.26c.12-.37.22-.56.3-.56.05 0 .21.02.46.06v-.3H9.86v.3c.23 0 .36.02.38.02.24 0 .35.17.35.51 0 .24-.1.58-.29 1.01L8.35 13.62 6.14 5.88c-.11-.45-.16-.79-.16-1.02 0-.34.13-.51.38-.51.05 0 .2-.02.43-.06v-.3h-4v.3c.23 0 .37.02.4.02.25 0 .43.17.56.51l3.52 11.58h.41l2.67-8.15 2.62 8.15h.41l4.02-11.58c.2-.6.27-.9.27-1.07z"/></svg>',
+    google: '<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M12.545,10.239v3.821h5.445c-0.712,2.315-2.647,3.972-5.445,3.972c-3.332,0-6.033-2.701-6.033-6.032s2.701-6.032,6.033-6.032c1.498,0,2.866,0.549,3.921,1.453l2.814-2.814C17.503,2.988,15.139,2,12.545,2C7.021,2,2.543,6.477,2.543,12s4.478,10,10.002,10c8.396,0,10.249-7.85,9.426-11.748L12.545,10.239z"/></svg>',
+    x: '<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"></path></svg>'
+  };
+  return map[id] || '<svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none"><circle cx="12" cy="12" r="10"></circle></svg>';
+};
+
+const sortableListRef = ref<HTMLElement | null>(null);
+const customMenuConfigList = ref<any[]>([...DEFAULT_SETTINGS.customMenuConfig]);
 
 const langOptions = computed(() => [
   { value: 'zh-CN', label: t('lang.zh_cn') },
@@ -710,6 +854,11 @@ const inlineParagraphTriggerOptions = computed(() => [
   { value: 'custom', label: t('paragraph.trigger_custom') },
 ]);
 
+const translationDisplayModeOptions = computed(() => [
+  { value: 'append', label: t('paragraph.display_mode_append') || '原文下方显示' },
+  { value: 'replace', label: t('paragraph.display_mode_replace') || '替代覆盖原文' },
+]);
+
 const getInitialTheme = (): 'light' | 'dark' => {
   if (typeof window === 'undefined' || typeof localStorage === 'undefined') return 'dark';
   const saved = localStorage.getItem('rubi-theme') as 'light' | 'dark';
@@ -736,7 +885,7 @@ const formatShortcut = (shortcut: string | undefined) => {
   return formatted;
 };
 
-const recordShortcut = (e: KeyboardEvent, key: 'furiganaShortcut' | 'paragraphShortcut' | 'inlineParagraphCustomShortcut') => {
+const recordShortcut = (e: KeyboardEvent, key: 'furiganaShortcut' | 'paragraphShortcut' | 'inlineParagraphCustomShortcut' | 'fullPageTranslateShortcut') => {
   if (['Shift', 'Control', 'Alt', 'Meta', 'Escape', 'Enter', 'Tab', 'Backspace', 'Delete'].includes(e.key)) {
     if (e.key === 'Backspace' || e.key === 'Escape') {
       settings[key] = '';
@@ -763,6 +912,48 @@ onMounted(async () => {
   // Load settings
   const stored = await settingsStorage.getValue();
   Object.assign(settings, stored);
+  if (settings.customMenuConfig) {
+    customMenuConfigList.value = [...settings.customMenuConfig];
+  }
+  
+  nextTick(() => {
+    if (sortableListRef.value) {
+      Sortable.create(sortableListRef.value, {
+        handle: '.drag-handle',
+        animation: 200,
+        forceFallback: true,
+        fallbackClass: 'sortable-drag',
+        ghostClass: 'sortable-ghost',
+        onUpdate: (e) => {
+          const { oldIndex, newIndex } = e;
+          if (oldIndex !== undefined && newIndex !== undefined && oldIndex !== newIndex) {
+            const arr = [...customMenuConfigList.value];
+            const item = arr.splice(oldIndex, 1)[0];
+            arr.splice(newIndex, 0, item);
+            
+            // Revert DOM change first so Vue can safely render the list based on VDOM updates
+            const el = sortableListRef.value;
+            if (el && e.item) {
+              const children = Array.from(el.children);
+              e.item.remove();
+              if (oldIndex >= children.length - 1) {
+                el.appendChild(e.item);
+              } else {
+                el.insertBefore(e.item, children[oldIndex]);
+              }
+            }
+            
+            customMenuConfigList.value = arr;
+            
+            nextTick(() => {
+              saveSettings();
+            });
+          }
+        }
+      });
+    }
+  });
+  
   if (settings.uiLanguage) {
     locale.value = settings.uiLanguage;
   }
@@ -830,7 +1021,8 @@ function loadVoices() {
 }
 
 async function saveSettings() {
-  await settingsStorage.setValue({ ...settings });
+  settings.customMenuConfig = [...customMenuConfigList.value];
+  await settingsStorage.setValue(JSON.parse(JSON.stringify(settings)));
   applyThemeToDocument(); // Re-apply theme and gem class if highlightStyle changed
   showSavedStatus.value = true;
   setTimeout(() => {
@@ -1041,6 +1233,19 @@ body {
 </style>
 
 <style scoped>
+.sortable-ghost {
+  opacity: 0.3 !important;
+  background-color: var(--bg-secondary) !important;
+  border: 1px dashed var(--text-tertiary) !important;
+}
+.sortable-drag {
+  cursor: grabbing !important;
+  opacity: 1 !important;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.15) !important;
+  background-color: var(--bg-primary) !important;
+  transform: scale(1.02);
+}
+
 .rubi-theme-provider {
   min-height: 100vh;
 }

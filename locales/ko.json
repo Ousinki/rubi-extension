@@ -6,7 +6,8 @@
     "theme_toggle": "테마 전환"
   },
   "nav": {
-    "title": "탐색 목차"
+    "title": "탐색 목차",
+    "saved": "자동 저장됨"
   },
   "appearance": {
     "title": "UI 외관 및 하이라이트",

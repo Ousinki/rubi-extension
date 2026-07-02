@@ -6,7 +6,8 @@
     "theme_toggle": "テーマ切替"
   },
   "nav": {
-    "title": "ナビゲーション"
+    "title": "ナビゲーション",
+    "saved": "自動保存されました"
   },
   "appearance": {
     "title": "ポップアップとハイライト設定",

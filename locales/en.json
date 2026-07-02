@@ -6,7 +6,8 @@
     "theme_toggle": "Toggle theme"
   },
   "nav": {
-    "title": "Navigation"
+    "title": "Navigation",
+    "saved": "Auto-saved"
   },
   "appearance": {
     "title": "Popup & Highlights",

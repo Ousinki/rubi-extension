@@ -6,7 +6,8 @@
     "theme_toggle": "切换主题"
   },
   "nav": {
-    "title": "导航目录"
+    "title": "导航目录",
+    "saved": "已自动保存"
   },
   "appearance": {
     "title": "悬浮窗与高亮样式",

@@ -6,7 +6,8 @@
     "theme_toggle": "切換主題"
   },
   "nav": {
-    "title": "導航目錄"
+    "title": "導航目錄",
+    "saved": "已自動保存"
   },
   "appearance": {
     "title": "懸浮窗與高亮樣式",

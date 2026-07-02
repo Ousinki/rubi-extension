@@ -75,7 +75,7 @@
                   <a href="#lookup-panel" class="doc-label" :class="{ active: activeSection === 'lookup-panel' }">{{ t('lookup.title') }}</a>
                 </li>
                 <li>
-                  <a href="#context-menu-panel" class="doc-label" :class="{ active: activeSection === 'context-menu-panel' }">右键菜单</a>
+                  <a href="#context-menu-panel" class="doc-label" :class="{ active: activeSection === 'context-menu-panel' }">{{ t('context_menu.title') }}</a>
                 </li>
                 <li>
                   <a href="#api-settings" class="doc-label" :class="{ active: activeSection === 'api-settings' }">{{ t('llm.title') }}</a>
@@ -94,7 +94,7 @@
               <!-- Autosave status info inside the sticky area -->
               <div v-show="showSavedStatus" class="status-indicator" style="margin-top: 24px; animation: rubi-fade 0.2s ease forwards;">
                 <span class="status-dot"></span>
-                <span>已自动保存</span>
+                <span>{{ t('nav.saved') || '已自动保存' }}</span>
               </div>
             </div>
           </aside>

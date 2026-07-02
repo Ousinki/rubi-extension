@@ -178,9 +178,9 @@ const rawSettingsStorage = storage.defineItem<RubiSettings>(
  */
 function isExtensionContextValid(): boolean {
   try {
-    return typeof chrome !== 'undefined'
-      && typeof chrome.runtime !== 'undefined'
-      && !!chrome.runtime.id;
+    return typeof browser !== 'undefined'
+      && typeof browser.runtime !== 'undefined'
+      && !!browser.runtime.id;
   } catch {
     return false;
   }

@@ -343,7 +343,7 @@ body {
 }
 </style>
 
-<style scoped>
+<style>
 .sortable-ghost {
   opacity: 0.3 !important;
   background-color: var(--bg-secondary) !important;

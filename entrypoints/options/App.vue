@@ -329,9 +329,6 @@ async function saveSettings() {
   --btn-hover: #264b77;
 }
 
-html {
-  /* scroll-behavior is applied dynamically in onMounted to prevent scroll jump bugs on reload */
-}
 
 body {
   margin: 0;

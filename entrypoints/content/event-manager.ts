@@ -375,6 +375,21 @@ export function setupEventListeners(): void {
         }
       }
       
+      if (currentSettings?.customSearchEngines) {
+        for (const engine of currentSettings.customSearchEngines) {
+          if (engine.enabled && engine.urlTemplate) {
+            items.push({
+              label: `在 ${engine.name || '自定义引擎'} 中搜索`,
+              icon: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>',
+              onClick: () => {
+                const url = engine.urlTemplate.replace('%s', encodeURIComponent(targetWord));
+                window.open(url, '_blank');
+              }
+            });
+          }
+        }
+      }
+      
       uiActions.showContextMenu(items, e.clientX, e.clientY);
       lastContextMenuTime = Date.now();
     }

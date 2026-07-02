@@ -169,10 +169,28 @@ const rawSettingsStorage = storage.defineItem<RubiSettings>(
   { fallback: DEFAULT_SETTINGS }
 );
 
+/**
+ * Guard: check if the extension runtime context is still valid.
+ * When an extension is updated/reloaded, old content-script contexts are
+ * invalidated. Any chrome API call after this point will throw
+ * "Extension context invalidated". Checking chrome.runtime.id is the
+ * canonical way to detect this before making any storage/messaging call.
+ */
+function isExtensionContextValid(): boolean {
+  try {
+    return typeof chrome !== 'undefined'
+      && typeof chrome.runtime !== 'undefined'
+      && !!chrome.runtime.id;
+  } catch {
+    return false;
+  }
+}
+
 export const settingsStorage = {
   key: rawSettingsStorage.key,
   remove: () => rawSettingsStorage.removeValue(),
   async getValue(): Promise<RubiSettings> {
+    if (!isExtensionContextValid()) return DEFAULT_SETTINGS;
     try {
       const val = await rawSettingsStorage.getValue();
       const merged = { ...DEFAULT_SETTINGS, ...val };
@@ -201,6 +219,10 @@ export const settingsStorage = {
       
       return merged;
     } catch (e: any) {
+      // Silently fall back on context invalidation (expected after extension update)
+      if (e?.message?.includes('context invalidated') || e?.message?.includes('Extension context')) {
+        return DEFAULT_SETTINGS;
+      }
       console.warn('[Rubi] 扩展存储读取失败，回退到默认设置以防崩溃:', e);
       return DEFAULT_SETTINGS;
     }
@@ -223,14 +245,19 @@ export const settingsStorage = {
     }
   },
   watch(callback: (newVal: RubiSettings | null, oldVal: RubiSettings | null) => void): () => void {
+    if (!isExtensionContextValid()) return () => {};
     try {
       return rawSettingsStorage.watch((newVal, oldVal) => {
+        // Guard against race: storage.onChanged can fire just after invalidation
+        if (!isExtensionContextValid()) return;
         const mergedNew = newVal ? { ...DEFAULT_SETTINGS, ...newVal } : null;
         const mergedOld = oldVal ? { ...DEFAULT_SETTINGS, ...oldVal } : null;
         callback(mergedNew, mergedOld);
       });
     } catch (e: any) {
-      console.warn('[Rubi] 扩展上下文已失效 (Storage watch)，无法监听设置变化', e);
+      if (!e?.message?.includes('context invalidated') && !e?.message?.includes('Extension context')) {
+        console.warn('[Rubi] 扩展上下文已失效 (Storage watch)，无法监听设置变化', e);
+      }
       return () => {};
     }
   }

@@ -1,16 +1,15 @@
 export async function safeSendMessage(message: any): Promise<any> {
   try {
-    if (!browser?.runtime?.id) {
-      console.warn('[Rubi] 扩展上下文已失效，请刷新页面');
-      return null;
-    }
+    // Proactively check — avoids throwing entirely in most cases
+    if (!browser?.runtime?.id) return null;
     return await browser.runtime.sendMessage(message);
   } catch (e: any) {
     if (e?.message?.includes('Extension context invalidated') ||
         e?.message?.includes('Cannot read properties of undefined') ||
         e?.message?.includes('Receiving end does not exist') ||
         e?.message?.includes('Could not establish connection')) {
-      console.warn('[Rubi] 扩展上下文已失效，请刷新页面以恢复功能', e);
+      // Silent: expected when extension is updated and old context is invalid.
+      // The user does not need to see this in the extension error panel.
       return null;
     }
     throw e;

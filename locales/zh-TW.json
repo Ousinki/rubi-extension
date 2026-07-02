@@ -158,5 +158,25 @@
     "recording": "按下快捷鍵組合…",
     "click_to_set": "點擊設定",
     "direct_hint": "⚠ 直接模式會在滑鼠懸停新段落時自動翻譯，可能產生大量翻譯請求。"
+  },
+  "context_menu": {
+    "title": "高級右鍵選單",
+    "tag": "Context Menu",
+    "enable_label": "啟用懸浮右鍵選單卡片",
+    "enable_desc": "右鍵點擊高亮單詞時，將展示精美的懸浮選單並支持快速發音、翻譯等操作，不再彈出原生瀏覽器選單。",
+    "custom_engines": "自定義搜索引擎 (Custom Search Engines)",
+    "custom_engines_desc": "支持動態擴展右鍵選單的搜索選項。使用 %s 代表選中的文本。例如：https://github.com/search?q=%s",
+    "engine_name": "引擎名稱",
+    "url_template": "URL 模板 (如: https://...?q=%s)",
+    "add_engine": "添加自定義引擎",
+    "translate": "翻譯當前段落",
+    "furigana": "全文注音",
+    "explain": "AI 翻譯",
+    "weblio": "在 Weblio 詞典中查詢",
+    "jisho": "在 Jisho 詞典中查詢",
+    "wikipedia": "在維基百科中查詢",
+    "google": "在 Google 中搜索",
+    "x": "在 X (Twitter) 中搜索",
+    "delete": "刪除"
   }
 }

@@ -157,5 +157,25 @@
     "recording": "ショートカットキーを押してください...",
     "click_to_set": "クリックして設定",
     "direct_hint": "⚠ ダイレクトモードでは新しい段落にホバーすると自動翻訳され、多くの翻訳リクエストが発生する可能性があります。"
+  },
+  "context_menu": {
+    "title": "コンテキストメニュー",
+    "tag": "Context Menu",
+    "enable_label": "フローティングメニューを有効にする",
+    "enable_desc": "単語を右クリックした際にブラウザの標準メニューの代わりに、発音や翻訳ができる美しいフローティングメニューを表示します。",
+    "custom_engines": "カスタム検索エンジン (Custom Search Engines)",
+    "custom_engines_desc": "検索オプションを動的に追加できます。選択されたテキストには %s を使用してください。例：https://github.com/search?q=%s",
+    "engine_name": "エンジン名",
+    "url_template": "URL テンプレート (例: https://...?q=%s)",
+    "add_engine": "エンジンを追加",
+    "translate": "段落を翻訳",
+    "furigana": "ルビを振る",
+    "explain": "AI 翻訳",
+    "weblio": "Weblio で検索",
+    "jisho": "Jisho で検索",
+    "wikipedia": "Wikipedia で検索",
+    "google": "Google で検索",
+    "x": "X (Twitter) で検索",
+    "delete": "削除"
   }
 }

@@ -161,5 +161,25 @@
     "recording": "Press shortcut keys...",
     "click_to_set": "Click to set",
     "direct_hint": "⚠ Direct mode auto-translates when hovering over new paragraphs, which may generate many translation requests."
+  },
+  "context_menu": {
+    "title": "Context Menu",
+    "tag": "Context Menu",
+    "enable_label": "Enable Floating Context Menu",
+    "enable_desc": "Show a beautiful floating menu on right-click to quickly translate or pronounce words, replacing the native browser menu.",
+    "custom_engines": "Custom Search Engines",
+    "custom_engines_desc": "Dynamically extend context menu search options. Use %s for the selected text. Example: https://github.com/search?q=%s",
+    "engine_name": "Engine Name",
+    "url_template": "URL Template (e.g. https://...?q=%s)",
+    "add_engine": "Add Custom Engine",
+    "translate": "Translate Paragraph",
+    "furigana": "Furigana",
+    "explain": "AI Translation",
+    "weblio": "Search in Weblio",
+    "jisho": "Search in Jisho",
+    "wikipedia": "Search in Wikipedia",
+    "google": "Search in Google",
+    "x": "Search in X (Twitter)",
+    "delete": "Delete"
   }
 }

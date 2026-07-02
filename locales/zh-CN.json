@@ -161,5 +161,25 @@
     "recording": "按下快捷键组合…",
     "click_to_set": "点击设置",
     "direct_hint": "⚠ 直接模式会在鼠标悬停新段落时自动翻译，可能产生大量翻译请求。"
+  },
+  "context_menu": {
+    "title": "高级右键菜单",
+    "tag": "Context Menu",
+    "enable_label": "启用悬浮右键菜单卡片",
+    "enable_desc": "右键点击高亮单词时，将展示精美的悬浮菜单并支持快速发音、翻译等操作，不再弹出原生浏览器菜单。",
+    "custom_engines": "自定义搜索引擎 (Custom Search Engines)",
+    "custom_engines_desc": "支持动态扩展右键菜单的搜索选项。使用 %s 代表选中的文本。例如：https://github.com/search?q=%s",
+    "engine_name": "引擎名称",
+    "url_template": "URL 模板 (如: https://...?q=%s)",
+    "add_engine": "添加自定义引擎",
+    "translate": "翻译当前段落",
+    "furigana": "全文注音",
+    "explain": "AI 翻译",
+    "weblio": "在 Weblio 词典中查询",
+    "jisho": "在 Jisho 词典中查询",
+    "wikipedia": "在维基百科中查询",
+    "google": "在 Google 中搜索",
+    "x": "在 X (Twitter) 中搜索",
+    "delete": "删除"
   }
 }

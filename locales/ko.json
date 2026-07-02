@@ -151,5 +151,25 @@
     "recording": "단축키를 누르세요...",
     "click_to_set": "클릭하여 설정",
     "direct_hint": "⚠ 즉시 모드는 마우스가 새 단락에 올라가면 자동으로 번역되어, 많은 번역 요청이 발생할 수 있습니다."
+  },
+  "context_menu": {
+    "title": "컨텍스트 메뉴",
+    "tag": "Context Menu",
+    "enable_label": "플로팅 컨텍스트 메뉴 사용",
+    "enable_desc": "단어를 마우스 우클릭할 때 기본 브라우저 메뉴 대신 발음이나 번역이 가능한 아름다운 플로팅 메뉴를 표시합니다.",
+    "custom_engines": "사용자 지정 검색 엔진",
+    "custom_engines_desc": "컨텍스트 메뉴 검색 옵션을 동적으로 확장합니다. 선택한 텍스트에 %s를 사용하세요. 예: https://github.com/search?q=%s",
+    "engine_name": "엔진 이름",
+    "url_template": "URL 템플릿 (예: https://...?q=%s)",
+    "add_engine": "엔진 추가",
+    "translate": "단락 번역",
+    "furigana": "후리가나",
+    "explain": "AI 번역",
+    "weblio": "Weblio에서 검색",
+    "jisho": "Jisho에서 검색",
+    "wikipedia": "Wikipedia에서 검색",
+    "google": "Google에서 검색",
+    "x": "X (Twitter)에서 검색",
+    "delete": "삭제"
   }
 }

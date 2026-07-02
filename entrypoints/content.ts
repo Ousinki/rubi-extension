@@ -20,10 +20,31 @@ export default defineContentScript({
   
   async main(ctx) {
     console.log('[Rubi] Content script main initialized.');
-    
+
+    // ─── Global context-invalidation guard ──────────────────────────────────
+    // WXT's rawSettingsStorage.watch() registers a chrome.storage.onChanged
+    // listener internally. When the extension is updated/reloaded, Chrome can
+    // fire that listener BEFORE WXT's ctx cleanup runs. WXT then calls
+    // chrome.storage.get() internally — this throws "Extension context
+    // invalidated" as an uncaught Promise rejection that bypasses all of our
+    // own try-catch wrappers. We intercept it here at the window level to
+    // prevent it from polluting the extension error panel.
+    const suppressContextErrors = (reason: unknown) => {
+      const msg = (reason as any)?.message ?? String(reason);
+      return msg.includes('context invalidated') || msg.includes('Extension context');
+    };
+    window.addEventListener('unhandledrejection', (e: PromiseRejectionEvent) => {
+      if (suppressContextErrors(e.reason)) e.preventDefault();
+    });
+    window.addEventListener('error', (e: ErrorEvent) => {
+      if (suppressContextErrors(e.message)) e.preventDefault();
+    });
+    // ────────────────────────────────────────────────────────────────────────
+
     // Load initial settings
     const currentSettings = await settingsStorage.getValue();
     updateContentContext(currentSettings, currentSettings.enabled);
+
 
     // Inject global host styling for CSS Custom Highlight & Ruby
     injectHostStyles(currentSettings);

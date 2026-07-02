@@ -14,6 +14,7 @@ export interface DictEntry {
   m: string[];        // meanings (translations)
   j?: string;         // JLPT level (N5-N1) (optional)
   lemma?: string;     // Dictionary/prototype form (optional)
+  isAiFallback?: boolean; // True when entry was generated as an AI/katakana fallback, not from the local dict
 }
 
 export interface LookupResult {

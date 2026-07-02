@@ -181,6 +181,11 @@ onMounted(async () => {
   sections.forEach((section) => {
     observer.observe(section);
   });
+
+  // Apply smooth scroll after a short delay to prevent weird scroll animations on page reload
+  setTimeout(() => {
+    document.documentElement.style.scrollBehavior = 'smooth';
+  }, 500);
 });
 
 const getInitialTheme = (): 'light' | 'dark' => {
@@ -325,7 +330,7 @@ async function saveSettings() {
 }
 
 html {
-  scroll-behavior: smooth;
+  /* scroll-behavior is applied dynamically in onMounted to prevent scroll jump bugs on reload */
 }
 
 body {

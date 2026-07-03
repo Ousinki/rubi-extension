@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="assets/icon.svg" alt="Rubi Logo" width="80" height="80">
+  <img src="public/icon.svg" alt="Rubi Logo" width="80" height="80">
   <h1>Rubi (ルビ)</h1>
   <p><strong>沉浸式 AI 日语振假名注音与语境翻译浏览器扩展</strong></p>
   <p>

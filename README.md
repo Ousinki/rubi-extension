@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="assets/icon.svg" alt="Rubi Logo" width="80" height="80">
+  <img src="public/icon.svg" alt="Rubi Logo" width="80" height="80">
   <h1>Rubi (ルビ)</h1>
   <p><strong>Immersive AI Japanese Furigana & Contextual Translation Extension</strong></p>
   <p>

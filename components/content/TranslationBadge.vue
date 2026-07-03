@@ -5,7 +5,7 @@
     class="rubi-translation-tooltip"
     :class="[
       { 'rubi-visible': uiState.translationBadge.visible },
-      { 'rubi-ask-mode': uiState.translationBadge.askMode },
+      { 'rubi-ask-mode': uiState.translationBadge.mode === 'ask' },
       actualPosition === 'top' ? 'pos-top' : 'pos-bottom',
       'theme-' + tooltipTheme
     ]"
@@ -23,7 +23,7 @@
       <span
         class="engine-tag"
         :class="{ 'has-error': !!uiState.translationBadge.errorInfo }"
-        v-if="uiState.translationBadge.showEngine && !uiState.translationBadge.askMode"
+        v-if="uiState.translationBadge.showEngine && uiState.translationBadge.mode !== 'ask'"
         @click="handleEngineClick"
         :title="uiState.translationBadge.errorInfo ? `翻译失败已降级至 Google。错误: ${uiState.translationBadge.errorInfo} (请检查权限或刷新插件)` : '点击使用 AI 翻译'"
       >
@@ -33,26 +33,26 @@
 
       <!-- Close button in ask mode -->
       <div
-        v-if="uiState.translationBadge.askMode"
+        v-if="uiState.translationBadge.mode === 'ask'"
         class="ask-close"
         @click.stop="handleClose"
       >✕</div>
     </div>
 
     <!-- Ask mode: AI answer -->
-    <div v-if="uiState.translationBadge.askMode && uiState.translationBadge.askAnswer" class="ask-answer">
+    <div v-if="uiState.translationBadge.mode === 'ask' && uiState.translationBadge.askAnswer" class="ask-answer">
       {{ uiState.translationBadge.askAnswer }}
     </div>
 
     <!-- Ask mode: loading -->
-    <div v-if="uiState.translationBadge.askMode && uiState.translationBadge.askLoading" class="ask-loading">
+    <div v-if="uiState.translationBadge.mode === 'ask' && uiState.translationBadge.askLoading" class="ask-loading">
       <span class="ask-loading-dot"></span>
       <span class="ask-loading-dot"></span>
       <span class="ask-loading-dot"></span>
     </div>
 
     <!-- Ask mode: input -->
-    <div v-if="uiState.translationBadge.askMode && !uiState.translationBadge.askLoading" class="ask-input-row">
+    <div v-if="uiState.translationBadge.mode === 'ask' && !uiState.translationBadge.askLoading" class="ask-input-row">
       <textarea
         ref="askInputEl"
         class="ask-input"
@@ -120,9 +120,10 @@ watch(
 );
 
 watch(
-  () => uiState.translationBadge.askMode,
-  async (askMode) => {
-    if (askMode) {
+  () => uiState.translationBadge.mode,
+  async (mode) => {
+    const isAsk = mode === 'ask';
+    if (isAsk) {
       await nextTick();
       askInputEl.value?.focus();
     } else {
@@ -279,7 +280,7 @@ const handleEngineClick = async (e: MouseEvent) => {
   uiState.translationBadge.text = 'AI 翻译中...';
   uiState.translationBadge.engine = 'AI';
   uiState.translationBadge.translationType = 'ai';
-  uiState.translationBadge.pinned = true;
+  uiState.translationBadge.mode = 'ai-explain';
   
   try {
     const resp = await safeSendMessage({
@@ -304,7 +305,7 @@ const handleEngineClick = async (e: MouseEvent) => {
 const handleDblClick = (e: MouseEvent) => {
   e.stopPropagation();
   e.preventDefault();
-  if (!uiState.translationBadge.askMode) {
+  if (uiState.translationBadge.mode !== 'ask') {
     uiActions.enterAskMode();
   }
 };

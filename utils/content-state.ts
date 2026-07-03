@@ -1,5 +1,16 @@
 import { reactive } from 'vue';
 
+/**
+ * Controls when and how the translation badge can be hidden.
+ *
+ * - 'hidden'     : badge is not visible
+ * - 'hover'      : triggered by hover; hides after 300ms on mouse-leave, immediately on word-switch
+ * - 'click'      : triggered by click/dblclick; stays on mouse-leave, hides on word-switch or blank click
+ * - 'ai-explain' : triggered by context menu AI/machine translate; only closable via ✕ button
+ * - 'ask'        : ask-AI mode (input box open); only closable via ✕ button
+ */
+export type BadgeMode = 'hidden' | 'hover' | 'click' | 'ai-explain' | 'ask';
+
 export interface MenuItem {
   icon?: string;
   label: string;
@@ -112,7 +123,7 @@ export const uiState = reactive({
   },
   translationBadge: {
     visible: false,
-    pinned: false,
+    mode: 'hidden' as BadgeMode,
     text: '',
     engine: '',
     translationType: 'dict' as 'dict' | 'machine' | 'ai',
@@ -123,7 +134,6 @@ export const uiState = reactive({
     exactRect: false,
     updater: null as (() => DOMRect | null) | null,
     originalText: '',
-    askMode: false,
     askLoading: false,
     askAnswer: '',
     askContext: '',
@@ -241,10 +251,10 @@ export const uiActions = {
   },
 
   showTranslationBadge(
-    text: string, 
-    engine: string, 
-    rect: DOMRect, 
-    pinned: boolean = false, 
+    text: string,
+    engine: string,
+    rect: DOMRect,
+    mode: BadgeMode = 'hover',
     position: 'bottom' | 'top' = 'bottom',
     showEngine: boolean = true,
     translationType: 'dict' | 'machine' | 'ai' = 'machine',
@@ -257,30 +267,31 @@ export const uiActions = {
     uiState.translationBadge.text = text;
     uiState.translationBadge.engine = engine;
     uiState.translationBadge.rect = toRect(rect);
-    uiState.translationBadge.pinned = pinned;
+    uiState.translationBadge.mode = mode;
     uiState.translationBadge.position = position;
     uiState.translationBadge.showEngine = showEngine;
     uiState.translationBadge.translationType = translationType;
     uiState.translationBadge.originalText = originalText || '';
     uiState.translationBadge.errorInfo = errorInfo;
-    uiState.translationBadge.askMode = false;
-    uiState.translationBadge.askLoading = false;
-    uiState.translationBadge.askAnswer = '';
-    uiState.translationBadge.askContext = '';
-    
+    // Reset ask-mode UI state when showing a fresh badge
+    if (mode !== 'ask') {
+      uiState.translationBadge.askLoading = false;
+      uiState.translationBadge.askAnswer = '';
+      uiState.translationBadge.askContext = '';
+    }
+
     // Slight delay to ensure content updates before showing
     setTimeout(() => {
       uiState.translationBadge.visible = true;
     }, 10);
-    
+
     if (!isSync) {
-      syncAction('showTranslationBadge', text, engine, toPlainRect(rect), pinned, position, showEngine, translationType, originalText, errorInfo);
+      syncAction('showTranslationBadge', text, engine, toPlainRect(rect), mode, position, showEngine, translationType, originalText, errorInfo);
     }
   },
   hideTranslationBadge(isSync = false, suppressNext = false) {
     uiState.translationBadge.visible = false;
-    uiState.translationBadge.pinned = false;
-    uiState.translationBadge.askMode = false;
+    uiState.translationBadge.mode = 'hidden';
     uiState.translationBadge.askLoading = false;
     uiState.translationBadge.askAnswer = '';
     uiState.translationBadge.askContext = '';
@@ -292,11 +303,11 @@ export const uiActions = {
     }
   },
   enterAskMode() {
-    uiState.translationBadge.askMode = true;
-    uiState.translationBadge.pinned = true;
+    uiState.translationBadge.mode = 'ask';
   },
   exitAskMode() {
-    uiState.translationBadge.askMode = false;
+    // Return to ai-explain mode (badge stays visible, input box closes)
+    uiState.translationBadge.mode = 'ai-explain';
     uiState.translationBadge.askLoading = false;
     uiState.translationBadge.askAnswer = '';
   },
@@ -349,7 +360,7 @@ export const uiActions = {
   
   updateActiveRects() {
     // In Ask AI mode, keep the badge fixed at its original position
-    const isAskMode = uiState.translationBadge.pinned && uiState.translationBadge.askMode;
+    const isAskMode = uiState.translationBadge.mode === 'ask';
 
     if (uiState.translationBadge.visible && uiState.translationBadge.updater && !isAskMode) {
       const newRect = uiState.translationBadge.updater();

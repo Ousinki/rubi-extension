@@ -25,6 +25,13 @@ export let isMouseOverPopup = false;
 export let hoverTimer: ReturnType<typeof setTimeout> | null = null;
 export let activeUpdateDynamicReading: ((reading: string) => void) | null = null;
 
+/**
+ * Monotonically-increasing token — incremented every time the cursor enters a NEW word.
+ * All async translation callbacks capture their token at dispatch time and bail out
+ * if the token has changed by the time they resolve, preventing stale badge updates.
+ */
+let lookupToken = 0;
+
 export function setCurrentWord(val: string | null) { currentWord = val; }
 export function setCurrentHighlightedRanges(val: Range[] | null) { currentHighlightedRanges = val; }
 export function setCurrentMatchedEntry(val: DictEntry | null) { currentMatchedEntry = val; }
@@ -45,18 +52,24 @@ export function clearHoverHighlight() {
 
 export function immediateHide() {
   if (isMouseOverPopup) return; // Don't hide if mouse is still over the popup
-  if (uiState.translationBadge.pinned) return; // Don't hide pinned (AI mode) badge
+  const mode = uiState.translationBadge.mode;
+  if (mode === 'ai-explain' || mode === 'ask') return; // user must close manually
   cancelScheduledHide();
   clearHoverHighlight();
   if (!uiState.pronounceBadge.pinned) uiActions.hidePronounceBadge();
-  if (!uiState.translationBadge.pinned) uiActions.hideTranslationBadge();
+  // 'click' mode: badge stays visible even when cursor leaves the word area
+  if (mode === 'hover') {
+    uiActions.hideTranslationBadge();
+  }
 }
 
 export function scheduleHide() {
   if (hoverTimer) return;
   hoverTimer = setTimeout(() => {
     if (!isMouseOverPopup) {
-      if (uiState.translationBadge.pinned) {
+      const mode = uiState.translationBadge.mode;
+      // ai-explain, ask, click: badge is not controlled by hover-out timer
+      if (mode === 'ai-explain' || mode === 'ask' || mode === 'click') {
         hoverTimer = null;
         return;
       }
@@ -110,7 +123,9 @@ export function getFallbackWordLength(text: string): number {
 }
 
 export async function handleMouseMove(e: MouseEvent) {
-  if (uiState.translationBadge.pinned) return;
+  // ai-explain and ask modes must be closed by the user explicitly; freeze hover detection
+  const badgeMode = uiState.translationBadge.mode;
+  if (badgeMode === 'ai-explain' || badgeMode === 'ask') return;
 
   try {
     await loadDictionary();
@@ -256,6 +271,15 @@ export async function handleMouseMove(e: MouseEvent) {
       }
 
       if (isOverWord && targetRect && targetRange) {
+        // New word — immediately clear old translation badge (one-to-one correspondence).
+        // cancelScheduledHide() alone only prevents the 300ms delayed hide, leaving
+        // the old badge visible until the async translation for the new word resolves.
+        if (currentWord !== matchedWord) {
+          uiActions.hideTranslationBadge();
+          // Increment token: all in-flight async callbacks for the old word will bail out
+          lookupToken++;
+        }
+        const myToken = lookupToken;
         cancelScheduledHide();
         currentWord = matchedWord;
         currentHighlightedRanges = ranges;
@@ -346,7 +370,7 @@ export async function handleMouseMove(e: MouseEvent) {
           return currentRects.length > targetRectIndex ? currentRects[targetRectIndex] : currentRects[0];
         };
 
-        const wordSnapshot = matchedWord;
+        const wordSnapshot = matchedWord; // kept for reference in closures below
         const isRubyMode = currentSettings?.lookupDisplayStyle === 'ruby';
 
         // Helper for combined word rect
@@ -442,7 +466,7 @@ export async function handleMouseMove(e: MouseEvent) {
               'AI 翻译中...',
               'AI',
               isRubyMode ? getDynamicWordRect() : (rect as DOMRect),
-              false,
+              'hover',
               pos,
               showEngine,
               'ai',
@@ -456,8 +480,8 @@ export async function handleMouseMove(e: MouseEvent) {
             sentence: getSentenceContext(),
             forceReading: true
           }).then((resp: any) => {
-            if (currentWord !== wordSnapshot) return;
-            
+            if (myToken !== lookupToken) return;
+
             if (resp?.reading) {
               updateDynamicReading(resp.reading);
             } else if (!resp?.success) {
@@ -467,14 +491,14 @@ export async function handleMouseMove(e: MouseEvent) {
             }
 
             if (trigger === 'hover') {
-              if (uiState.translationBadge.pinned && uiState.translationBadge.askMode) return;
+              if (uiState.translationBadge.mode === 'ask') return;
               const result = resp?.translation || 'AI 翻译失败';
               const activeRect = isRubyMode ? getDynamicWordRect() : getRect();
               uiActions.showTranslationBadge(
                 result,
                 'AI',
                 activeRect,
-                false,
+                'hover',
                 pos,
                 showEngine,
                 'ai',
@@ -482,16 +506,16 @@ export async function handleMouseMove(e: MouseEvent) {
               );
             }
           }).catch((err: any) => {
-            if (currentWord !== wordSnapshot) return;
+            if (myToken !== lookupToken) return;
             updateDynamicReading('错误');
             if (trigger === 'hover') {
-              if (uiState.translationBadge.pinned && uiState.translationBadge.askMode) return;
+              if (uiState.translationBadge.mode === 'ask') return;
               const activeRect = isRubyMode ? getDynamicWordRect() : getRect();
               uiActions.showTranslationBadge(
                 `AI 翻译出错: ${err.message || err}`,
                 'AI',
                 activeRect,
-                false,
+                'hover',
                 pos,
                 showEngine,
                 'ai',
@@ -510,7 +534,7 @@ export async function handleMouseMove(e: MouseEvent) {
               `${matchedWord} (${translationStr})`,
               'DICT',
               isRubyMode ? getDynamicWordRect() : (rect as DOMRect),
-              false,
+              'hover',
               pos,
               showEngine,
               'dict',
@@ -524,9 +548,9 @@ export async function handleMouseMove(e: MouseEvent) {
               targetLang,
               engine,
             }).then((resp: any) => {
-              if (currentWord !== wordSnapshot) return;
-              if (uiState.translationBadge.pinned && uiState.translationBadge.askMode) return;
-              
+              if (myToken !== lookupToken) return;
+              if (uiState.translationBadge.mode === 'ask') return;
+
               if (resp?.reading && !displayReading && currentSettings?.enableAutoTranslate) {
                 updateDynamicReading(resp.reading);
               }
@@ -537,7 +561,7 @@ export async function handleMouseMove(e: MouseEvent) {
                 result,
                 resp?.targetText ? (resp.engine || engine) : 'DICT',
                 activeRect,
-                false,
+                'hover',
                 pos,
                 showEngine,
                 'machine',
@@ -545,14 +569,14 @@ export async function handleMouseMove(e: MouseEvent) {
                 resp?.errorInfo
               );
             }).catch(() => {
-              if (currentWord !== wordSnapshot) return;
-              if (uiState.translationBadge.pinned && uiState.translationBadge.askMode) return;
+              if (myToken !== lookupToken) return;
+              if (uiState.translationBadge.mode === 'ask') return;
               const activeRect = isRubyMode ? getDynamicWordRect() : getRect();
               uiActions.showTranslationBadge(
                 `${matchedWord} (${translationStr})`,
                 'DICT',
                 activeRect,
-                false,
+                'hover',
                 pos,
                 showEngine,
                 'dict',
@@ -589,7 +613,7 @@ export async function triggerTranslation(word: string, targetRange: Range, targe
       'AI 翻译中...',
       'AI',
       rect,
-      true,
+      'click',
       pos,
       showEngine,
       'ai',
@@ -603,7 +627,7 @@ export async function triggerTranslation(word: string, targetRange: Range, targe
         sentence: getSentenceContext()
       });
       if (currentWord !== wordSnapshot) return;
-      if (uiState.translationBadge.pinned && uiState.translationBadge.askMode) return;
+      if (uiState.translationBadge.mode === 'ask') return;
       
       if (response?.reading) {
         if (activeUpdateDynamicReading) {
@@ -618,7 +642,7 @@ export async function triggerTranslation(word: string, targetRange: Range, targe
         result,
         'AI',
         getRect(),
-        true,
+        'click',
         pos,
         showEngine,
         'ai',
@@ -626,12 +650,12 @@ export async function triggerTranslation(word: string, targetRange: Range, targe
       );
     } catch (err: any) {
       if (currentWord !== wordSnapshot) return;
-      if (uiState.translationBadge.pinned && uiState.translationBadge.askMode) return;
+      if (uiState.translationBadge.mode === 'ask') return;
       uiActions.showTranslationBadge(
         `AI 翻译出错: ${err.message || err}`,
         'AI',
         getRect(),
-        true,
+        'click',
         pos,
         showEngine,
         'ai',
@@ -654,7 +678,7 @@ export async function triggerTranslation(word: string, targetRange: Range, targe
       `${word} (${translationStr})`,
       'DICT',
       rect as DOMRect,
-      true,
+      'click',
       pos,
       showEngine,
       'dict',
@@ -669,14 +693,14 @@ export async function triggerTranslation(word: string, targetRange: Range, targe
       engine,
     }).then((resp: any) => {
       if (currentWord !== wordSnapshot) return;
-      if (uiState.translationBadge.pinned && uiState.translationBadge.askMode) return;
+      if (uiState.translationBadge.mode === 'ask') return;
       const result = resp?.targetText || translationStr;
       const activeRect = getRect();
       uiActions.showTranslationBadge(
         result,
         resp?.targetText ? (resp.engine || engine) : 'DICT',
         activeRect,
-        true,
+        'click',
         pos,
         showEngine,
         'machine',
@@ -685,13 +709,13 @@ export async function triggerTranslation(word: string, targetRange: Range, targe
       );
     }).catch(() => {
       if (currentWord !== wordSnapshot) return;
-      if (uiState.translationBadge.pinned && uiState.translationBadge.askMode) return;
+      if (uiState.translationBadge.mode === 'ask') return;
       const activeRect = getRect();
       uiActions.showTranslationBadge(
         `${word} (${translationStr})`,
         'DICT',
         activeRect,
-        true,
+        'click',
         pos,
         showEngine,
         'dict',
@@ -719,12 +743,12 @@ export async function triggerWordExplain(word: string, clientX: number, clientY:
   const pos = (settings.translationPosition === 'pronounce-badge' ? 'bottom' : settings.translationPosition) || 'bottom';
   const showEngine = settings.showTranslationEngine ?? true;
 
-  // Show loading state in the translationBadge, NOT pinned
+  // Show loading state — 'ai-explain' mode means user must manually close
   uiActions.showTranslationBadge(
     'AI 翻译中...',
     'AI',
     currentRect,
-    true,
+    'ai-explain',
     pos,
     showEngine,
     'ai',
@@ -753,7 +777,7 @@ export async function triggerWordExplain(word: string, clientX: number, clientY:
         response.translation,
         'AI',
         getRect(),
-        true,
+        'ai-explain',
         pos,
         showEngine,
         'ai',
@@ -764,7 +788,7 @@ export async function triggerWordExplain(word: string, clientX: number, clientY:
         response?.error ? `翻译失败: ${response.error}` : '翻译失败',
         'AI',
         getRect(),
-        true,
+        'ai-explain',
         pos,
         showEngine,
         'ai',
@@ -777,7 +801,7 @@ export async function triggerWordExplain(word: string, clientX: number, clientY:
       `请求出错: ${err.message || err}`,
       'AI',
       getRect(),
-      true,
+      'ai-explain',
       pos,
       showEngine,
       'ai',
@@ -802,10 +826,10 @@ export async function triggerMachineTranslation(word: string, clientX: number, c
 
   uiState.returnGrace = true;
   uiActions.showTranslationBadge(
-    t('翻译中...', settings.uiLanguage), // Using generic translating text
+    t('翻译中...', settings.uiLanguage),
     engine.toUpperCase(),
     currentRect,
-    false,
+    'ai-explain',
     pos,
     showEngine,
     'machine',
@@ -828,7 +852,7 @@ export async function triggerMachineTranslation(word: string, clientX: number, c
         response.targetText,
         response.engine.toUpperCase(),
         getRect(),
-        false,
+        'ai-explain',
         pos,
         showEngine,
         'machine',
@@ -839,7 +863,7 @@ export async function triggerMachineTranslation(word: string, clientX: number, c
         t('翻译失败', settings.uiLanguage),
         engine.toUpperCase(),
         getRect(),
-        false,
+        'ai-explain',
         pos,
         showEngine,
         'machine',
@@ -852,7 +876,7 @@ export async function triggerMachineTranslation(word: string, clientX: number, c
       t('翻译出错', settings.uiLanguage) + `: ${err.message || err}`,
       engine.toUpperCase(),
       getRect(),
-      false,
+      'ai-explain',
       pos,
       showEngine,
       'machine',

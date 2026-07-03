@@ -80,7 +80,8 @@ export function setupEventListeners(): void {
 
     if (isMouseOverPopup) {
       setIsMouseOverPopup(false);
-      if (uiState.translationBadge.pinned) return;
+      const m = uiState.translationBadge.mode;
+      if (m === 'ai-explain' || m === 'ask') return;
     }
 
     if (hasEditableFocus()) return;

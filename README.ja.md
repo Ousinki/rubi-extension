@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="public/icon.svg" alt="Rubi Logo" width="80" height="80">
+  <img src="public/rubi_logo.svg" alt="Rubi Logo" width="80" height="80">
   <h1>Rubi (ルビ)</h1>
   <p><strong>没入感のある AI 日本語ふりがな・文脈翻訳ブラウザ拡張機能</strong></p>
   <p>

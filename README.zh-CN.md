@@ -3,8 +3,10 @@
   <h1>Rubi (ルビ)</h1>
   <p><strong>沉浸式 AI 日语振假名注音与语境翻译浏览器扩展</strong></p>
   <p>
-    <a href="README.md">English</a> | 
-    <a href="README.zh-CN.md"><b>简体中文</b></a>
+    <a href="README.md">English</a> |
+    <a href="README.zh-CN.md"><b>简体中文</b></a> |
+    <a href="README.ja.md">日本語</a> |
+    <a href="README.ko.md">한국어</a>
   </p>
   <p>
     <a href="https://github.com/Ousinki/rubi-extension/blob/main/LICENSE">

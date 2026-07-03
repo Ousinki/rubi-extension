@@ -3,8 +3,10 @@
   <h1>Rubi (ルビ)</h1>
   <p><strong>Immersive AI Japanese Furigana & Contextual Translation Extension</strong></p>
   <p>
-    <a href="README.md"><b>English</b></a> | 
-    <a href="README.zh-CN.md">简体中文</a>
+    <a href="README.md"><b>English</b></a> |
+    <a href="README.zh-CN.md">简体中文</a> |
+    <a href="README.ja.md">日本語</a> |
+    <a href="README.ko.md">한국어</a>
   </p>
   <p>
     <a href="https://github.com/Ousinki/rubi-extension/blob/main/LICENSE">

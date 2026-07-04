@@ -1,0 +1,18 @@
+{
+  "extName": {
+    "message": "Rubi — AI 일본어 요미가나 및 문맥 번역",
+    "description": "Name of the extension."
+  },
+  "extDescription": {
+    "message": "몰입형 일본어 읽기 도우미: 요미가나(후리가나)를 자동 주입하고 AI 기반 문맥 번역 및 사전 설명을 제공합니다.",
+    "description": "Description of the extension."
+  },
+  "commandTranslateParagraph": {
+    "message": "마우스 오버된 단락 번역",
+    "description": "Command to translate hovered paragraph."
+  },
+  "commandToggleExtension": {
+    "message": "Rubi 확장 프로그램 토글",
+    "description": "Command to toggle extension"
+  }
+}
